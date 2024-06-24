@@ -18,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/playlists")
+@CrossOrigin(origins = "*")
 public class PlaylistController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class); // ロガーを追加
@@ -26,6 +27,7 @@ public class PlaylistController {
     private SpotifyService spotifyService;
 
     @GetMapping("/search")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
         logger.info("PlaylistController: searchPlaylists called with query: {}", query); // クエリをログ出力
         try {
@@ -38,5 +40,12 @@ public class PlaylistController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
+    }
+
+    @GetMapping("/{id}") // 新しいエンドポイントを追加
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<String> getPlaylistById(@PathVariable String id) { // IDを受け取る
+        logger.info("PlaylistController: getPlaylistById called with id: {}", id); // IDをログに出力
+        return ResponseEntity.ok("Received playlist ID: " + id); // IDをレスポンスとして返す
     }
 }
