@@ -15,6 +15,8 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,8 +72,20 @@ public class PlaylistController {
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
             logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresの取得が完了しました。トラック数: {}", tracks.length);
 
+            List<Map<String, Object>> trackList = new ArrayList<>();
+            for (PlaylistTrack track : tracks) {
+                Map<String, Object> trackData = new HashMap<>();
+                trackData.put("track", track.getTrack());
+
+                // getAudioFeaturesForTrackにTrackSimplifiedオブジェクトではなく、trackIdを渡す
+                String trackId = track.getTrack().getId();
+                trackData.put("audioFeatures", spotifyService.getAudioFeaturesForTrack(trackId));
+
+                trackList.add(trackData);
+            }
+
             logger.info("PlaylistController: トラック情報を items キーでラップして返却します");
-            return ResponseEntity.ok(Map.of("tracks", Map.of("items", tracks)));
+            return ResponseEntity.ok(Map.of("tracks", Map.of("items", trackList)));
         } catch (IOException e) {
             logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
