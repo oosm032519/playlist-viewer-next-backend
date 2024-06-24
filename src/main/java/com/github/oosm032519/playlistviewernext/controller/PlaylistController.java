@@ -15,7 +15,6 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +23,7 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class PlaylistController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class); // ロガーを追加
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class);
 
     @Autowired
     private SpotifyService spotifyService;
@@ -32,30 +31,58 @@ public class PlaylistController {
     @GetMapping("/search")
     @CrossOrigin(origins = "*")
     public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
-        logger.info("PlaylistController: searchPlaylists called with query: {}", query); // クエリをログ出力
+        logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
         try {
+            logger.info("PlaylistController: アクセストークンを取得します");
             spotifyService.getAccessToken();
+            logger.info("PlaylistController: アクセストークンの取得に成功しました");
+
+            logger.info("PlaylistController: プレイリストの検索を開始します");
             List<PlaylistSimplified> playlists = spotifyService.searchPlaylists(query);
-            logger.info("PlaylistController: Found {} playlists", playlists.size()); // プレイリスト数をログ出力
+            logger.info("PlaylistController: プレイリストの検索が完了しました。見つかったプレイリスト数: {}", playlists.size());
+
+            logger.info("PlaylistController: 検索結果を返却します");
             return ResponseEntity.ok(playlists);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            logger.error("PlaylistController: Error searching playlists", e); // エラーをログ出力
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
+        } catch (IOException e) {
+            logger.error("PlaylistController: プレイリストの検索中にIO例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } catch (SpotifyWebApiException e) {
+            logger.error("PlaylistController: プレイリストの検索中にSpotify Web API例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } catch (ParseException e) {
+            logger.error("PlaylistController: プレイリストの検索中に解析例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } finally {
+            logger.info("PlaylistController: searchPlaylists メソッドが終了しました");
         }
     }
 
-    @GetMapping("/{id}") // 新しいエンドポイントを追加
+    @GetMapping("/{id}")
     @CrossOrigin(origins = "*")
     public ResponseEntity<?> getPlaylistById(@PathVariable String id) {
+        logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
+            logger.info("PlaylistController: アクセストークンを取得します");
             spotifyService.getAccessToken();
+            logger.info("PlaylistController: アクセストークンの取得に成功しました");
+
+            logger.info("PlaylistController: プレイリストのトラック情報を取得します");
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
-            logger.info("PlaylistController: Found {} tracks", tracks.length);
+            logger.info("PlaylistController: プレイリストのトラック情報の取得が完了しました。トラック数: {}", tracks.length);
+
+            logger.info("PlaylistController: トラック情報を返却します");
             return ResponseEntity.ok(Map.of("tracks", tracks));
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            logger.error("PlaylistController: Error getting playlist", e);
+        } catch (IOException e) {
+            logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } catch (SpotifyWebApiException e) {
+            logger.error("PlaylistController: プレイリストの取得中にSpotify Web API例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } catch (ParseException e) {
+            logger.error("PlaylistController: プレイリストの取得中に解析例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } finally {
+            logger.info("PlaylistController: getPlaylistById メソッドが終了しました");
         }
     }
 }
