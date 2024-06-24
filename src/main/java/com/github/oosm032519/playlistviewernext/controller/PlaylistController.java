@@ -14,7 +14,9 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/playlists")
@@ -44,8 +46,9 @@ public class PlaylistController {
 
     @GetMapping("/{id}") // 新しいエンドポイントを追加
     @CrossOrigin(origins = "*")
-    public ResponseEntity<String> getPlaylistById(@PathVariable String id) { // IDを受け取る
-        logger.info("PlaylistController: getPlaylistById called with id: {}", id); // IDをログに出力
-        return ResponseEntity.ok("Received playlist ID: " + id); // IDをレスポンスとして返す
+    public ResponseEntity<Map<String, String>> getPlaylistById(@PathVariable String id) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Received playlist ID: " + id);
+        return ResponseEntity.ok(response);
     }
 }
