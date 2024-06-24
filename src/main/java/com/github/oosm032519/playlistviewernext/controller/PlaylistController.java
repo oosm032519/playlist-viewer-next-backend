@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -46,9 +47,15 @@ public class PlaylistController {
 
     @GetMapping("/{id}") // 新しいエンドポイントを追加
     @CrossOrigin(origins = "*")
-    public ResponseEntity<Map<String, String>> getPlaylistById(@PathVariable String id) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Received playlist ID: " + id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> getPlaylistById(@PathVariable String id) {
+        try {
+            spotifyService.getAccessToken();
+            PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
+            logger.info("PlaylistController: Found {} tracks", tracks.length);
+            return ResponseEntity.ok(Map.of("tracks", tracks));
+        } catch (IOException | SpotifyWebApiException | ParseException e) {
+            logger.error("PlaylistController: Error getting playlist", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        }
     }
 }
