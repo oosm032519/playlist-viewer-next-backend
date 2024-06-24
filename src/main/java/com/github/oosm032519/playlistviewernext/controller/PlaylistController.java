@@ -70,8 +70,9 @@ public class PlaylistController {
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
             logger.info("PlaylistController: プレイリストのトラック情報の取得が完了しました。トラック数: {}", tracks.length);
 
-            logger.info("PlaylistController: トラック情報を返却します");
-            return ResponseEntity.ok(Map.of("tracks", tracks));
+            // 変更点: tracks を tracks.items でラップ
+            logger.info("PlaylistController: トラック情報を items キーでラップして返却します");
+            return ResponseEntity.ok(Map.of("tracks", Map.of("items", tracks)));
         } catch (IOException e) {
             logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
