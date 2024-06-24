@@ -66,9 +66,9 @@ public class PlaylistController {
             spotifyService.getAccessToken();
             logger.info("PlaylistController: アクセストークンの取得に成功しました");
 
-            logger.info("PlaylistController: プレイリストのトラック情報を取得します");
+            logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresを取得します");
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
-            logger.info("PlaylistController: プレイリストのトラック情報の取得が完了しました。トラック数: {}", tracks.length);
+            logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresの取得が完了しました。トラック数: {}", tracks.length);
 
             logger.info("PlaylistController: トラック情報を items キーでラップして返却します");
             return ResponseEntity.ok(Map.of("tracks", Map.of("items", tracks)));
