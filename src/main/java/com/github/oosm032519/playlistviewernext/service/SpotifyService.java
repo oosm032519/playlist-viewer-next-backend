@@ -10,6 +10,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
+import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
@@ -25,6 +26,9 @@ public class SpotifyService {
 
     @Autowired
     private SpotifyApi spotifyApi;
+
+    @Autowired
+    private SessionService sessionService;
 
     public void getAccessToken() throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アクセストークンの取得を開始します。");
@@ -88,5 +92,23 @@ public class SpotifyService {
         logger.info("  Duration MS: {}", audioFeatures.getDurationMs());
         logger.info("  Time Signature: {}", audioFeatures.getTimeSignature());
         logger.info("--------------------");
+    }
+
+    public List<PlaylistSimplified> getCurrentUsersPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("ユーザーがフォローしているプレイリストの取得を開始します。");
+
+        String accessToken = sessionService.getAccessToken();
+        spotifyApi.setAccessToken(accessToken);
+
+        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
+        logger.info("GetListOfCurrentUsersPlaylistsRequestを作成しました。");
+
+        Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
+        logger.info("GetListOfCurrentUsersPlaylistsRequestを実行し、結果を取得しました。");
+
+        List<PlaylistSimplified> playlists = Arrays.asList(playlistsPaging.getItems());
+        logger.info("取得したプレイリスト数: {}", playlists.size());
+
+        return playlists;
     }
 }
