@@ -1,5 +1,3 @@
-// File: src/main/java/com/github/oosm032519/playlistviewernext/controller/LoginSuccessController.java
-
 package com.github.oosm032519.playlistviewernext.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
