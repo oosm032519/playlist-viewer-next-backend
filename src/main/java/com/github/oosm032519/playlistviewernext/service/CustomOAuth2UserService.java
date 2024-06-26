@@ -25,6 +25,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String accessToken = userRequest.getAccessToken().getTokenValue();
         sessionService.setAccessToken(accessToken);
 
+        // ユーザーIDをセッションに保存
+        String userId = user.getAttribute("id");
+        sessionService.setUserId(userId);
+
         // 新しい変更可能なマップを作成し、元の属性をコピー
         Map<String, Object> mutableAttributes = new HashMap<>(user.getAttributes());
 

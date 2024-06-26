@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.controller;
 import com.github.oosm032519.playlistviewernext.service.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,10 +21,12 @@ public class SessionCheckController {
     public ResponseEntity<Map<String, Object>> checkSession() {
         Map<String, Object> response = new HashMap<>();
         String accessToken = sessionService.getAccessToken();
+        String userId = sessionService.getUserId();
 
         if (accessToken != null && !accessToken.isEmpty()) {
             response.put("status", "success");
             response.put("message", "Access token is present in the session");
+            response.put("userId", userId);
             // セキュリティ上の理由から、トークンの一部のみを表示
             response.put("tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
         } else {
