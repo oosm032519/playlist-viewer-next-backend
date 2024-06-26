@@ -58,7 +58,6 @@ public class PlaylistController {
     }
 
     @GetMapping("/{id}")
-    @CrossOrigin(origins = "*")
     public ResponseEntity<?> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
