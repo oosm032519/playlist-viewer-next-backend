@@ -4,6 +4,8 @@ import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -28,7 +30,13 @@ public class SpotifyService {
     private SpotifyApi spotifyApi;
 
     @Autowired
-    private SessionService sessionService;
+    private OAuth2AuthorizedClientService authorizedClientService;
+
+    private void setAccessToken(OAuth2AuthenticationToken authentication) {
+        String accessToken = authorizedClientService.loadAuthorizedClient("spotify", authentication.getName())
+                .getAccessToken().getTokenValue();
+        spotifyApi.setAccessToken(accessToken);
+    }
 
     public void getClientCredentialsToken() throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アクセストークンの取得を開始します。");
@@ -94,21 +102,15 @@ public class SpotifyService {
         logger.info("--------------------");
     }
 
-    public List<PlaylistSimplified> getCurrentUsersPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+    public List<PlaylistSimplified> getCurrentUsersPlaylists(OAuth2AuthenticationToken authentication) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("ユーザーがフォローしているプレイリストの取得を開始します。");
-
-        String accessToken = sessionService.getAccessToken();
-        spotifyApi.setAccessToken(accessToken);
-
+        setAccessToken(authentication);
         GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
         logger.info("GetListOfCurrentUsersPlaylistsRequestを作成しました。");
-
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
         logger.info("GetListOfCurrentUsersPlaylistsRequestを実行し、結果を取得しました。");
-
         List<PlaylistSimplified> playlists = Arrays.asList(playlistsPaging.getItems());
         logger.info("取得したプレイリスト数: {}", playlists.size());
-
         return playlists;
     }
 }
