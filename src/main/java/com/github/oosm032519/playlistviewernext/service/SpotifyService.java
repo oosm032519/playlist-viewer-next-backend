@@ -30,7 +30,7 @@ public class SpotifyService {
     @Autowired
     private SessionService sessionService;
 
-    public void getAccessToken() throws IOException, SpotifyWebApiException, ParseException {
+    public void getClientCredentialsToken() throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アクセストークンの取得を開始します。");
         ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();
         logger.info("ClientCredentialsRequestを作成しました。");

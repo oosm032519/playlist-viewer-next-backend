@@ -33,9 +33,9 @@ public class PlaylistController {
     public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
         logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
         try {
-            logger.info("PlaylistController: アクセストークンを取得します");
-            spotifyService.getAccessToken();
-            logger.info("PlaylistController: アクセストークンの取得に成功しました");
+            logger.info("PlaylistController: クライアントクレデンシャルトークンを取得します");
+            spotifyService.getClientCredentialsToken();
+            logger.info("PlaylistController: クライアントクレデンシャルトークンの取得に成功しました");
 
             logger.info("PlaylistController: プレイリストの検索を開始します");
             List<PlaylistSimplified> playlists = spotifyService.searchPlaylists(query);
@@ -61,9 +61,9 @@ public class PlaylistController {
     public ResponseEntity<?> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            logger.info("PlaylistController: アクセストークンを取得します");
-            spotifyService.getAccessToken();
-            logger.info("PlaylistController: アクセストークンの取得に成功しました");
+            logger.info("PlaylistController: クライアントクレデンシャルトークンを取得します");
+            spotifyService.getClientCredentialsToken();
+            logger.info("PlaylistController: クライアントクレデンシャルトークンの取得に成功しました");
 
             logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresを取得します");
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
