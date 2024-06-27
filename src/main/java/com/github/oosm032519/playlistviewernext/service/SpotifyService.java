@@ -20,7 +20,9 @@ import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackReq
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SpotifyService {
@@ -69,12 +71,17 @@ public class SpotifyService {
         PlaylistTrack[] tracks = playlist.getTracks().getItems();
         logger.info("プレイリストのトラック数: {}", tracks.length);
 
+        Map<String, Integer> genreCount = new HashMap<>();
+
         for (PlaylistTrack track : tracks) {
             Track fullTrack = (Track) track.getTrack();
             ArtistSimplified[] artists = fullTrack.getArtists();
             for (ArtistSimplified artist : artists) {
                 String artistId = artist.getId();
                 List<String> genres = getArtistGenres(artistId);
+                for (String genre : genres) {
+                    genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1);
+                }
                 logger.info("トラック: '{}', アーティスト: '{}', ジャンル: {}",
                         fullTrack.getName(), artist.getName(), String.join(", ", genres));
             }
@@ -82,7 +89,23 @@ public class SpotifyService {
             AudioFeatures audioFeatures = getAudioFeaturesForTrack(trackId);
             logAudioFeatures(fullTrack.getName(), audioFeatures);
         }
+
+        logTopGenres(genreCount);
         return tracks;
+    }
+
+    private void logTopGenres(Map<String, Integer> genreCount) {
+        List<Map.Entry<String, Integer>> sortedGenres = genreCount.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(3)
+                .toList();
+
+        logger.info("Top 3 ジャンル:");
+        for (int i = 0; i < sortedGenres.size(); i++) {
+            Map.Entry<String, Integer> entry = sortedGenres.get(i);
+            logger.info("{}. {}: {} 回", i + 1, entry.getKey(), entry.getValue());
+        }
     }
 
     public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
