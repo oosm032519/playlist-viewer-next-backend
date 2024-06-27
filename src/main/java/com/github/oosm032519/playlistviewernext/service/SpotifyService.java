@@ -72,7 +72,6 @@ public class SpotifyService {
         logger.info("プレイリストのトラック数: {}", tracks.length);
 
         Map<String, Integer> genreCount = new HashMap<>();
-
         for (PlaylistTrack track : tracks) {
             Track fullTrack = (Track) track.getTrack();
             ArtistSimplified[] artists = fullTrack.getArtists();
@@ -82,30 +81,22 @@ public class SpotifyService {
                 for (String genre : genres) {
                     genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1);
                 }
-                logger.info("トラック: '{}', アーティスト: '{}', ジャンル: {}",
-                        fullTrack.getName(), artist.getName(), String.join(", ", genres));
+                logger.info("トラック: '{}', アーティスト: '{}', ジャンル: {}", fullTrack.getName(), artist.getName(), String.join(", ", genres));
             }
             String trackId = fullTrack.getId();
             AudioFeatures audioFeatures = getAudioFeaturesForTrack(trackId);
             logAudioFeatures(fullTrack.getName(), audioFeatures);
         }
 
-        logTopGenres(genreCount);
+        logGenreCounts(genreCount);
         return tracks;
     }
 
-    private void logTopGenres(Map<String, Integer> genreCount) {
-        List<Map.Entry<String, Integer>> sortedGenres = genreCount.entrySet()
-                .stream()
+    private void logGenreCounts(Map<String, Integer> genreCount) {
+        logger.info("ジャンル出現回数:");
+        genreCount.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(3)
-                .toList();
-
-        logger.info("Top 3 ジャンル:");
-        for (int i = 0; i < sortedGenres.size(); i++) {
-            Map.Entry<String, Integer> entry = sortedGenres.get(i);
-            logger.info("{}. {}: {} 回", i + 1, entry.getKey(), entry.getValue());
-        }
+                .forEach(entry -> logger.info("{}: {} 回", entry.getKey(), entry.getValue()));
     }
 
     public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
