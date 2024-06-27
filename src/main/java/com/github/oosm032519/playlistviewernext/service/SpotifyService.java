@@ -99,6 +99,30 @@ public class SpotifyService {
                 .forEach(entry -> logger.info("{}: {} 回", entry.getKey(), entry.getValue()));
     }
 
+    public Map<String, Integer> getGenreCountsForPlaylist(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("プレイリストのジャンル集計を開始します。プレイリストID: {}", playlistId);
+
+        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
+        Playlist playlist = getPlaylistRequest.execute();
+        PlaylistTrack[] tracks = playlist.getTracks().getItems();
+
+        Map<String, Integer> genreCount = new HashMap<>();
+        for (PlaylistTrack track : tracks) {
+            Track fullTrack = (Track) track.getTrack();
+            ArtistSimplified[] artists = fullTrack.getArtists();
+            for (ArtistSimplified artist : artists) {
+                String artistId = artist.getId();
+                List<String> genres = getArtistGenres(artistId);
+                for (String genre : genres) {
+                    genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1);
+                }
+            }
+        }
+
+        logger.info("プレイリストのジャンル集計が完了しました。");
+        return genreCount;
+    }
+
     public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アーティストのジャンル取得を開始します。アーティストID: {}", artistId);
         GetArtistRequest getArtistRequest = spotifyApi.getArtist(artistId).build();
