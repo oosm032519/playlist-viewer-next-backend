@@ -12,6 +12,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
+import se.michaelthelin.spotify.requests.data.artists.GetArtistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
@@ -68,14 +69,31 @@ public class SpotifyService {
         PlaylistTrack[] tracks = playlist.getTracks().getItems();
         logger.info("プレイリストのトラック数: {}", tracks.length);
 
-        // 各トラックのaudio featuresを取得してログ出力
         for (PlaylistTrack track : tracks) {
-            String trackId = track.getTrack().getId();
+            Track fullTrack = (Track) track.getTrack();
+            ArtistSimplified[] artists = fullTrack.getArtists();
+            for (ArtistSimplified artist : artists) {
+                String artistId = artist.getId();
+                List<String> genres = getArtistGenres(artistId);
+                logger.info("トラック: '{}', アーティスト: '{}', ジャンル: {}",
+                        fullTrack.getName(), artist.getName(), String.join(", ", genres));
+            }
+
+            String trackId = fullTrack.getId();
             AudioFeatures audioFeatures = getAudioFeaturesForTrack(trackId);
-            logAudioFeatures(track.getTrack().getName(), audioFeatures);
+            logAudioFeatures(fullTrack.getName(), audioFeatures);
         }
 
         return tracks;
+    }
+
+    public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("アーティストのジャンル取得を開始します。アーティストID: {}", artistId);
+        GetArtistRequest getArtistRequest = spotifyApi.getArtist(artistId).build();
+        Artist artist = getArtistRequest.execute();
+        List<String> genres = Arrays.asList(artist.getGenres());
+        logger.info("アーティスト: '{}', ジャンル: {}", artist.getName(), String.join(", ", genres));
+        return genres;
     }
 
     public AudioFeatures getAudioFeaturesForTrack(String trackId) throws IOException, SpotifyWebApiException, ParseException {
