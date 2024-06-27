@@ -12,8 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,7 +61,7 @@ public class PlaylistController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPlaylistById(@PathVariable String id) {
+    public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
             logger.info("PlaylistController: クライアントクレデンシャルトークンを取得します");
@@ -73,12 +75,17 @@ public class PlaylistController {
             List<Map<String, Object>> trackList = new ArrayList<>();
             for (PlaylistTrack track : tracks) {
                 Map<String, Object> trackData = new HashMap<>();
-                trackData.put("track", track.getTrack());
+                Track fullTrack = (Track) track.getTrack();
+                trackData.put("track", fullTrack);
 
-                // getAudioFeaturesForTrackにTrackSimplifiedオブジェクトではなく、trackIdを渡す
-                String trackId = track.getTrack().getId();
+                // アーティストIDの取得とログ出力
+                ArtistSimplified[] artists = fullTrack.getArtists();
+                for (ArtistSimplified artist : artists) {
+                    logger.info("PlaylistController: トラック '{}' のアーティストID: {}", fullTrack.getName(), artist.getId());
+                }
+
+                String trackId = fullTrack.getId();
                 trackData.put("audioFeatures", spotifyService.getAudioFeaturesForTrack(trackId));
-
                 trackList.add(trackData);
             }
 
