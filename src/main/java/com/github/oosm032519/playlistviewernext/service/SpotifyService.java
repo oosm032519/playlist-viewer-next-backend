@@ -78,12 +78,10 @@ public class SpotifyService {
                 logger.info("トラック: '{}', アーティスト: '{}', ジャンル: {}",
                         fullTrack.getName(), artist.getName(), String.join(", ", genres));
             }
-
             String trackId = fullTrack.getId();
             AudioFeatures audioFeatures = getAudioFeaturesForTrack(trackId);
             logAudioFeatures(fullTrack.getName(), audioFeatures);
         }
-
         return tracks;
     }
 
