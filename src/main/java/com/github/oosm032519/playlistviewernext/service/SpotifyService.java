@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 @Service
 public class SpotifyService {
@@ -101,7 +103,6 @@ public class SpotifyService {
 
     public Map<String, Integer> getGenreCountsForPlaylist(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("プレイリストのジャンル集計を開始します。プレイリストID: {}", playlistId);
-
         GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
         Playlist playlist = getPlaylistRequest.execute();
         PlaylistTrack[] tracks = playlist.getTracks().getItems();
@@ -119,9 +120,22 @@ public class SpotifyService {
             }
         }
 
+        // ジャンルの出現回数を降順でソート
+        Map<String, Integer> sortedGenreCount = genreCount.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, _) -> e1,
+                        LinkedHashMap::new
+                ));
+
         logger.info("プレイリストのジャンル集計が完了しました。");
-        return genreCount;
+        logger.info(sortedGenreCount.toString());
+        return sortedGenreCount;
     }
+
 
     public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アーティストのジャンル取得を開始します。アーティストID: {}", artistId);
