@@ -219,4 +219,13 @@ public class SpotifyService {
 
         return recommendedTracks;
     }
+
+    public String getPlaylistName(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("プレイリストの名前を取得します。プレイリストID: {}", playlistId);
+        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
+        Playlist playlist = getPlaylistRequest.execute();
+        String playlistName = playlist.getName();
+        logger.info("プレイリスト名: {}", playlistName);
+        return playlistName;
+    }
 }

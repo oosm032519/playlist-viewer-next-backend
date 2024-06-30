@@ -103,11 +103,16 @@ public class PlaylistController {
                 logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
             }
 
+            // プレイリストの名前を取得
+            String playlistName = spotifyService.getPlaylistName(id);
+            logger.info(playlistName);
+
             // レスポンスの作成
             Map<String, Object> response = new HashMap<>();
             response.put("tracks", Map.of("items", trackList));
             response.put("genreCounts", genreCounts);
             response.put("recommendations", recommendations);
+            response.put("playlistName", playlistName); // プレイリスト名を追加
 
             logger.info("PlaylistController: トラック情報、ジャンルの出現回数、オススメ楽曲を返却します");
             return ResponseEntity.ok(response);
