@@ -92,6 +92,18 @@ public class PlaylistController {
                 // ジャンルの出現回数を取得
                 Map<String, Integer> genreCounts = spotifyService.getGenreCountsForPlaylist(id);
 
+                // 上位5つのジャンルを取得
+                List<String> top5Genres = spotifyService.getTop5GenresForPlaylist(id);
+
+                // Spotify APIを呼び出してオススメ楽曲を取得
+                try {
+                    logger.info("PlaylistController: 上位5つのジャンルをシード値としてSpotify APIを呼び出します。ジャンル: {}", top5Genres);
+                    spotifyService.getRecommendations(top5Genres);
+                } catch (IOException | SpotifyWebApiException | ParseException e) {
+                    logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
+                    // エラー処理
+                }
+
                 // レスポンスの作成
                 Map<String, Object> response = new HashMap<>();
                 response.put("tracks", Map.of("items", trackList));

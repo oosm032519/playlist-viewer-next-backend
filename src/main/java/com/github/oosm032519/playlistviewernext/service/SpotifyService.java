@@ -13,6 +13,7 @@ import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
 import se.michaelthelin.spotify.requests.data.artists.GetArtistRequest;
+import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
@@ -180,5 +181,44 @@ public class SpotifyService {
         List<PlaylistSimplified> playlists = Arrays.asList(playlistsPaging.getItems());
         logger.info("取得したプレイリスト数: {}", playlists.size());
         return playlists;
+    }
+
+    public List<String> getTop5GenresForPlaylist(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("プレイリストのジャンル出現頻度上位5つの取得を開始します。プレイリストID: {}", playlistId);
+
+        Map<String, Integer> genreCounts = getGenreCountsForPlaylist(playlistId);
+
+        // 出現頻度上位5つのジャンルを取得
+        List<String> top5Genres = genreCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        logger.info("プレイリストのジャンル出現頻度上位5つの取得が完了しました。上位5つのジャンル: {}", top5Genres);
+        return top5Genres;
+    }
+
+    public void getRecommendations(List<String> seedGenres) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("SpotifyService: getRecommendationsメソッドが呼び出されました。シードジャンル: {}", seedGenres);
+
+        // seedGenresが空でない場合のみAPIを呼び出す
+        if (!seedGenres.isEmpty()) {
+            String joinedGenres = String.join(",", seedGenres);
+            GetRecommendationsRequest getRecommendationsRequest = spotifyApi.getRecommendations()
+                    .seed_genres(joinedGenres)
+                    .build();
+
+            Recommendations recommendations = getRecommendationsRequest.execute();
+
+            logger.info("SpotifyService: オススメ楽曲を取得しました。楽曲数: {}", recommendations.getTracks().length);
+
+            // 取得したオススメ楽曲の詳細をログ出力
+            for (Track track : recommendations.getTracks()) {
+                logger.info("  - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
+            }
+        } else {
+            logger.info("SpotifyService: シードジャンルが空のため、Spotify APIを呼び出しません。");
+        }
     }
 }
