@@ -20,12 +20,8 @@ import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsR
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.LinkedHashMap;
 
 @Service
 public class SpotifyService {
@@ -199,26 +195,28 @@ public class SpotifyService {
         return top5Genres;
     }
 
-    public void getRecommendations(List<String> seedGenres) throws IOException, SpotifyWebApiException, ParseException {
+    public List<Track> getRecommendations(List<String> seedGenres) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("SpotifyService: getRecommendationsメソッドが呼び出されました。シードジャンル: {}", seedGenres);
+        List<Track> recommendedTracks = new ArrayList<>();
 
-        // seedGenresが空でない場合のみAPIを呼び出す
         if (!seedGenres.isEmpty()) {
             String joinedGenres = String.join(",", seedGenres);
             GetRecommendationsRequest getRecommendationsRequest = spotifyApi.getRecommendations()
                     .seed_genres(joinedGenres)
+                    .limit(20)  // 推奨曲の数を20に設定（必要に応じて調整してください）
                     .build();
 
             Recommendations recommendations = getRecommendationsRequest.execute();
+            recommendedTracks = Arrays.asList(recommendations.getTracks());
 
-            logger.info("SpotifyService: オススメ楽曲を取得しました。楽曲数: {}", recommendations.getTracks().length);
-
-            // 取得したオススメ楽曲の詳細をログ出力
-            for (Track track : recommendations.getTracks()) {
-                logger.info("  - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
+            logger.info("SpotifyService: オススメ楽曲を取得しました。楽曲数: {}", recommendedTracks.size());
+            for (Track track : recommendedTracks) {
+                logger.info(" - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
             }
         } else {
             logger.info("SpotifyService: シードジャンルが空のため、Spotify APIを呼び出しません。");
         }
+
+        return recommendedTracks;
     }
 }

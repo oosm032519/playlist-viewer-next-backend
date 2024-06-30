@@ -60,70 +60,70 @@ public class PlaylistController {
         }
     }
 
-        @GetMapping("/{id}")
-        public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
-            logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
-            try {
-                logger.info("PlaylistController: クライアントクレデンシャルトークンを取得します");
-                spotifyService.getClientCredentialsToken();
-                logger.info("PlaylistController: クライアントクレデンシャルトークンの取得に成功しました");
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
+        logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
+        try {
+            logger.info("PlaylistController: クライアントクレデンシャルトークンを取得します");
+            spotifyService.getClientCredentialsToken();
+            logger.info("PlaylistController: クライアントクレデンシャルトークンの取得に成功しました");
 
-                logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresを取得します");
-                PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
-                logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresの取得が完了しました。トラック数: {}", tracks.length);
+            logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresを取得します");
+            PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
+            logger.info("PlaylistController: プレイリストのトラック情報とaudio featuresの取得が完了しました。トラック数: {}", tracks.length);
 
-                List<Map<String, Object>> trackList = new ArrayList<>();
-                for (PlaylistTrack track : tracks) {
-                    Map<String, Object> trackData = new HashMap<>();
-                    Track fullTrack = (Track) track.getTrack();
-                    trackData.put("track", fullTrack);
+            List<Map<String, Object>> trackList = new ArrayList<>();
+            for (PlaylistTrack track : tracks) {
+                Map<String, Object> trackData = new HashMap<>();
+                Track fullTrack = (Track) track.getTrack();
+                trackData.put("track", fullTrack);
 
-                    // アーティストIDの取得とログ出力
-                    ArtistSimplified[] artists = fullTrack.getArtists();
-                    for (ArtistSimplified artist : artists) {
-                        logger.info("PlaylistController: トラック '{}' のアーティストID: {}", fullTrack.getName(), artist.getId());
-                    }
-
-                    String trackId = fullTrack.getId();
-                    trackData.put("audioFeatures", spotifyService.getAudioFeaturesForTrack(trackId));
-                    trackList.add(trackData);
+                ArtistSimplified[] artists = fullTrack.getArtists();
+                for (ArtistSimplified artist : artists) {
+                    logger.info("PlaylistController: トラック '{}' のアーティストID: {}", fullTrack.getName(), artist.getId());
                 }
 
-                // ジャンルの出現回数を取得
-                Map<String, Integer> genreCounts = spotifyService.getGenreCountsForPlaylist(id);
-
-                // 上位5つのジャンルを取得
-                List<String> top5Genres = spotifyService.getTop5GenresForPlaylist(id);
-
-                // Spotify APIを呼び出してオススメ楽曲を取得
-                try {
-                    logger.info("PlaylistController: 上位5つのジャンルをシード値としてSpotify APIを呼び出します。ジャンル: {}", top5Genres);
-                    spotifyService.getRecommendations(top5Genres);
-                } catch (IOException | SpotifyWebApiException | ParseException e) {
-                    logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
-                    // エラー処理
-                }
-
-                // レスポンスの作成
-                Map<String, Object> response = new HashMap<>();
-                response.put("tracks", Map.of("items", trackList));
-                response.put("genreCounts", genreCounts);
-
-                logger.info("PlaylistController: トラック情報とジャンルの出現回数を返却します");
-                return ResponseEntity.ok(response);
-            } catch (IOException e) {
-                logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
-            } catch (SpotifyWebApiException e) {
-                logger.error("PlaylistController: プレイリストの取得中にSpotify Web API例外が発生しました", e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
-            } catch (ParseException e) {
-                logger.error("PlaylistController: プレイリストの取得中に解析例外が発生しました", e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
-            } finally {
-                logger.info("PlaylistController: getPlaylistById メソッドが終了しました");
+                String trackId = fullTrack.getId();
+                trackData.put("audioFeatures", spotifyService.getAudioFeaturesForTrack(trackId));
+                trackList.add(trackData);
             }
+
+            // ジャンルの出現回数を取得
+            Map<String, Integer> genreCounts = spotifyService.getGenreCountsForPlaylist(id);
+
+            // 上位5つのジャンルを取得
+            List<String> top5Genres = spotifyService.getTop5GenresForPlaylist(id);
+
+            // オススメ楽曲を取得
+            List<Track> recommendations = new ArrayList<>();
+            try {
+                logger.info("PlaylistController: 上位5つのジャンルをシード値としてSpotify APIを呼び出します。ジャンル: {}", top5Genres);
+                recommendations = spotifyService.getRecommendations(top5Genres);
+            } catch (IOException | SpotifyWebApiException | ParseException e) {
+                logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
+            }
+
+            // レスポンスの作成
+            Map<String, Object> response = new HashMap<>();
+            response.put("tracks", Map.of("items", trackList));
+            response.put("genreCounts", genreCounts);
+            response.put("recommendations", recommendations);
+
+            logger.info("PlaylistController: トラック情報、ジャンルの出現回数、オススメ楽曲を返却します");
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } catch (SpotifyWebApiException e) {
+            logger.error("PlaylistController: プレイリストの取得中にSpotify Web API例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } catch (ParseException e) {
+            logger.error("PlaylistController: プレイリストの取得中に解析例外が発生しました", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+        } finally {
+            logger.info("PlaylistController: getPlaylistById メソッドが終了しました");
         }
+    }
 
     @GetMapping("/followed")
     public ResponseEntity<?> getFollowedPlaylists(OAuth2AuthenticationToken authentication) {
