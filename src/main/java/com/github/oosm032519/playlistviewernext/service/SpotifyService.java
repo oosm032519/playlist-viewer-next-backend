@@ -28,11 +28,14 @@ public class SpotifyService {
 
     private static final Logger logger = LoggerFactory.getLogger(SpotifyService.class);
 
-    @Autowired
-    private SpotifyApi spotifyApi;
+    private final SpotifyApi spotifyApi;
+    private final OAuth2AuthorizedClientService authorizedClientService;
 
     @Autowired
-    private OAuth2AuthorizedClientService authorizedClientService;
+    public SpotifyService(SpotifyApi spotifyApi, OAuth2AuthorizedClientService authorizedClientService) {
+        this.spotifyApi = spotifyApi;
+        this.authorizedClientService = authorizedClientService;
+    }
 
     private void setAccessToken(OAuth2AuthenticationToken authentication) {
         String accessToken = authorizedClientService.loadAuthorizedClient("spotify", authentication.getName())
@@ -58,7 +61,8 @@ public class SpotifyService {
         logger.info("SearchPlaylistsRequestを作成しました。");
         Paging<PlaylistSimplified> playlistSimplifiedPaging = searchPlaylistsRequest.execute();
         logger.info("SearchPlaylistsRequestを実行し、結果を取得しました。");
-        List<PlaylistSimplified> playlists = Arrays.asList(playlistSimplifiedPaging.getItems());
+        List<PlaylistSimplified> playlists = playlistSimplifiedPaging.getItems() != null ?
+                Arrays.asList(playlistSimplifiedPaging.getItems()) : Collections.emptyList();
         logger.info("検索結果: {}件のプレイリストが見つかりました。", playlists.size());
         return playlists;
     }
@@ -113,14 +117,12 @@ public class SpotifyService {
             for (ArtistSimplified artist : artists) {
                 String artistId = artist.getId();
                 List<String> genres = getArtistGenres(artistId);
-                for (String genre : genres) {
-                    genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1);
-                }
+                genres.forEach(genre -> genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1));
             }
         }
 
         // ジャンルの出現回数を降順でソート
-        Map<String, Integer> sortedGenreCount = genreCount.entrySet()
+        return genreCount.entrySet()
                 .stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .collect(Collectors.toMap(
@@ -129,18 +131,13 @@ public class SpotifyService {
                         (e1, _) -> e1,
                         LinkedHashMap::new
                 ));
-
-        logger.info("プレイリストのジャンル集計が完了しました。");
-        logger.info(sortedGenreCount.toString());
-        return sortedGenreCount;
     }
-
 
     public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("アーティストのジャンル取得を開始します。アーティストID: {}", artistId);
         GetArtistRequest getArtistRequest = spotifyApi.getArtist(artistId).build();
         Artist artist = getArtistRequest.execute();
-        List<String> genres = Arrays.asList(artist.getGenres());
+        List<String> genres = artist.getGenres() != null ? Arrays.asList(artist.getGenres()) : Collections.emptyList();
         logger.info("アーティスト: '{}', ジャンル: {}", artist.getName(), String.join(", ", genres));
         return genres;
     }
@@ -176,7 +173,8 @@ public class SpotifyService {
         logger.info("GetListOfCurrentUsersPlaylistsRequestを作成しました。");
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
         logger.info("GetListOfCurrentUsersPlaylistsRequestを実行し、結果を取得しました。");
-        List<PlaylistSimplified> playlists = Arrays.asList(playlistsPaging.getItems());
+        List<PlaylistSimplified> playlists = playlistsPaging.getItems() != null ?
+                Arrays.asList(playlistsPaging.getItems()) : Collections.emptyList();
         logger.info("取得したプレイリスト数: {}", playlists.size());
         return playlists;
     }
@@ -187,38 +185,34 @@ public class SpotifyService {
         Map<String, Integer> genreCounts = getGenreCountsForPlaylist(playlistId);
 
         // 出現頻度上位5つのジャンルを取得
-        List<String> top5Genres = genreCounts.entrySet().stream()
+        return genreCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(5)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
-
-        logger.info("プレイリストのジャンル出現頻度上位5つの取得が完了しました。上位5つのジャンル: {}", top5Genres);
-        return top5Genres;
     }
 
     public List<Track> getRecommendations(List<String> seedGenres) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("SpotifyService: getRecommendationsメソッドが呼び出されました。シードジャンル: {}", seedGenres);
-        List<Track> recommendedTracks = new ArrayList<>();
-
-        if (!seedGenres.isEmpty()) {
-            String joinedGenres = String.join(",", seedGenres);
-            GetRecommendationsRequest getRecommendationsRequest = spotifyApi.getRecommendations()
-                    .seed_genres(joinedGenres)
-                    .limit(20)  // 推奨曲の数を20に設定（必要に応じて調整してください）
-                    .build();
-
-            Recommendations recommendations = getRecommendationsRequest.execute();
-            recommendedTracks = Arrays.asList(recommendations.getTracks());
-
-            logger.info("SpotifyService: オススメ楽曲を取得しました。楽曲数: {}", recommendedTracks.size());
-            for (Track track : recommendedTracks) {
-                logger.info(" - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
-            }
-        } else {
+        if (seedGenres.isEmpty()) {
             logger.info("SpotifyService: シードジャンルが空のため、Spotify APIを呼び出しません。");
+            return Collections.emptyList();
         }
 
+        String joinedGenres = String.join(",", seedGenres);
+        GetRecommendationsRequest getRecommendationsRequest = spotifyApi.getRecommendations()
+                .seed_genres(joinedGenres)
+                .limit(20)
+                .build();
+
+        Recommendations recommendations = getRecommendationsRequest.execute();
+        List<Track> recommendedTracks = recommendations.getTracks() != null ?
+                Arrays.asList(recommendations.getTracks()) : Collections.emptyList();
+
+        logger.info("SpotifyService: オススメ楽曲を取得しました。楽曲数: {}", recommendedTracks.size());
+        for (Track track : recommendedTracks) {
+            logger.info(" - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
+        }
         return recommendedTracks;
     }
 
