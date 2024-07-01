@@ -53,7 +53,7 @@ public class SpotifyService {
     public List<PlaylistSimplified> searchPlaylists(String query) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("プレイリストの検索を開始します。検索クエリ: {}", query);
         SearchPlaylistsRequest searchPlaylistsRequest = spotifyApi.searchPlaylists(query)
-                .limit(50)
+                .limit(20)
                 .build();
         logger.info("SearchPlaylistsRequestを作成しました。");
         Paging<PlaylistSimplified> playlistSimplifiedPaging = searchPlaylistsRequest.execute();
