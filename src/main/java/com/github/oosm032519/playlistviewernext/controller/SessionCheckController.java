@@ -18,35 +18,42 @@ import java.util.Map;
 @RequestMapping("/api/session")
 public class SessionCheckController {
 
+    private final OAuth2AuthorizedClientService authorizedClientService;
+
     @Autowired
-    private OAuth2AuthorizedClientService authorizedClientService;
+    public SessionCheckController(OAuth2AuthorizedClientService authorizedClientService) {
+        this.authorizedClientService = authorizedClientService;
+    }
 
     @GetMapping("/check")
     public ResponseEntity<Map<String, Object>> checkSession(
             @AuthenticationPrincipal OAuth2User principal,
             OAuth2AuthenticationToken authentication) {
+
         Map<String, Object> response = new HashMap<>();
 
-        if (principal != null && authentication != null) {
-            OAuth2AuthorizedClient authorizedClient = authorizedClientService
-                    .loadAuthorizedClient("spotify", authentication.getName());
-
-            if (authorizedClient != null) {
-                String accessToken = authorizedClient.getAccessToken().getTokenValue();
-                String userId = principal.getAttribute("id");
-
-                response.put("status", "success");
-                response.put("message", "Access token is present");
-                response.put("userId", userId);
-                response.put("tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
-            } else {
-                response.put("status", "error");
-                response.put("message", "No access token found");
-            }
-        } else {
+        if (principal == null || authentication == null) {
             response.put("status", "error");
             response.put("message", "User not authenticated");
+            return ResponseEntity.ok(response);
         }
+
+        OAuth2AuthorizedClient authorizedClient = authorizedClientService
+                .loadAuthorizedClient("spotify", authentication.getName());
+
+        if (authorizedClient == null) {
+            response.put("status", "error");
+            response.put("message", "No access token found");
+            return ResponseEntity.ok(response);
+        }
+
+        String accessToken = authorizedClient.getAccessToken().getTokenValue();
+        String userId = principal.getAttribute("id");
+
+        response.put("status", "success");
+        response.put("message", "Access token is present");
+        response.put("userId", userId);
+        response.put("tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
 
         return ResponseEntity.ok(response);
     }
