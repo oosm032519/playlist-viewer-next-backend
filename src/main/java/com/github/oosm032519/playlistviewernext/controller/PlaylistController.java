@@ -12,10 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
-import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
-import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
-import se.michaelthelin.spotify.model_objects.specification.Track;
+import se.michaelthelin.spotify.model_objects.specification.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -107,14 +104,19 @@ public class PlaylistController {
             String playlistName = spotifyService.getPlaylistName(id);
             logger.info(playlistName);
 
+            User owner = spotifyService.getPlaylistOwner(id);
+
             // レスポンスの作成
             Map<String, Object> response = new HashMap<>();
             response.put("tracks", Map.of("items", trackList));
             response.put("genreCounts", genreCounts);
             response.put("recommendations", recommendations);
             response.put("playlistName", playlistName); // プレイリスト名を追加
+            response.put("ownerId", owner.getId()); // 作成者IDを追加
+            response.put("ownerName", owner.getDisplayName()); // 作成者名を追加
 
-            logger.info("PlaylistController: トラック情報、ジャンルの出現回数、オススメ楽曲を返却します");
+            logger.info("PlaylistController: トラック情報、ジャンルの出現回数、オススメ楽曲、作成者情報を返却します");
+
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             logger.error("PlaylistController: プレイリストの取得中にIO例外が発生しました", e);

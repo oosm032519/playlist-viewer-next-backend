@@ -228,4 +228,13 @@ public class SpotifyService {
         logger.info("プレイリスト名: {}", playlistName);
         return playlistName;
     }
+
+    public User getPlaylistOwner(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("プレイリストの作成者情報を取得します。プレイリストID: {}", playlistId);
+        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
+        Playlist playlist = getPlaylistRequest.execute();
+        User owner = playlist.getOwner();
+        logger.info("プレイリスト作成者: ID = {}, 名前 = {}", owner.getId(), owner.getDisplayName());
+        return owner;
+    }
 }
