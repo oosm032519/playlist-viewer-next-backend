@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.SpotifyService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyAnalyticsService;
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +23,12 @@ public class PlaylistController {
     private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class);
 
     private final SpotifyService spotifyService;
+    private final SpotifyAnalyticsService spotifyAnalyticsService;
 
     @Autowired
-    public PlaylistController(SpotifyService spotifyService) {
+    public PlaylistController(SpotifyService spotifyService, SpotifyAnalyticsService spotifyAnalyticsService) {
         this.spotifyService = spotifyService;
+        this.spotifyAnalyticsService = spotifyAnalyticsService;
     }
 
     @GetMapping("/search")
@@ -50,8 +53,8 @@ public class PlaylistController {
             PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = getTrackListData(tracks);
 
-            Map<String, Integer> genreCounts = spotifyService.getGenreCountsForPlaylist(id);
-            List<String> top5Genres = spotifyService.getTop5GenresForPlaylist(id);
+            Map<String, Integer> genreCounts = spotifyAnalyticsService.getGenreCountsForPlaylist(id);
+            List<String> top5Genres = spotifyAnalyticsService.getTop5GenresForPlaylist(id);
 
             List<Track> recommendations = getRecommendations(top5Genres);
 
@@ -85,7 +88,7 @@ public class PlaylistController {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = spotifyService.getRecommendations(top5Genres);
+                recommendations = spotifyAnalyticsService.getRecommendations(top5Genres);
             }
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
