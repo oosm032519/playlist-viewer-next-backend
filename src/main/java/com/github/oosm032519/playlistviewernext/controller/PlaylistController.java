@@ -35,7 +35,7 @@ public class PlaylistController {
             spotifyService.getClientCredentialsToken();
             List<PlaylistSimplified> playlists = spotifyService.searchPlaylists(query);
             return ResponseEntity.ok(playlists);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
+        } catch (Exception e) {
             logger.error("PlaylistController: プレイリストの検索中にエラーが発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
@@ -61,7 +61,7 @@ public class PlaylistController {
             Map<String, Object> response = createPlaylistResponse(trackList, genreCounts, recommendations, playlistName, owner);
 
             return ResponseEntity.ok(response);
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
+        } catch (Exception e) {
             logger.error("PlaylistController: プレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
