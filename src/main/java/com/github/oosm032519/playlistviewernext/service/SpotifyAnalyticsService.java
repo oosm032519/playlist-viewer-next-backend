@@ -70,24 +70,24 @@ public class SpotifyAnalyticsService {
     }
 
     public List<Track> getRecommendations(List<String> seedGenres) throws IOException, SpotifyWebApiException, ParseException {
-        logger.info("SpotifyAnalyticsService: getRecommendationsメソッドが呼び出されました。シードジャンル: {}", seedGenres);
         if (seedGenres.isEmpty()) {
-            logger.info("SpotifyAnalyticsService: シードジャンルが空のため、Spotify APIを呼び出しません。");
             return Collections.emptyList();
         }
 
-        String joinedGenres = String.join(",", seedGenres);
-        GetRecommendationsRequest getRecommendationsRequest = spotifyApi.getRecommendations()
-                .seed_genres(joinedGenres)
+        String genres = String.join(",", seedGenres);
+        GetRecommendationsRequest recommendationsRequest = spotifyApi.getRecommendations()
+                .seed_genres(genres)
                 .limit(20)
                 .build();
-        Recommendations recommendations = getRecommendationsRequest.execute();
-        List<Track> recommendedTracks = recommendations.getTracks() != null ? Arrays.asList(recommendations.getTracks()) : Collections.emptyList();
-        logger.info("SpotifyAnalyticsService: オススメ楽曲を取得しました。楽曲数: {}", recommendedTracks.size());
-        for (Track track : recommendedTracks) {
-            logger.info(" - 曲名: {}, アーティスト: {}", track.getName(), track.getArtists()[0].getName());
+
+        Recommendations recommendations = recommendationsRequest.execute();
+
+        // null チェックを追加
+        if (recommendations == null || recommendations.getTracks() == null) {
+            return Collections.emptyList();
         }
-        return recommendedTracks;
+
+        return Arrays.asList(recommendations.getTracks());
     }
 
     private void logAudioFeatures(String trackName, AudioFeatures audioFeatures) {
