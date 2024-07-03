@@ -311,4 +311,153 @@ class SpotifyServiceTest {
         verify(spotifyApi).setAccessToken("test-access-token");
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void testSetAccessToken_正常系() {
+        // Arrange
+        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+        OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
+        OAuth2AccessToken accessToken = mock(OAuth2AccessToken.class);
+
+        when(authentication.getName()).thenReturn("test-user");
+        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(authorizedClient);
+        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
+        when(accessToken.getTokenValue()).thenReturn("test-access-token");
+
+        // Act
+        spotifyService.setAccessToken(authentication);
+
+        // Assert
+        verify(spotifyApi).setAccessToken("test-access-token");
+    }
+
+    @Test
+    void testGetClientCredentialsToken_異常系_SpotifyWebApiException() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
+        ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
+        when(spotifyApi.clientCredentials()).thenReturn(builder);
+        when(builder.build()).thenReturn(clientCredentialsRequest);
+        when(clientCredentialsRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getClientCredentialsToken())
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Spotify API error");
+    }
+
+    @Test
+    void testSearchPlaylists_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String query = "test query";
+        SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
+        SearchPlaylistsRequest searchPlaylistsRequest = mock(SearchPlaylistsRequest.class);
+
+        when(spotifyApi.searchPlaylists(query)).thenReturn(builder);
+        when(builder.limit(20)).thenReturn(builder);
+        when(builder.build()).thenReturn(searchPlaylistsRequest);
+        when(searchPlaylistsRequest.execute()).thenThrow(new IOException("API error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.searchPlaylists(query))
+                .isInstanceOf(IOException.class)
+                .hasMessage("API error");
+    }
+
+    @Test
+    void testGetPlaylistTracks_異常系_プレイリストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "non-existent-playlist-id";
+        GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
+        GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
+
+        when(spotifyApi.getPlaylist(playlistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getPlaylistRequest);
+        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getPlaylistTracks(playlistId))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Playlist not found");
+    }
+
+    @Test
+    void testGetArtistGenres_異常系_アーティストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String artistId = "non-existent-artist-id";
+        GetArtistRequest.Builder builder = mock(GetArtistRequest.Builder.class);
+        GetArtistRequest getArtistRequest = mock(GetArtistRequest.class);
+
+        when(spotifyApi.getArtist(artistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getArtistRequest);
+        when(getArtistRequest.execute()).thenThrow(new SpotifyWebApiException("Artist not found"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getArtistGenres(artistId))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Artist not found");
+    }
+
+    @Test
+    void testGetAudioFeaturesForTrack_異常系_トラックが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String trackId = "non-existent-track-id";
+        GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
+        GetAudioFeaturesForTrackRequest getAudioFeaturesRequest = mock(GetAudioFeaturesForTrackRequest.class);
+
+        when(spotifyApi.getAudioFeaturesForTrack(trackId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getAudioFeaturesRequest);
+        when(getAudioFeaturesRequest.execute()).thenThrow(new SpotifyWebApiException("Track not found"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getAudioFeaturesForTrack(trackId))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Track not found");
+    }
+
+    @Test
+    void testGetPlaylistName_異常系_プレイリストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "non-existent-playlist-id";
+        GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
+        GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
+
+        when(spotifyApi.getPlaylist(playlistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getPlaylistRequest);
+        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getPlaylistName(playlistId))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Playlist not found");
+    }
+
+    @Test
+    void testGetPlaylistOwner_異常系_プレイリストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "non-existent-playlist-id";
+        GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
+        GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
+
+        when(spotifyApi.getPlaylist(playlistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getPlaylistRequest);
+        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getPlaylistOwner(playlistId))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Playlist not found");
+    }
+
+    @Test
+    void testGetCurrentUsersPlaylists_異常系_認証エラー() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+        when(authentication.getName()).thenReturn("test-user");
+        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(null);
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.getCurrentUsersPlaylists(authentication))
+                .isInstanceOf(NullPointerException.class);
+    }
 }

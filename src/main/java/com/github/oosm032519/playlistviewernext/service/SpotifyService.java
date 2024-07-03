@@ -33,7 +33,7 @@ public class SpotifyService {
         this.authorizedClientService = authorizedClientService;
     }
 
-    private void setAccessToken(OAuth2AuthenticationToken authentication) {
+    public void setAccessToken(OAuth2AuthenticationToken authentication) {
         String accessToken = authorizedClientService.loadAuthorizedClient("spotify", authentication.getName())
                 .getAccessToken().getTokenValue();
         spotifyApi.setAccessToken(accessToken);
