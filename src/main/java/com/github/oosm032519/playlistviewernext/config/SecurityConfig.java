@@ -17,7 +17,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final String[] PERMIT_ALL_URLS = {
-            "/", "/error", "/webjars/**", "/api/session/check", "/api/playlists/search", "/api/playlists/{id}"
+            "/", "/error", "/webjars/**", "/api/session/check", "/api/playlists/search", "/api/playlists/{id}", "/api/logout"
     };
 
     @Bean
