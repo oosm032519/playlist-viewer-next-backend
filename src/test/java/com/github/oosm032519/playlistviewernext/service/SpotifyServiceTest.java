@@ -4,6 +4,7 @@ import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -22,8 +23,6 @@ import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsR
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,15 +38,15 @@ class SpotifyServiceTest {
     @Mock
     private OAuth2AuthorizedClientService authorizedClientService;
 
+    @InjectMocks
     private SpotifyService spotifyService;
 
     @BeforeEach
     void setUp() {
-        spotifyService = new SpotifyService(spotifyApi, authorizedClientService);
     }
 
     @Test
-    void testGetClientCredentialsToken() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetClientCredentialsToken_正常系() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
         ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
@@ -65,7 +64,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetClientCredentialsTokenThrowsException() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetClientCredentialsToken_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
         ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
@@ -80,7 +79,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testSearchPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+    void testSearchPlaylists_正常系_検索結果あり() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String query = "test query";
         SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
@@ -99,11 +98,11 @@ class SpotifyServiceTest {
 
         // Assert
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst()).isEqualTo(playlistSimplifieds[0]);
+        assertThat(result.get(0)).isEqualTo(playlistSimplifieds[0]);
     }
 
     @Test
-    void testSearchPlaylistsReturnsEmptyList() throws IOException, SpotifyWebApiException, ParseException {
+    void testSearchPlaylists_正常系_検索結果なし() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String query = "empty query";
         SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
@@ -124,7 +123,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetPlaylistTracks() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetPlaylistTracks_正常系() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "test-playlist-id";
         GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
@@ -148,7 +147,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetArtistGenres() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetArtistGenres_正常系_ジャンルあり() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String artistId = "test-artist-id";
         GetArtistRequest.Builder builder = mock(GetArtistRequest.Builder.class);
@@ -170,7 +169,29 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetAudioFeaturesForTrack() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetArtistGenres_正常系_ジャンルなし() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String artistId = "test-artist-id";
+        GetArtistRequest.Builder builder = mock(GetArtistRequest.Builder.class);
+        GetArtistRequest getArtistRequest = mock(GetArtistRequest.class);
+        Artist artist = mock(Artist.class);
+
+        when(spotifyApi.getArtist(artistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getArtistRequest);
+        when(getArtistRequest.execute()).thenReturn(artist);
+        when(artist.getGenres()).thenReturn(null);
+        when(artist.getName()).thenReturn("Test Artist");
+
+        // Act
+        List<String> result = spotifyService.getArtistGenres(artistId);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+
+    @Test
+    void testGetAudioFeaturesForTrack_正常系() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String trackId = "test-track-id";
         GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
@@ -189,7 +210,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetPlaylistName() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetPlaylistName_正常系() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "test-playlist-id";
         GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
@@ -209,7 +230,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetPlaylistOwner() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetPlaylistOwner_正常系() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "test-playlist-id";
         GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
@@ -234,7 +255,7 @@ class SpotifyServiceTest {
     }
 
     @Test
-    void testGetCurrentUsersPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetCurrentUsersPlaylists_正常系_プレイリストあり() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
         OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
@@ -260,11 +281,11 @@ class SpotifyServiceTest {
         // Assert
         verify(spotifyApi).setAccessToken("test-access-token");
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst()).isEqualTo(playlistSimplifieds[0]);
+        assertThat(result.get(0)).isEqualTo(playlistSimplifieds[0]);
     }
 
     @Test
-    void testGetCurrentUsersPlaylistsReturnsEmptyList() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetCurrentUsersPlaylists_正常系_プレイリストなし() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
         OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
