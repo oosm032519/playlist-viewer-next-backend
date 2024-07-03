@@ -143,6 +143,38 @@ class SpotifyAnalyticsServiceTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "nullTracksPlaylistId";
+        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(null);
+
+        // Act
+        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getRecommendations_ShouldHandleApiException() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        List<String> seedGenres = Arrays.asList("rock", "pop");
+        GetRecommendationsRequest.Builder recommendationsBuilder = mock(GetRecommendationsRequest.Builder.class);
+        GetRecommendationsRequest recommendationsRequest = mock(GetRecommendationsRequest.class);
+
+        when(spotifyApi.getRecommendations()).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.seed_genres(anyString())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.limit(anyInt())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
+        when(recommendationsRequest.execute()).thenThrow(new SpotifyWebApiException("API error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyAnalyticsService.getRecommendations(seedGenres))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("API error");
+    }
+
     private PlaylistTrack[] createMockPlaylistTracks() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);
         PlaylistTrack track2 = mock(PlaylistTrack.class);

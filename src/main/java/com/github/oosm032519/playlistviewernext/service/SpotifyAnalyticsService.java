@@ -29,6 +29,11 @@ public class SpotifyAnalyticsService {
     public Map<String, Integer> getGenreCountsForPlaylist(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("プレイリストのジャンル集計を開始します。プレイリストID: {}", playlistId);
         PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(playlistId);
+        if (tracks == null) {
+            logger.warn("プレイリストID: {} に対するトラックが見つかりませんでした。", playlistId);
+            return Collections.emptyMap();
+        }
+
         Map<String, Integer> genreCount = new HashMap<>();
 
         for (PlaylistTrack track : tracks) {
