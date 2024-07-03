@@ -248,6 +248,31 @@ class SpotifyAnalyticsServiceTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "emptyPlaylistId";
+        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+
+        // Act
+        List<String> result = spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getTop5GenresForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "errorPlaylistId";
+        when(spotifyService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId))
+                .isInstanceOf(IOException.class)
+                .hasMessage("API error");
+    }
+
     private PlaylistTrack[] createMockPlaylistTracks() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);
         PlaylistTrack track2 = mock(PlaylistTrack.class);
