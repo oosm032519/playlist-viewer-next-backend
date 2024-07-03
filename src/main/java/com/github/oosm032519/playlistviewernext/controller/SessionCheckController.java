@@ -38,8 +38,15 @@ public class SessionCheckController {
             return ResponseEntity.ok(response);
         }
 
-        OAuth2AuthorizedClient authorizedClient = authorizedClientService
-                .loadAuthorizedClient("spotify", authentication.getName());
+        OAuth2AuthorizedClient authorizedClient;
+        try {
+            authorizedClient = authorizedClientService
+                    .loadAuthorizedClient("spotify", authentication.getName());
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Error loading authorized client: " + e.getMessage());
+            return ResponseEntity.ok(response);
+        }
 
         if (authorizedClient == null) {
             response.put("status", "error");
