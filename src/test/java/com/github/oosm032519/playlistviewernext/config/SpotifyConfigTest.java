@@ -70,7 +70,7 @@ class SpotifyConfigTest {
     void spotifyApiBean_ShouldBeThreadSafe() {
         List<SpotifyApi> apis = IntStream.range(0, 100)
                 .parallel()
-                .mapToObj(i -> spotifyConfig.spotifyApi())
+                .mapToObj(_ -> spotifyConfig.spotifyApi())
                 .collect(Collectors.toList());
 
         assertThat(apis).allMatch(api -> api == spotifyApi);
