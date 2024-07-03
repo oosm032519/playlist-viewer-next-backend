@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.enums.Modality;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
@@ -459,5 +460,160 @@ class SpotifyServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> spotifyService.getCurrentUsersPlaylists(authentication))
                 .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void testGetAudioFeaturesForTrack_正常系_詳細情報() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String trackId = "test-track-id";
+        GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
+        GetAudioFeaturesForTrackRequest getAudioFeaturesRequest = mock(GetAudioFeaturesForTrackRequest.class);
+        AudioFeatures audioFeatures = mock(AudioFeatures.class);
+
+        when(spotifyApi.getAudioFeaturesForTrack(trackId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getAudioFeaturesRequest);
+        when(getAudioFeaturesRequest.execute()).thenReturn(audioFeatures);
+        when(audioFeatures.getDanceability()).thenReturn(0.8f);
+        when(audioFeatures.getEnergy()).thenReturn(0.9f);
+        when(audioFeatures.getKey()).thenReturn(5);
+        when(audioFeatures.getLoudness()).thenReturn(-4.3f);
+        when(audioFeatures.getMode()).thenReturn(Modality.MINOR);
+        when(audioFeatures.getTimeSignature()).thenReturn(4);
+
+        // Act
+        AudioFeatures result = spotifyService.getAudioFeaturesForTrack(trackId);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getDanceability()).isEqualTo(0.8f);
+        assertThat(result.getEnergy()).isEqualTo(0.9f);
+        assertThat(result.getKey()).isEqualTo(5);
+        assertThat(result.getLoudness()).isEqualTo(-4.3f);
+        assertThat(result.getMode()).isEqualTo(Modality.MINOR);
+        assertThat(result.getTimeSignature()).isEqualTo(4);
+    }
+
+    @Test
+    void testGetPlaylistName_正常系_長い名前() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "test-playlist-id";
+        GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
+        GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
+        Playlist playlist = mock(Playlist.class);
+
+        when(spotifyApi.getPlaylist(playlistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getPlaylistRequest);
+        when(getPlaylistRequest.execute()).thenReturn(playlist);
+        when(playlist.getName()).thenReturn("This is a very long playlist name that exceeds the usual length of playlist names");
+
+        // Act
+        String result = spotifyService.getPlaylistName(playlistId);
+
+        // Assert
+        assertThat(result).isEqualTo("This is a very long playlist name that exceeds the usual length of playlist names");
+    }
+
+    @Test
+    void testGetPlaylistOwner_正常系_詳細情報() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "test-playlist-id";
+        GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
+        GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
+        Playlist playlist = mock(Playlist.class);
+        User owner = mock(User.class);
+        Followers followers = mock(Followers.class);
+
+        when(spotifyApi.getPlaylist(playlistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getPlaylistRequest);
+        when(getPlaylistRequest.execute()).thenReturn(playlist);
+        when(playlist.getOwner()).thenReturn(owner);
+        when(owner.getId()).thenReturn("owner-id");
+        when(owner.getDisplayName()).thenReturn("Owner Name");
+        when(owner.getUri()).thenReturn("spotify:user:owner-id");
+        when(owner.getFollowers()).thenReturn(followers);
+        when(followers.getTotal()).thenReturn(1000);
+
+        // Act
+        User result = spotifyService.getPlaylistOwner(playlistId);
+
+        // Assert
+        assertThat(result).isEqualTo(owner);
+        assertThat(result.getId()).isEqualTo("owner-id");
+        assertThat(result.getDisplayName()).isEqualTo("Owner Name");
+        assertThat(result.getUri()).isEqualTo("spotify:user:owner-id");
+        assertThat(result.getFollowers().getTotal()).isEqualTo(1000);
+    }
+
+    @Test
+    void testGetCurrentUsersPlaylists_正常系_複数のプレイリスト() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+        OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
+        OAuth2AccessToken accessToken = mock(OAuth2AccessToken.class);
+        GetListOfCurrentUsersPlaylistsRequest.Builder builder = mock(GetListOfCurrentUsersPlaylistsRequest.Builder.class);
+        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = mock(GetListOfCurrentUsersPlaylistsRequest.class);
+        Paging<PlaylistSimplified> playlistsPaging = mock(Paging.class);
+        PlaylistSimplified playlist1 = mock(PlaylistSimplified.class);
+        PlaylistSimplified playlist2 = mock(PlaylistSimplified.class);
+        PlaylistSimplified playlist3 = mock(PlaylistSimplified.class);
+        PlaylistSimplified[] playlistSimplifieds = new PlaylistSimplified[]{playlist1, playlist2, playlist3};
+
+        when(authentication.getName()).thenReturn("test-user");
+        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(authorizedClient);
+        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
+        when(accessToken.getTokenValue()).thenReturn("test-access-token");
+
+        when(spotifyApi.getListOfCurrentUsersPlaylists()).thenReturn(builder);
+        when(builder.build()).thenReturn(playlistsRequest);
+        when(playlistsRequest.execute()).thenReturn(playlistsPaging);
+        when(playlistsPaging.getItems()).thenReturn(playlistSimplifieds);
+
+        when(playlist1.getName()).thenReturn("Playlist 1");
+        when(playlist2.getName()).thenReturn("Playlist 2");
+        when(playlist3.getName()).thenReturn("Playlist 3");
+
+        // Act
+        List<PlaylistSimplified> result = spotifyService.getCurrentUsersPlaylists(authentication);
+
+        // Assert
+        verify(spotifyApi).setAccessToken("test-access-token");
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).getName()).isEqualTo("Playlist 1");
+        assertThat(result.get(1).getName()).isEqualTo("Playlist 2");
+        assertThat(result.get(2).getName()).isEqualTo("Playlist 3");
+    }
+
+    @Test
+    void testSetAccessToken_異常系_認証情報なし() {
+        // Arrange
+        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+        when(authentication.getName()).thenReturn("test-user");
+        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(null);
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyService.setAccessToken(authentication))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void testGetArtistGenres_正常系_複数ジャンル() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String artistId = "test-artist-id";
+        GetArtistRequest.Builder builder = mock(GetArtistRequest.Builder.class);
+        GetArtistRequest getArtistRequest = mock(GetArtistRequest.class);
+        Artist artist = mock(Artist.class);
+        String[] genres = new String[]{"pop", "rock", "indie", "alternative"};
+
+        when(spotifyApi.getArtist(artistId)).thenReturn(builder);
+        when(builder.build()).thenReturn(getArtistRequest);
+        when(getArtistRequest.execute()).thenReturn(artist);
+        when(artist.getGenres()).thenReturn(genres);
+        when(artist.getName()).thenReturn("Test Artist");
+
+        // Act
+        List<String> result = spotifyService.getArtistGenres(artistId);
+
+        // Assert
+        assertThat(result).containsExactly("pop", "rock", "indie", "alternative");
     }
 }
