@@ -1,3 +1,5 @@
+// SecurityConfig.java
+
 package com.github.oosm032519.playlistviewernext.config;
 
 import org.springframework.context.annotation.Bean;

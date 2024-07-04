@@ -32,35 +32,26 @@ public class SessionCheckController {
 
         Map<String, Object> response = new HashMap<>();
 
-        if (principal == null || authentication == null) {
+        if (principal != null && authentication != null) {
+            OAuth2AuthorizedClient authorizedClient = authorizedClientService
+                    .loadAuthorizedClient("spotify", authentication.getName());
+
+            if (authorizedClient != null) {
+                String accessToken = authorizedClient.getAccessToken().getTokenValue();
+                String userId = principal.getAttribute("id");
+
+                response.put("status", "success");
+                response.put("message", "User authenticated");
+                response.put("userId", userId);
+                response.put("tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
+            } else {
+                response.put("status", "error");
+                response.put("message", "No access token found");
+            }
+        } else {
             response.put("status", "error");
             response.put("message", "User not authenticated");
-            return ResponseEntity.ok(response);
         }
-
-        OAuth2AuthorizedClient authorizedClient;
-        try {
-            authorizedClient = authorizedClientService
-                    .loadAuthorizedClient("spotify", authentication.getName());
-        } catch (Exception e) {
-            response.put("status", "error");
-            response.put("message", "Error loading authorized client: " + e.getMessage());
-            return ResponseEntity.ok(response);
-        }
-
-        if (authorizedClient == null) {
-            response.put("status", "error");
-            response.put("message", "No access token found");
-            return ResponseEntity.ok(response);
-        }
-
-        String accessToken = authorizedClient.getAccessToken().getTokenValue();
-        String userId = principal.getAttribute("id");
-
-        response.put("status", "success");
-        response.put("message", "Access token is present");
-        response.put("userId", userId);
-        response.put("tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
 
         return ResponseEntity.ok(response);
     }
