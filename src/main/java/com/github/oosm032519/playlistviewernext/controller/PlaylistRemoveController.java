@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -20,12 +21,13 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
+@RequestMapping("/api/playlist")
 public class PlaylistRemoveController {
 
     @Autowired
     private SpotifyApi spotifyApi;
 
-    @PostMapping("/removeTrackFromPlaylist")
+    @PostMapping("/remove-track")
     public ResponseEntity<String> removeTrackFromPlaylist(@RequestBody RemoveTrackRequest request, OAuth2User principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("認証が必要です。");
