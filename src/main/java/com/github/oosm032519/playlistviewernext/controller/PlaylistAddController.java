@@ -1,5 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -65,24 +67,11 @@ public class PlaylistAddController {
     }
 }
 
+    @Setter
+    @Getter
     class AddTrackRequest {
-    private String playlistId;
+        // getterとsetterメソッド
+        private String playlistId;
     private String trackId;
 
-    // getterとsetterメソッド
-    public String getPlaylistId() {
-        return playlistId;
     }
-
-    public void setPlaylistId(String playlistId) {
-        this.playlistId = playlistId;
-    }
-
-    public String getTrackId() {
-        return trackId;
-    }
-
-    public void setTrackId(String trackId) {
-        this.trackId = trackId;
-    }
-}
