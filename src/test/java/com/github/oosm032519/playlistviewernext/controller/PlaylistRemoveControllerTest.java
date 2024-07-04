@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.BeforeEach;

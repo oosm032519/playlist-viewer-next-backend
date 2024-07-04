@@ -1,9 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,11 +57,4 @@ public class PlaylistRemoveController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("エラー: " + e.getMessage());
         }
     }
-}
-
-@Setter
-@Getter
-class RemoveTrackRequest {
-    private String playlistId;
-    private String trackId;
 }
