@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistAddControllerTest {
