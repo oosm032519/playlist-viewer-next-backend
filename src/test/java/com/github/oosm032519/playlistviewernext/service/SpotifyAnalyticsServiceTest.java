@@ -28,7 +28,10 @@ class SpotifyAnalyticsServiceTest {
     private SpotifyApi spotifyApi;
 
     @Mock
-    private SpotifyService spotifyService;
+    private SpotifyPlaylistService playlistService;
+
+    @Mock
+    private SpotifyArtistService artistService;
 
     @InjectMocks
     private SpotifyAnalyticsService spotifyAnalyticsService;
@@ -38,9 +41,9 @@ class SpotifyAnalyticsServiceTest {
         // Arrange
         String playlistId = "testPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
-        when(spotifyService.getArtistGenres("artist1")).thenReturn(Arrays.asList("rock", "pop"));
-        when(spotifyService.getArtistGenres("artist2")).thenReturn(Arrays.asList("rock", "jazz"));
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
+        when(artistService.getArtistGenres("artist1")).thenReturn(Arrays.asList("rock", "pop"));
+        when(artistService.getArtistGenres("artist2")).thenReturn(Arrays.asList("rock", "jazz"));
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -62,7 +65,7 @@ class SpotifyAnalyticsServiceTest {
     void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "emptyPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -75,7 +78,7 @@ class SpotifyAnalyticsServiceTest {
     void getGenreCountsForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "errorPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
+        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId))
@@ -150,7 +153,7 @@ class SpotifyAnalyticsServiceTest {
     void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "nullTracksPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(null);
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(null);
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -203,9 +206,9 @@ class SpotifyAnalyticsServiceTest {
         // Arrange
         String playlistId = "noGenresPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
-        when(spotifyService.getArtistGenres("artist1")).thenReturn(Collections.emptyList());
-        when(spotifyService.getArtistGenres("artist2")).thenReturn(Collections.emptyList());
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
+        when(artistService.getArtistGenres("artist1")).thenReturn(Collections.emptyList());
+        when(artistService.getArtistGenres("artist2")).thenReturn(Collections.emptyList());
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -239,7 +242,7 @@ class SpotifyAnalyticsServiceTest {
         // Arrange
         String playlistId = "noArtistsPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracksWithNoArtists();
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -252,7 +255,7 @@ class SpotifyAnalyticsServiceTest {
     void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "emptyPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
 
         // Act
         List<String> result = spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId);
@@ -265,7 +268,7 @@ class SpotifyAnalyticsServiceTest {
     void getTop5GenresForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "errorPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
+        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId))

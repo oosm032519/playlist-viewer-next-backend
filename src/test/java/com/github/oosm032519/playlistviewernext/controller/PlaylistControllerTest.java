@@ -1,7 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.SpotifyAnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyTrackService;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,9 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -25,10 +28,13 @@ import static org.mockito.Mockito.*;
 class PlaylistControllerTest {
 
     @Mock
-    private SpotifyService spotifyService;
+    private SpotifyPlaylistService playlistService;
 
     @Mock
-    private SpotifyAnalyticsService spotifyAnalyticsService;
+    private SpotifyAnalyticsService analyticsService;
+
+    @Mock
+    private SpotifyTrackService trackService;
 
     @InjectMocks
     private PlaylistController playlistController;
@@ -47,7 +53,7 @@ class PlaylistControllerTest {
                 new PlaylistSimplified.Builder().setName("Playlist 2").build()
         );
 
-        when(spotifyService.searchPlaylists(query)).thenReturn(expectedPlaylists);
+        when(playlistService.searchPlaylists(query)).thenReturn(expectedPlaylists);
 
         // When
         ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
@@ -55,14 +61,14 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(spotifyService).searchPlaylists(query);
+        verify(playlistService).searchPlaylists(query);
     }
 
     @Test
     void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String query = "test query";
-        when(spotifyService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
+        when(playlistService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
@@ -70,7 +76,7 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNull();
-        verify(spotifyService).searchPlaylists(query);
+        verify(playlistService).searchPlaylists(query);
     }
 
     @Test
@@ -90,13 +96,13 @@ class PlaylistControllerTest {
         String playlistName = "Test Playlist";
         User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
 
-        when(spotifyService.getPlaylistTracks(playlistId)).thenReturn(tracks);
-        when(spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
-        when(spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
-        when(spotifyAnalyticsService.getRecommendations(top5Genres)).thenReturn(recommendations);
-        when(spotifyService.getPlaylistName(playlistId)).thenReturn(playlistName);
-        when(spotifyService.getPlaylistOwner(playlistId)).thenReturn(owner);
-        when(spotifyService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
+        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(tracks);
+        when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
+        when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
+        when(analyticsService.getRecommendations(top5Genres)).thenReturn(recommendations);
+        when(playlistService.getPlaylistName(playlistId)).thenReturn(playlistName);
+        when(playlistService.getPlaylistOwner(playlistId)).thenReturn(owner);
+        when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
 
         // When
         ResponseEntity<Map<String, Object>> response = playlistController.getPlaylistById(playlistId);
@@ -112,20 +118,20 @@ class PlaylistControllerTest {
         assertThat(responseBody.get("ownerId")).isEqualTo(owner.getId());
         assertThat(responseBody.get("ownerName")).isEqualTo(owner.getDisplayName());
 
-        verify(spotifyService).getPlaylistTracks(playlistId);
-        verify(spotifyAnalyticsService).getGenreCountsForPlaylist(playlistId);
-        verify(spotifyAnalyticsService).getTop5GenresForPlaylist(playlistId);
-        verify(spotifyAnalyticsService).getRecommendations(top5Genres);
-        verify(spotifyService).getPlaylistName(playlistId);
-        verify(spotifyService).getPlaylistOwner(playlistId);
-        verify(spotifyService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
+        verify(playlistService).getPlaylistTracks(playlistId);
+        verify(analyticsService).getGenreCountsForPlaylist(playlistId);
+        verify(analyticsService).getTop5GenresForPlaylist(playlistId);
+        verify(analyticsService).getRecommendations(top5Genres);
+        verify(playlistService).getPlaylistName(playlistId);
+        verify(playlistService).getPlaylistOwner(playlistId);
+        verify(trackService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
     }
 
     @Test
     void getPlaylistById_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String playlistId = "testPlaylistId";
-        when(spotifyService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
+        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = playlistController.getPlaylistById(playlistId);
@@ -135,7 +141,7 @@ class PlaylistControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
-        verify(spotifyService).getPlaylistTracks(playlistId);
+        verify(playlistService).getPlaylistTracks(playlistId);
     }
 
     @Test
@@ -147,7 +153,7 @@ class PlaylistControllerTest {
                 new PlaylistSimplified.Builder().setName("Followed Playlist 2").build()
         );
 
-        when(spotifyService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
+        when(playlistService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
 
         // When
         ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
@@ -155,14 +161,14 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(spotifyService).getCurrentUsersPlaylists(authToken);
+        verify(playlistService).getCurrentUsersPlaylists(authToken);
     }
 
     @Test
     void getFollowedPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        when(spotifyService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
+        when(playlistService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
 
         // When
         ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
@@ -170,6 +176,6 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isEqualTo("Error: Authentication error");
-        verify(spotifyService).getCurrentUsersPlaylists(authToken);
+        verify(playlistService).getCurrentUsersPlaylists(authToken);
     }
 }

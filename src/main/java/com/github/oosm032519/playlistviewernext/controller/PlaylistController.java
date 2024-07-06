@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.SpotifyService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.*;
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,21 +21,28 @@ public class PlaylistController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class);
 
-    private final SpotifyService spotifyService;
-    private final SpotifyAnalyticsService spotifyAnalyticsService;
+    private final SpotifyAuthService authService;
+    private final SpotifyPlaylistService playlistService;
+    private final SpotifyTrackService trackService;
+    private final SpotifyAnalyticsService analyticsService;
 
     @Autowired
-    public PlaylistController(SpotifyService spotifyService, SpotifyAnalyticsService spotifyAnalyticsService) {
-        this.spotifyService = spotifyService;
-        this.spotifyAnalyticsService = spotifyAnalyticsService;
+    public PlaylistController(SpotifyAuthService authService,
+                              SpotifyPlaylistService playlistService,
+                              SpotifyTrackService trackService,
+                              SpotifyAnalyticsService analyticsService) {
+        this.authService = authService;
+        this.playlistService = playlistService;
+        this.trackService = trackService;
+        this.analyticsService = analyticsService;
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
         logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
         try {
-            spotifyService.getClientCredentialsToken();
-            List<PlaylistSimplified> playlists = spotifyService.searchPlaylists(query);
+            authService.getClientCredentialsToken();
+            List<PlaylistSimplified> playlists = playlistService.searchPlaylists(query);
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
             logger.error("PlaylistController: プレイリストの検索中にエラーが発生しました", e);
@@ -48,18 +54,18 @@ public class PlaylistController {
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            spotifyService.getClientCredentialsToken();
+            authService.getClientCredentialsToken();
 
-            PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(id);
+            PlaylistTrack[] tracks = playlistService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = getTrackListData(tracks);
 
-            Map<String, Integer> genreCounts = spotifyAnalyticsService.getGenreCountsForPlaylist(id);
-            List<String> top5Genres = spotifyAnalyticsService.getTop5GenresForPlaylist(id);
+            Map<String, Integer> genreCounts = analyticsService.getGenreCountsForPlaylist(id);
+            List<String> top5Genres = analyticsService.getTop5GenresForPlaylist(id);
 
             List<Track> recommendations = getRecommendations(top5Genres);
 
-            String playlistName = spotifyService.getPlaylistName(id);
-            User owner = spotifyService.getPlaylistOwner(id);
+            String playlistName = playlistService.getPlaylistName(id);
+            User owner = playlistService.getPlaylistOwner(id);
 
             Map<String, Object> response = createPlaylistResponse(trackList, genreCounts, recommendations, playlistName, owner);
 
@@ -78,7 +84,7 @@ public class PlaylistController {
             trackData.put("track", fullTrack);
 
             String trackId = fullTrack.getId();
-            trackData.put("audioFeatures", spotifyService.getAudioFeaturesForTrack(trackId));
+            trackData.put("audioFeatures", trackService.getAudioFeaturesForTrack(trackId));
             trackList.add(trackData);
         }
         return trackList;
@@ -88,7 +94,7 @@ public class PlaylistController {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = spotifyAnalyticsService.getRecommendations(top5Genres);
+                recommendations = analyticsService.getRecommendations(top5Genres);
             }
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
@@ -114,7 +120,7 @@ public class PlaylistController {
     @GetMapping("/followed")
     public ResponseEntity<?> getFollowedPlaylists(OAuth2AuthenticationToken authentication) {
         try {
-            return ResponseEntity.ok(spotifyService.getCurrentUsersPlaylists(authentication));
+            return ResponseEntity.ok(playlistService.getCurrentUsersPlaylists(authentication));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }

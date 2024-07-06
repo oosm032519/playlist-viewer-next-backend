@@ -18,17 +18,19 @@ import java.util.stream.Collectors;
 public class SpotifyAnalyticsService {
     private static final Logger logger = LoggerFactory.getLogger(SpotifyAnalyticsService.class);
     private final SpotifyApi spotifyApi;
-    private final SpotifyService spotifyService;
+    private final SpotifyPlaylistService playlistService;
+    private final SpotifyArtistService artistService;
 
     @Autowired
-    public SpotifyAnalyticsService(SpotifyApi spotifyApi, SpotifyService spotifyService) {
+    public SpotifyAnalyticsService(SpotifyApi spotifyApi, SpotifyPlaylistService playlistService, SpotifyArtistService artistService) {
         this.spotifyApi = spotifyApi;
-        this.spotifyService = spotifyService;
+        this.playlistService = playlistService;
+        this.artistService = artistService;
     }
 
     public Map<String, Integer> getGenreCountsForPlaylist(String playlistId) throws IOException, SpotifyWebApiException, ParseException {
         logger.info("プレイリストのジャンル集計を開始します。プレイリストID: {}", playlistId);
-        PlaylistTrack[] tracks = spotifyService.getPlaylistTracks(playlistId);
+        PlaylistTrack[] tracks = playlistService.getPlaylistTracks(playlistId);
         if (tracks == null) {
             logger.warn("プレイリストID: {} に対するトラックが見つかりませんでした。", playlistId);
             return Collections.emptyMap();
@@ -41,7 +43,7 @@ public class SpotifyAnalyticsService {
             ArtistSimplified[] artists = fullTrack.getArtists();
             for (ArtistSimplified artist : artists) {
                 String artistId = artist.getId();
-                List<String> genres = spotifyService.getArtistGenres(artistId);
+                List<String> genres = artistService.getArtistGenres(artistId);
                 genres.forEach(genre -> genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1));
             }
         }
@@ -88,24 +90,5 @@ public class SpotifyAnalyticsService {
         }
 
         return Arrays.asList(recommendations.getTracks());
-    }
-
-    private void logAudioFeatures(String trackName, AudioFeatures audioFeatures) {
-        logger.info("Track: {}", trackName);
-        logger.info("Audio Features:");
-        logger.info(" Danceability: {}", audioFeatures.getDanceability());
-        logger.info(" Energy: {}", audioFeatures.getEnergy());
-        logger.info(" Key: {}", audioFeatures.getKey());
-        logger.info(" Loudness: {}", audioFeatures.getLoudness());
-        logger.info(" Mode: {}", audioFeatures.getMode());
-        logger.info(" Speechiness: {}", audioFeatures.getSpeechiness());
-        logger.info(" Acousticness: {}", audioFeatures.getAcousticness());
-        logger.info(" Instrumentalness: {}", audioFeatures.getInstrumentalness());
-        logger.info(" Liveness: {}", audioFeatures.getLiveness());
-        logger.info(" Valence: {}", audioFeatures.getValence());
-        logger.info(" Tempo: {}", audioFeatures.getTempo());
-        logger.info(" Duration MS: {}", audioFeatures.getDurationMs());
-        logger.info(" Time Signature: {}", audioFeatures.getTimeSignature());
-        logger.info("--------------------");
     }
 }
