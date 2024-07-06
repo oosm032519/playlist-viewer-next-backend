@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.SpotifyAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyAuthService;
 import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistService;
 import com.github.oosm032519.playlistviewernext.service.SpotifyTrackService;
 import org.apache.hc.core5.http.ParseException;
@@ -26,6 +27,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistControllerTest {
+
+    @Mock
+    private SpotifyAuthService authService;
 
     @Mock
     private SpotifyPlaylistService playlistService;

@@ -21,14 +21,18 @@ public class PlaylistController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class);
 
+    @Autowired
     private final SpotifyAuthService authService;
+    @Autowired
     private final SpotifyPlaylistService playlistService;
+    @Autowired
     private final SpotifyTrackService trackService;
+    @Autowired
     private final SpotifyAnalyticsService analyticsService;
 
     @Autowired
     public PlaylistController(SpotifyAuthService authService,
-                              SpotifyPlaylistService playlistService,
+            SpotifyPlaylistService playlistService,
                               SpotifyTrackService trackService,
                               SpotifyAnalyticsService analyticsService) {
         this.authService = authService;
@@ -41,7 +45,7 @@ public class PlaylistController {
     public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
         logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
         try {
-            authService.getClientCredentialsToken();
+            authService.getClientCredentialsToken(); // 認証トークンを取得
             List<PlaylistSimplified> playlists = playlistService.searchPlaylists(query);
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
@@ -54,7 +58,7 @@ public class PlaylistController {
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            authService.getClientCredentialsToken();
+            authService.getClientCredentialsToken(); // 認証トークンを取得
 
             PlaylistTrack[] tracks = playlistService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = getTrackListData(tracks);
@@ -122,6 +126,7 @@ public class PlaylistController {
         try {
             return ResponseEntity.ok(playlistService.getCurrentUsersPlaylists(authentication));
         } catch (Exception e) {
+            logger.error("PlaylistController: フォロー中のプレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
