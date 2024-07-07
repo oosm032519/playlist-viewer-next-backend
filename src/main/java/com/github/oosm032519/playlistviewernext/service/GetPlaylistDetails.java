@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class PlaylistService {
+public class GetPlaylistDetails {
 
     @Autowired
     private SpotifyPlaylistDetailsService playlistDetailsService;

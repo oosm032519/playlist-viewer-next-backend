@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.PlaylistService;
+import com.github.oosm032519.playlistviewernext.service.GetPlaylistDetails;
 import com.github.oosm032519.playlistviewernext.service.AnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.RecommendationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 class PlaylistDetailsControllerTest {
 
     @Mock
-    private PlaylistService playlistService;
+    private GetPlaylistDetails getPlaylistDetails;
 
     @Mock
     private AnalyticsService analyticsService;
@@ -51,7 +51,7 @@ class PlaylistDetailsControllerTest {
                 "ownerName", "Owner Name"
         );
 
-        when(playlistService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
+        when(getPlaylistDetails.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -61,14 +61,14 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody()).isEqualTo(playlistDetails);
 
-        verify(playlistService).getPlaylistDetails(playlistId);
+        verify(getPlaylistDetails).getPlaylistDetails(playlistId);
     }
 
     @Test
     void getPlaylistById_HandlesExceptionGracefully() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
-        when(playlistService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
+        when(getPlaylistDetails.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -78,6 +78,6 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
-        verify(playlistService).getPlaylistDetails(playlistId);
+        verify(getPlaylistDetails).getPlaylistDetails(playlistId);
     }
 }

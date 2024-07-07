@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistServiceTest {
+class GetPlaylistDetailsTest {
 
     @Mock
     private SpotifyPlaylistDetailsService playlistDetailsService;
@@ -27,7 +27,7 @@ class PlaylistServiceTest {
     private PlaylistAuthController authController;
 
     @InjectMocks
-    private PlaylistService playlistService;
+    private GetPlaylistDetails getPlaylistDetails;
 
     @BeforeEach
     void setUp() {
@@ -51,7 +51,7 @@ class PlaylistServiceTest {
         when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
 
         // When
-        Map<String, Object> response = playlistService.getPlaylistDetails(playlistId);
+        Map<String, Object> response = getPlaylistDetails.getPlaylistDetails(playlistId);
 
         // Then
         assertThat(response.get("tracks")).isInstanceOf(Map.class);
