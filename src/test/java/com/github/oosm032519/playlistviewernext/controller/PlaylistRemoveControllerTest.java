@@ -1,8 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
+import com.github.oosm032519.playlistviewernext.service.PlaylistRemoveService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,34 +13,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
-import se.michaelthelin.spotify.requests.data.playlists.RemoveItemsFromPlaylistRequest;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistRemoveControllerTest {
 
     @Mock
-    private SpotifyApi spotifyApi;
-
-    @Mock
-    private OAuth2User principal;
-
-    @Mock
-    private RemoveItemsFromPlaylistRequest.Builder builder;
-
-    @Mock
-    private RemoveItemsFromPlaylistRequest removeItemsFromPlaylistRequest;
+    private PlaylistRemoveService playlistRemoveService;
 
     @InjectMocks
     private PlaylistRemoveController playlistRemoveController;
@@ -69,100 +49,16 @@ class PlaylistRemoveControllerTest {
         }
 
         @Test
-        @DisplayName("Should return unauthorized when access token is null")
-        void shouldReturnUnauthorizedWhenAccessTokenIsNull() {
-            when(principal.getAttributes()).thenReturn(new HashMap<>());
+        @DisplayName("Should delegate to PlaylistRemoveService")
+        void shouldDelegateToPlaylistService() {
+            OAuth2User principal = mock(OAuth2User.class);
+            ResponseEntity<String> expectedResponse = ResponseEntity.ok("トラックが正常に削除されました。");
+            when(playlistRemoveService.removeTrackFromPlaylist(removeTrackRequest, principal)).thenReturn(expectedResponse);
 
             ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
 
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
-        }
-
-        @Test
-        @DisplayName("Should return unauthorized when access token is empty")
-        void shouldReturnUnauthorizedWhenAccessTokenIsEmpty() {
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", "");
-            when(principal.getAttributes()).thenReturn(attributes);
-
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
-        }
-
-        @Test
-        @DisplayName("Should remove track successfully")
-        void shouldRemoveTrackSuccessfully() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", "validToken");
-            when(principal.getAttributes()).thenReturn(attributes);
-
-            when(spotifyApi.removeItemsFromPlaylist(anyString(), any(JsonArray.class))).thenReturn(builder);
-            when(builder.build()).thenReturn(removeItemsFromPlaylistRequest);
-            SnapshotResult snapshotResult = mock(SnapshotResult.class);
-            when(snapshotResult.getSnapshotId()).thenReturn("snapshotId");
-            when(removeItemsFromPlaylistRequest.execute()).thenReturn(snapshotResult);
-
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isEqualTo("トラックが正常に削除されました。Snapshot ID: snapshotId");
-
-            verify(spotifyApi).setAccessToken("validToken");
-            verify(spotifyApi).removeItemsFromPlaylist("playlistId", JsonParser.parseString("[{\"uri\":\"spotify:track:trackId\"}]").getAsJsonArray());
-        }
-
-        @Test
-        @DisplayName("Should handle IOException")
-        void shouldHandleIOException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", "validToken");
-            when(principal.getAttributes()).thenReturn(attributes);
-
-            when(spotifyApi.removeItemsFromPlaylist(anyString(), any(JsonArray.class))).thenReturn(builder);
-            when(builder.build()).thenReturn(removeItemsFromPlaylistRequest);
-            when(removeItemsFromPlaylistRequest.execute()).thenThrow(new IOException("IO Error"));
-
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(response.getBody()).isEqualTo("エラー: IO Error");
-        }
-
-        @Test
-        @DisplayName("Should handle SpotifyWebApiException")
-        void shouldHandleSpotifyWebApiException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", "validToken");
-            when(principal.getAttributes()).thenReturn(attributes);
-
-            when(spotifyApi.removeItemsFromPlaylist(anyString(), any(JsonArray.class))).thenReturn(builder);
-            when(builder.build()).thenReturn(removeItemsFromPlaylistRequest);
-            when(removeItemsFromPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API Error"));
-
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(response.getBody()).isEqualTo("エラー: Spotify API Error");
-        }
-
-        @Test
-        @DisplayName("Should handle ParseException")
-        void shouldHandleParseException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", "validToken");
-            when(principal.getAttributes()).thenReturn(attributes);
-
-            when(spotifyApi.removeItemsFromPlaylist(anyString(), any(JsonArray.class))).thenReturn(builder);
-            when(builder.build()).thenReturn(removeItemsFromPlaylistRequest);
-            when(removeItemsFromPlaylistRequest.execute()).thenThrow(new org.apache.hc.core5.http.ParseException("Parse Error"));
-
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
-
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(response.getBody()).isEqualTo("エラー: Parse Error");
+            assertThat(response).isEqualTo(expectedResponse);
+            verify(playlistRemoveService).removeTrackFromPlaylist(removeTrackRequest, principal);
         }
     }
 }
