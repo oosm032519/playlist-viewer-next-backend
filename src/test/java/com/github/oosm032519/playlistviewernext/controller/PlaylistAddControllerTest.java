@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
+import com.github.oosm032519.playlistviewernext.security.AuthService;
+import com.github.oosm032519.playlistviewernext.service.PlaylistAddSearvice;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,35 +11,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
-import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
+import org.apache.hc.core5.http.ParseException;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistAddControllerTest {
 
     @Mock
-    private SpotifyApi spotifyApi;
+    private AuthService authService;
 
     @Mock
-    private AddItemsToPlaylistRequest.Builder addItemsToPlaylistRequestBuilder;
-
-    @Mock
-    private AddItemsToPlaylistRequest addItemsToPlaylistRequest;
-
-    @Mock
-    private SnapshotResult snapshotResult;
+    private PlaylistAddSearvice spotifyService;
 
     @Mock
     private OAuth2User principal;
@@ -46,7 +36,7 @@ class PlaylistAddControllerTest {
     private PlaylistAddController playlistAddController;
 
     @Test
-    void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "playlistId123";
         String trackId = "trackId456";
@@ -57,15 +47,11 @@ class PlaylistAddControllerTest {
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
-        // principalのモックを正しく設定
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("access_token", accessToken);
-        when(principal.getAttributes()).thenReturn(attributes);
+        when(authService.getAccessToken(principal)).thenReturn(accessToken);
 
-        when(spotifyApi.addItemsToPlaylist(anyString(), any(String[].class))).thenReturn(addItemsToPlaylistRequestBuilder);
-        when(addItemsToPlaylistRequestBuilder.build()).thenReturn(addItemsToPlaylistRequest);
-        when(addItemsToPlaylistRequest.execute()).thenReturn(snapshotResult);
+        SnapshotResult snapshotResult = mock(SnapshotResult.class);
         when(snapshotResult.getSnapshotId()).thenReturn(snapshotId);
+        when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenReturn(snapshotResult);
 
         // Act
         ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
@@ -74,9 +60,8 @@ class PlaylistAddControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + snapshotId);
 
-        verify(spotifyApi).setAccessToken(accessToken);
-        verify(spotifyApi).addItemsToPlaylist(playlistId, new String[]{"spotify:track:" + trackId});
-        verify(addItemsToPlaylistRequest).execute();
+        verify(authService).getAccessToken(principal);
+        verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }
 
     @Test
@@ -84,12 +69,17 @@ class PlaylistAddControllerTest {
         // Arrange
         AddTrackRequest request = new AddTrackRequest();
 
+        when(authService.getAccessToken(null)).thenReturn(null);
+
         // Act
         ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, null);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("認証が必要です。");
+
+        verify(authService).getAccessToken(null);
+        verifyNoInteractions(spotifyService);
     }
 
     @Test
@@ -99,20 +89,21 @@ class PlaylistAddControllerTest {
         request.setPlaylistId("playlistId123");
         request.setTrackId("trackId456");
 
-        // principalのモックを設定（アクセストークンなし）
-        when(principal.getAttributes()).thenReturn(new HashMap<>());
+        when(authService.getAccessToken(principal)).thenReturn(null);
 
         // Act
         ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
+        assertThat(response.getBody()).isEqualTo("認証が必要です。");
+
+        verify(authService).getAccessToken(principal);
+        verifyNoInteractions(spotifyService);
     }
 
-
     @Test
-    void addTrackToPlaylist_SpotifyAPIエラーの場合() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    void addTrackToPlaylist_SpotifyAPIエラーの場合() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "playlistId123";
         String trackId = "trackId456";
@@ -122,14 +113,8 @@ class PlaylistAddControllerTest {
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
-        // principalのモックを正しく設定
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("access_token", accessToken);
-        when(principal.getAttributes()).thenReturn(attributes);
-
-        when(spotifyApi.addItemsToPlaylist(anyString(), any(String[].class))).thenReturn(addItemsToPlaylistRequestBuilder);
-        when(addItemsToPlaylistRequestBuilder.build()).thenReturn(addItemsToPlaylistRequest);
-        when(addItemsToPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
+        when(authService.getAccessToken(principal)).thenReturn(accessToken);
+        when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act
         ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
@@ -138,8 +123,7 @@ class PlaylistAddControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isEqualTo("エラー: Spotify API error");
 
-        verify(spotifyApi).setAccessToken(accessToken);
-        verify(spotifyApi).addItemsToPlaylist(playlistId, new String[]{"spotify:track:" + trackId});
-        verify(addItemsToPlaylistRequest).execute();
+        verify(authService).getAccessToken(principal);
+        verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }
 }
