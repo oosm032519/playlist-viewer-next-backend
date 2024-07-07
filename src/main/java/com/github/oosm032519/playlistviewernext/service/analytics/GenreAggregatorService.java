@@ -25,6 +25,9 @@ public class GenreAggregatorService {
         Map<String, Integer> genreCount = new HashMap<>();
 
         for (PlaylistTrack track : tracks) {
+            if (track == null || track.getTrack() == null) {
+                continue; // track または track.getTrack() が null の場合はスキップ
+            }
             Track fullTrack = (Track) track.getTrack();
             Arrays.stream(fullTrack.getArtists())
                     .map(artist -> {
