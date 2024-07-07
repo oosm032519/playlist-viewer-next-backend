@@ -29,16 +29,22 @@ public class PlaylistController {
     private final SpotifyTrackService trackService;
     @Autowired
     private final SpotifyAnalyticsService analyticsService;
+    @Autowired
+    private final SpotifyRecommendationService recommendationService;
 
     @Autowired
-    public PlaylistController(SpotifyAuthService authService,
-            SpotifyPlaylistService playlistService,
+    public PlaylistController(
+                              SpotifyAuthService authService,
+                              SpotifyPlaylistService playlistService,
                               SpotifyTrackService trackService,
-                              SpotifyAnalyticsService analyticsService) {
+                              SpotifyAnalyticsService analyticsService,
+                              SpotifyRecommendationService recommendationService
+    ) {
         this.authService = authService;
         this.playlistService = playlistService;
         this.trackService = trackService;
         this.analyticsService = analyticsService;
+        this.recommendationService = recommendationService;
     }
 
     @GetMapping("/search")
@@ -98,7 +104,7 @@ public class PlaylistController {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = analyticsService.getRecommendations(top5Genres);
+                recommendations = recommendationService.getRecommendations(top5Genres);
             }
         } catch (IOException | SpotifyWebApiException | ParseException e) {
             logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);

@@ -1,9 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.SpotifyAnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyAuthService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyTrackService;
+import com.github.oosm032519.playlistviewernext.service.*;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +26,6 @@ import static org.mockito.Mockito.*;
 class PlaylistControllerTest {
 
     @Mock
-    private SpotifyAuthService authService;
-
-    @Mock
     private SpotifyPlaylistService playlistService;
 
     @Mock
@@ -39,6 +33,9 @@ class PlaylistControllerTest {
 
     @Mock
     private SpotifyTrackService trackService;
+
+    @Mock
+    private SpotifyRecommendationService recommendationService;
 
     @InjectMocks
     private PlaylistController playlistController;
@@ -103,7 +100,7 @@ class PlaylistControllerTest {
         when(playlistService.getPlaylistTracks(playlistId)).thenReturn(tracks);
         when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
         when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
-        when(analyticsService.getRecommendations(top5Genres)).thenReturn(recommendations);
+        when(recommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
         when(playlistService.getPlaylistName(playlistId)).thenReturn(playlistName);
         when(playlistService.getPlaylistOwner(playlistId)).thenReturn(owner);
         when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
@@ -125,7 +122,7 @@ class PlaylistControllerTest {
         verify(playlistService).getPlaylistTracks(playlistId);
         verify(analyticsService).getGenreCountsForPlaylist(playlistId);
         verify(analyticsService).getTop5GenresForPlaylist(playlistId);
-        verify(analyticsService).getRecommendations(top5Genres);
+        verify(recommendationService).getRecommendations(top5Genres);
         verify(playlistService).getPlaylistName(playlistId);
         verify(playlistService).getPlaylistOwner(playlistId);
         verify(trackService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
