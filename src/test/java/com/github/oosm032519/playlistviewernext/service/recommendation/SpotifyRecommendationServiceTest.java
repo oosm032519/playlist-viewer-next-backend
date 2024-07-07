@@ -109,6 +109,52 @@ class SpotifyRecommendationServiceTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    void getRecommendations_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        List<String> seedGenres = Arrays.asList("rock", "pop");
+        Recommendations mockRecommendations = mock(Recommendations.class);
+        when(mockRecommendations.getTracks()).thenReturn(null);
+
+        GetRecommendationsRequest.Builder recommendationsBuilder = mock(GetRecommendationsRequest.Builder.class);
+        GetRecommendationsRequest recommendationsRequest = mock(GetRecommendationsRequest.class);
+
+        when(spotifyApi.getRecommendations()).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.seed_genres(anyString())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.limit(anyInt())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
+        when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
+
+        // Act
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getRecommendations_ShouldHandleEmptyTracks() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        List<String> seedGenres = Arrays.asList("rock", "pop");
+        Recommendations mockRecommendations = mock(Recommendations.class);
+        when(mockRecommendations.getTracks()).thenReturn(new Track[0]);
+
+        GetRecommendationsRequest.Builder recommendationsBuilder = mock(GetRecommendationsRequest.Builder.class);
+        GetRecommendationsRequest recommendationsRequest = mock(GetRecommendationsRequest.class);
+
+        when(spotifyApi.getRecommendations()).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.seed_genres(anyString())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.limit(anyInt())).thenReturn(recommendationsBuilder);
+        when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
+        when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
+
+        // Act
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
     private Track[] createMockTracks() {
         Track track1 = mock(Track.class);
         Track track2 = mock(Track.class);
