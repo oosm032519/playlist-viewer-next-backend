@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,8 @@ import java.util.List;
 @Service
 public class TrackRecommendationService {
 
+    protected static Logger logger = LoggerFactory.getLogger(TrackRecommendationService.class);
+
     @Autowired
     private SpotifyRecommendationService recommendationService;
 
@@ -21,8 +24,13 @@ public class TrackRecommendationService {
                 recommendations = recommendationService.getRecommendations(top5Genres);
             }
         } catch (Exception e) {
-            LoggerFactory.getLogger(TrackRecommendationService.class).error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);
+            logger.error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);
         }
         return recommendations;
+    }
+
+    // テスト用のメソッドを追加
+    public static void setLogger(Logger logger) {
+        TrackRecommendationService.logger = logger;
     }
 }
