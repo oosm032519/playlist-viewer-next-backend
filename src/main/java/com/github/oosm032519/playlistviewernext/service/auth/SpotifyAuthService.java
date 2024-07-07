@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;

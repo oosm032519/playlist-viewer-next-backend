@@ -1,6 +1,6 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.service.*;
+import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

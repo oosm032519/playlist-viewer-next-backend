@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;

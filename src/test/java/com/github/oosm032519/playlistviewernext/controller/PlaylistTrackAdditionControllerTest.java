@@ -1,8 +1,9 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import com.github.oosm032519.playlistviewernext.controller.playlist.PlaylistTrackAdditionController;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
-import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackAdditionService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -1,6 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service;
 
-import com.github.oosm032519.playlistviewernext.controller.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyTrackService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

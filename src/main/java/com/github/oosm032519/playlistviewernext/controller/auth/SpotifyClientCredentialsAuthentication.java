@@ -1,6 +1,6 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import com.github.oosm032519.playlistviewernext.service.SpotifyAuthService;
+import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

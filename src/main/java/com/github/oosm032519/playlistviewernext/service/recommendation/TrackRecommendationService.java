@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.recommendation;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

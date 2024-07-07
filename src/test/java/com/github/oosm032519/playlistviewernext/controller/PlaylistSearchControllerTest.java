@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistSearchService;
+import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.controller.playlist.PlaylistSearchController;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

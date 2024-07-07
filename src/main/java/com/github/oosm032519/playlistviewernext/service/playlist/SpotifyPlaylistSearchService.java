@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

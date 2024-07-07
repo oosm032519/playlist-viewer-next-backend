@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.session;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

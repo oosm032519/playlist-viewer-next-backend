@@ -1,6 +1,6 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.controller.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;

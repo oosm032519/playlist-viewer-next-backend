@@ -1,5 +1,6 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
 import org.apache.hc.core5.http.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

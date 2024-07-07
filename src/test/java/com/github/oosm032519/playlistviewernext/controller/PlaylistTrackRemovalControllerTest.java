@@ -1,7 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
+import com.github.oosm032519.playlistviewernext.controller.playlist.PlaylistTrackRemovalController;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
-import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackRemovalService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

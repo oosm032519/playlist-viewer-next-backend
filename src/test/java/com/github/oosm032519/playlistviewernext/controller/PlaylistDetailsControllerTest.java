@@ -1,8 +1,9 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.PlaylistDetailsRetrievalService;
-import com.github.oosm032519.playlistviewernext.service.PlaylistAnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.TrackRecommendationService;
+import com.github.oosm032519.playlistviewernext.controller.playlist.PlaylistDetailsController;
+import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
+import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
