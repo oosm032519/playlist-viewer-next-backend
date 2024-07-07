@@ -9,7 +9,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.*;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,7 +28,7 @@ class SpotifyAnalyticsServiceTest {
     private SpotifyPlaylistService playlistService;
 
     @Mock
-    private SpotifyArtistService artistService;
+    private GenreAggregatorService genreAggregatorService;
 
     @InjectMocks
     private SpotifyAnalyticsService spotifyAnalyticsService;
@@ -37,8 +39,11 @@ class SpotifyAnalyticsServiceTest {
         String playlistId = "testPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
         when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
-        when(artistService.getArtistGenres("artist1")).thenReturn(Arrays.asList("rock", "pop"));
-        when(artistService.getArtistGenres("artist2")).thenReturn(Arrays.asList("rock", "jazz"));
+        Map<String, Integer> genreCounts = new LinkedHashMap<>();
+        genreCounts.put("rock", 2);
+        genreCounts.put("pop", 1);
+        genreCounts.put("jazz", 1);
+        when(genreAggregatorService.aggregateGenres(playlistTracks)).thenReturn(genreCounts);
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -61,6 +66,7 @@ class SpotifyAnalyticsServiceTest {
         // Arrange
         String playlistId = "emptyPlaylistId";
         when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
         Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
@@ -95,6 +101,7 @@ class SpotifyAnalyticsServiceTest {
 
         SpotifyAnalyticsService spyService = spy(spotifyAnalyticsService);
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
+        when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz", "blues", "classical"));
 
         // Act
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
@@ -102,19 +109,6 @@ class SpotifyAnalyticsServiceTest {
         // Assert
         assertThat(result).hasSize(5);
         assertThat(result).containsExactly("rock", "pop", "jazz", "blues", "classical");
-    }
-
-    @Test
-    void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
-        String playlistId = "nullTracksPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(null);
-
-        // Act
-        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
-
-        // Assert
-        assertThat(result).isEmpty();
     }
 
     @Test
@@ -128,6 +122,7 @@ class SpotifyAnalyticsServiceTest {
 
         SpotifyAnalyticsService spyService = spy(spotifyAnalyticsService);
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
+        when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz"));
 
         // Act
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
@@ -138,40 +133,11 @@ class SpotifyAnalyticsServiceTest {
     }
 
     @Test
-    void getGenreCountsForPlaylist_ShouldHandleArtistsWithNoGenres() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
-        String playlistId = "noGenresPlaylistId";
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
-        when(artistService.getArtistGenres("artist1")).thenReturn(Collections.emptyList());
-        when(artistService.getArtistGenres("artist2")).thenReturn(Collections.emptyList());
-
-        // Act
-        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getGenreCountsForPlaylist_ShouldHandleTracksWithNoArtists() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
-        String playlistId = "noArtistsPlaylistId";
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracksWithNoArtists();
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
-
-        // Act
-        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    @Test
     void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "emptyPlaylistId";
         when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
         List<String> result = spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId);
@@ -206,20 +172,6 @@ class SpotifyAnalyticsServiceTest {
         when(fullTrack2.getArtists()).thenReturn(new ArtistSimplified[]{artist2});
         when(artist1.getId()).thenReturn("artist1");
         when(artist2.getId()).thenReturn("artist2");
-
-        return new PlaylistTrack[]{track1, track2};
-    }
-
-    private PlaylistTrack[] createMockPlaylistTracksWithNoArtists() {
-        PlaylistTrack track1 = mock(PlaylistTrack.class);
-        PlaylistTrack track2 = mock(PlaylistTrack.class);
-        Track fullTrack1 = mock(Track.class);
-        Track fullTrack2 = mock(Track.class);
-
-        when(track1.getTrack()).thenReturn(fullTrack1);
-        when(track2.getTrack()).thenReturn(fullTrack2);
-        when(fullTrack1.getArtists()).thenReturn(new ArtistSimplified[]{});
-        when(fullTrack2.getArtists()).thenReturn(new ArtistSimplified[]{});
 
         return new PlaylistTrack[]{track1, track2};
     }
