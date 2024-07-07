@@ -20,7 +20,7 @@ public class GenreAggregatorService {
         this.artistService = artistService;
     }
 
-    public Map<String, Integer> aggregateGenres(PlaylistTrack[] tracks) throws IOException, SpotifyWebApiException, ParseException {
+    public Map<String, Integer> aggregateGenres(PlaylistTrack[] tracks) {
         Map<String, Integer> genreCount = new HashMap<>();
 
         for (PlaylistTrack track : tracks) {
