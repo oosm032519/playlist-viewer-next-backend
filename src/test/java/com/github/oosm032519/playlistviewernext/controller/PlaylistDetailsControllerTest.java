@@ -1,8 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.*;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.*;
 
@@ -25,72 +22,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistControllerTest {
-
-    @Mock
-    private SpotifyPlaylistSearchService playlistSearchService;
+class PlaylistDetailsControllerTest {
 
     @Mock
     private SpotifyPlaylistDetailsService playlistDetailsService;
 
     @Mock
-    private SpotifyUserPlaylistsService userPlaylistsService;
+    private SpotifyTrackService trackService;
 
     @Mock
     private SpotifyAnalyticsService analyticsService;
 
     @Mock
-    private SpotifyTrackService trackService;
-
-    @Mock
     private SpotifyRecommendationService recommendationService;
 
-    @Getter
-    @Setter
     @Mock
-    private SpotifyAuthService authService;
+    private PlaylistAuthController authController;
 
     @InjectMocks
-    private PlaylistController playlistController;
+    private PlaylistDetailsController detailsController;
 
     @BeforeEach
     void setUp() {
         // 各テストメソッドの前に実行される設定
-    }
-
-    @Test
-    void searchPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
-        String query = "test query";
-        List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
-                new PlaylistSimplified.Builder().setName("Playlist 1").build(),
-                new PlaylistSimplified.Builder().setName("Playlist 2").build()
-        );
-
-        when(playlistSearchService.searchPlaylists(query)).thenReturn(expectedPlaylists);
-
-        // When
-        ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(playlistSearchService).searchPlaylists(query);
-    }
-
-    @Test
-    void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
-        String query = "test query";
-        when(playlistSearchService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
-
-        // When
-        ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNull();
-        verify(playlistSearchService).searchPlaylists(query);
     }
 
     @Test
@@ -119,7 +73,7 @@ class PlaylistControllerTest {
         when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
 
         // When
-        ResponseEntity<Map<String, Object>> response = playlistController.getPlaylistById(playlistId);
+        ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -148,7 +102,7 @@ class PlaylistControllerTest {
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
-        ResponseEntity<Map<String, Object>> response = playlistController.getPlaylistById(playlistId);
+        ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -157,40 +111,4 @@ class PlaylistControllerTest {
 
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
     }
-
-    @Test
-    void getFollowedPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
-        OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
-                new PlaylistSimplified.Builder().setName("Followed Playlist 1").build(),
-                new PlaylistSimplified.Builder().setName("Followed Playlist 2").build()
-        );
-
-        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
-
-        // When
-        ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
-    }
-
-    @Test
-    void getFollowedPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
-        OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
-
-        // When
-        ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("Error: Authentication error");
-        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
-    }
-
 }

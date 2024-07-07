@@ -1,78 +1,56 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.*;
-import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.web.bind.annotation.*;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.model_objects.specification.*;
 
-import java.io.IOException;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/playlists")
-public class PlaylistController {
+@RequestMapping("/api/playlists/details")
+public class PlaylistDetailsController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistController.class);
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistDetailsController.class);
 
-    @Autowired
-    private final SpotifyAuthService authService;
-    @Autowired
-    private final SpotifyPlaylistSearchService playlistSearchService;
     @Autowired
     private final SpotifyPlaylistDetailsService playlistDetailsService;
-    @Autowired
-    private final SpotifyUserPlaylistsService userPlaylistsService;
     @Autowired
     private final SpotifyTrackService trackService;
     @Autowired
     private final SpotifyAnalyticsService analyticsService;
     @Autowired
     private final SpotifyRecommendationService recommendationService;
+    @Autowired
+    private final PlaylistAuthController authController;
 
     @Autowired
-    public PlaylistController(
-            SpotifyAuthService authService,
-            SpotifyPlaylistSearchService playlistSearchService,
+    public PlaylistDetailsController(
             SpotifyPlaylistDetailsService playlistDetailsService,
-            SpotifyUserPlaylistsService userPlaylistsService,
             SpotifyTrackService trackService,
             SpotifyAnalyticsService analyticsService,
-            SpotifyRecommendationService recommendationService
+            SpotifyRecommendationService recommendationService,
+            PlaylistAuthController authController
     ) {
-        this.authService = authService;
-        this.playlistSearchService = playlistSearchService;
         this.playlistDetailsService = playlistDetailsService;
-        this.userPlaylistsService = userPlaylistsService;
         this.trackService = trackService;
         this.analyticsService = analyticsService;
         this.recommendationService = recommendationService;
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
-        logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
-        try {
-            authService.getClientCredentialsToken(); // 認証トークンを取得
-            List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query);
-            return ResponseEntity.ok(playlists);
-        } catch (Exception e) {
-            logger.error("PlaylistController: プレイリストの検索中にエラーが発生しました", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
+        this.authController = authController;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
-        logger.info("PlaylistController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
+        logger.info("PlaylistDetailsController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            authService.getClientCredentialsToken(); // 認証トークンを取得
+            authController.authenticate();
 
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = getTrackListData(tracks);
@@ -89,12 +67,12 @@ public class PlaylistController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("PlaylistController: プレイリストの取得中にエラーが発生しました", e);
+            logger.error("PlaylistDetailsController: プレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
 
-    private List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) throws SpotifyWebApiException, IOException, ParseException {
+    private List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) throws Exception {
         List<Map<String, Object>> trackList = new ArrayList<>();
         for (PlaylistTrack track : tracks) {
             Map<String, Object> trackData = new HashMap<>();
@@ -114,8 +92,8 @@ public class PlaylistController {
             if (!top5Genres.isEmpty()) {
                 recommendations = recommendationService.getRecommendations(top5Genres);
             }
-        } catch (IOException | SpotifyWebApiException | ParseException e) {
-            logger.error("PlaylistController: Spotify APIの呼び出し中にエラーが発生しました。", e);
+        } catch (Exception e) {
+            logger.error("PlaylistDetailsController: Spotify APIの呼び出し中にエラーが発生しました。", e);
         }
         return recommendations;
     }
@@ -133,15 +111,5 @@ public class PlaylistController {
         response.put("ownerId", owner.getId());
         response.put("ownerName", owner.getDisplayName());
         return response;
-    }
-
-    @GetMapping("/followed")
-    public ResponseEntity<?> getFollowedPlaylists(OAuth2AuthenticationToken authentication) {
-        try {
-            return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists(authentication));
-        } catch (Exception e) {
-            logger.error("PlaylistController: フォロー中のプレイリストの取得中にエラーが発生しました", e);
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
-        }
     }
 }
