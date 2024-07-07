@@ -37,6 +37,9 @@ class PlaylistControllerTest {
     @Mock
     private SpotifyRecommendationService recommendationService;
 
+    @Mock
+    private SpotifyAuthService authService;
+
     @InjectMocks
     private PlaylistController playlistController;
 
