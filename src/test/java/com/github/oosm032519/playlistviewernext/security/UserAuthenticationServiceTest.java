@@ -13,12 +13,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AuthServiceTest {
+class UserAuthenticationServiceTest {
 
     @Mock
     private OAuth2User principal;
 
-    private final AuthService authService = new AuthService();
+    private final UserAuthenticationService userAuthenticationService = new UserAuthenticationService();
 
     @Test
     void getAccessToken_成功時() {
@@ -29,7 +29,7 @@ class AuthServiceTest {
         when(principal.getAttributes()).thenReturn(attributes);
 
         // Act
-        String result = authService.getAccessToken(principal);
+        String result = userAuthenticationService.getAccessToken(principal);
 
         // Assert
         assertThat(result).isEqualTo(accessToken);
@@ -38,7 +38,7 @@ class AuthServiceTest {
     @Test
     void getAccessToken_認証されていない場合() {
         // Act
-        String result = authService.getAccessToken(null);
+        String result = userAuthenticationService.getAccessToken(null);
 
         // Assert
         assertThat(result).isNull();
@@ -50,7 +50,7 @@ class AuthServiceTest {
         when(principal.getAttributes()).thenReturn(new HashMap<>());
 
         // Act
-        String result = authService.getAccessToken(principal);
+        String result = userAuthenticationService.getAccessToken(principal);
 
         // Assert
         assertThat(result).isNull();

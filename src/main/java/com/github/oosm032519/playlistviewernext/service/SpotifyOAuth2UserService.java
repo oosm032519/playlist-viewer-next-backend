@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+public class SpotifyOAuth2UserService extends DefaultOAuth2UserService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CustomOAuth2UserService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyOAuth2UserService.class);
     private static final String ACCESS_TOKEN_KEY = "access_token";
     private static final String USER_NAME_ATTRIBUTE_KEY = "id";
 

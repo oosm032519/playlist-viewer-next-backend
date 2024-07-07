@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service;
 
-import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
+import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
@@ -19,14 +19,14 @@ import java.io.IOException;
 import java.util.Map;
 
 @Service
-public class PlaylistRemoveService {
+public class SpotifyPlaylistTrackRemovalService {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistRemoveService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyPlaylistTrackRemovalService.class);
 
     @Autowired
     private SpotifyApi spotifyApi;
 
-    public ResponseEntity<String> removeTrackFromPlaylist(RemoveTrackRequest request, OAuth2User principal) {
+    public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
         Map<String, Object> attributes = principal.getAttributes();
         String accessToken = (String) attributes.get("access_token");
 

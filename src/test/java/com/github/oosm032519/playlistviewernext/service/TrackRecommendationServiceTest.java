@@ -17,13 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class RecommendationServiceTest {
+class TrackRecommendationServiceTest {
 
     @Mock
     private SpotifyRecommendationService recommendationService;
 
     @InjectMocks
-    private RecommendationService recommendationServiceWrapper;
+    private TrackRecommendationService trackRecommendationServiceWrapper;
 
     @BeforeEach
     void setUp() {
@@ -42,7 +42,7 @@ class RecommendationServiceTest {
         when(recommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
 
         // When
-        List<Track> result = recommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
 
         // Then
         assertThat(result).isEqualTo(recommendations);

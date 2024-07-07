@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class SpotifyAnalyticsService {
-    private static final Logger logger = LoggerFactory.getLogger(SpotifyAnalyticsService.class);
+public class SpotifyPlaylistAnalyticsService {
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyPlaylistAnalyticsService.class);
     private final SpotifyPlaylistDetailsService playlistDetailsService;
     private final GenreAggregatorService genreAggregatorService;
 
     @Autowired
-    public SpotifyAnalyticsService(SpotifyPlaylistDetailsService playlistDetailsService, GenreAggregatorService genreAggregatorService) {
+    public SpotifyPlaylistAnalyticsService(SpotifyPlaylistDetailsService playlistDetailsService, GenreAggregatorService genreAggregatorService) {
         this.playlistDetailsService = playlistDetailsService;
         this.genreAggregatorService = genreAggregatorService;
     }

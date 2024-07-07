@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class SpotifyRecommendationServiceTest {
+class SpotifyTrackRecommendationServiceTest {
 
     @Mock
     private SpotifyApi spotifyApi;

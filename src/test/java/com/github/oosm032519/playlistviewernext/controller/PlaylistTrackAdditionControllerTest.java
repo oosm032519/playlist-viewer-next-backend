@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
-import com.github.oosm032519.playlistviewernext.security.AuthService;
-import com.github.oosm032519.playlistviewernext.service.PlaylistAddSearvice;
+import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
+import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackAdditionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,19 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistAddControllerTest {
+class PlaylistTrackAdditionControllerTest {
 
     @Mock
-    private AuthService authService;
+    private UserAuthenticationService userAuthenticationService;
 
     @Mock
-    private PlaylistAddSearvice spotifyService;
+    private SpotifyPlaylistTrackAdditionService spotifyService;
 
     @Mock
     private OAuth2User principal;
 
     @InjectMocks
-    private PlaylistAddController playlistAddController;
+    private PlaylistTrackAdditionController playlistTrackAdditionController;
 
     @Test
     void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, ParseException {
@@ -43,62 +43,62 @@ class PlaylistAddControllerTest {
         String accessToken = "validAccessToken";
         String snapshotId = "snapshotId789";
 
-        AddTrackRequest request = new AddTrackRequest();
+        PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
-        when(authService.getAccessToken(principal)).thenReturn(accessToken);
+        when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
 
         SnapshotResult snapshotResult = mock(SnapshotResult.class);
         when(snapshotResult.getSnapshotId()).thenReturn(snapshotId);
         when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenReturn(snapshotResult);
 
         // Act
-        ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
+        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + snapshotId);
 
-        verify(authService).getAccessToken(principal);
+        verify(userAuthenticationService).getAccessToken(principal);
         verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }
 
     @Test
     void addTrackToPlaylist_認証されていない場合() {
         // Arrange
-        AddTrackRequest request = new AddTrackRequest();
+        PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
 
-        when(authService.getAccessToken(null)).thenReturn(null);
+        when(userAuthenticationService.getAccessToken(null)).thenReturn(null);
 
         // Act
-        ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, null);
+        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, null);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("認証が必要です。");
 
-        verify(authService).getAccessToken(null);
+        verify(userAuthenticationService).getAccessToken(null);
         verifyNoInteractions(spotifyService);
     }
 
     @Test
     void addTrackToPlaylist_アクセストークンがない場合() {
         // Arrange
-        AddTrackRequest request = new AddTrackRequest();
+        PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
         request.setPlaylistId("playlistId123");
         request.setTrackId("trackId456");
 
-        when(authService.getAccessToken(principal)).thenReturn(null);
+        when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
         // Act
-        ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
+        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("認証が必要です。");
 
-        verify(authService).getAccessToken(principal);
+        verify(userAuthenticationService).getAccessToken(principal);
         verifyNoInteractions(spotifyService);
     }
 
@@ -109,21 +109,21 @@ class PlaylistAddControllerTest {
         String trackId = "trackId456";
         String accessToken = "validAccessToken";
 
-        AddTrackRequest request = new AddTrackRequest();
+        PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
-        when(authService.getAccessToken(principal)).thenReturn(accessToken);
+        when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
         when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act
-        ResponseEntity<String> response = playlistAddController.addTrackToPlaylist(request, principal);
+        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isEqualTo("エラー: Spotify API error");
 
-        verify(authService).getAccessToken(principal);
+        verify(userAuthenticationService).getAccessToken(principal);
         verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }
 }

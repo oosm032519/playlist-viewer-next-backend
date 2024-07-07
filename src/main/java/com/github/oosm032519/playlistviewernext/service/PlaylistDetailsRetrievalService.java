@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service;
 
-import com.github.oosm032519.playlistviewernext.controller.PlaylistAuthController;
+import com.github.oosm032519.playlistviewernext.controller.SpotifyClientCredentialsAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
@@ -13,14 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class GetPlaylistDetails {
+public class PlaylistDetailsRetrievalService {
 
     @Autowired
     private SpotifyPlaylistDetailsService playlistDetailsService;
     @Autowired
     private SpotifyTrackService trackService;
     @Autowired
-    private PlaylistAuthController authController;
+    private SpotifyClientCredentialsAuthentication authController;
 
     public Map<String, Object> getPlaylistDetails(String id) throws Exception {
         authController.authenticate();

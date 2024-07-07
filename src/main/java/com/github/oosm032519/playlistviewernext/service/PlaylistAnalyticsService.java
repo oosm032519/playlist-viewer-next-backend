@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class AnalyticsService {
+public class PlaylistAnalyticsService {
 
     @Autowired
-    private SpotifyAnalyticsService analyticsService;
+    private SpotifyPlaylistAnalyticsService analyticsService;
 
     public Map<String, Integer> getGenreCountsForPlaylist(String id) throws IOException, ParseException, SpotifyWebApiException {
         return analyticsService.getGenreCountsForPlaylist(id);

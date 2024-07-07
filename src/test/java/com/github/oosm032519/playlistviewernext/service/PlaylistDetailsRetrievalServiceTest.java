@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service;
 
-import com.github.oosm032519.playlistviewernext.controller.PlaylistAuthController;
+import com.github.oosm032519.playlistviewernext.controller.SpotifyClientCredentialsAuthentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GetPlaylistDetailsTest {
+class PlaylistDetailsRetrievalServiceTest {
 
     @Mock
     private SpotifyPlaylistDetailsService playlistDetailsService;
@@ -24,10 +24,10 @@ class GetPlaylistDetailsTest {
     private SpotifyTrackService trackService;
 
     @Mock
-    private PlaylistAuthController authController;
+    private SpotifyClientCredentialsAuthentication authController;
 
     @InjectMocks
-    private GetPlaylistDetails getPlaylistDetails;
+    private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
     @BeforeEach
     void setUp() {
@@ -51,7 +51,7 @@ class GetPlaylistDetailsTest {
         when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
 
         // When
-        Map<String, Object> response = getPlaylistDetails.getPlaylistDetails(playlistId);
+        Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
 
         // Then
         assertThat(response.get("tracks")).isInstanceOf(Map.class);

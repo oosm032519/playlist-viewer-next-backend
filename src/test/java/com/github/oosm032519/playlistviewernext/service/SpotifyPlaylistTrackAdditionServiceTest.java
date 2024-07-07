@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistAddSearviceTest {
+class SpotifyPlaylistTrackAdditionServiceTest {
 
     @Mock
     private SpotifyApi spotifyApi;
@@ -33,7 +33,7 @@ class PlaylistAddSearviceTest {
     private SnapshotResult snapshotResult;
 
     @InjectMocks
-    private PlaylistAddSearvice spotifyService;
+    private SpotifyPlaylistTrackAdditionService spotifyService;
 
     @Test
     void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {

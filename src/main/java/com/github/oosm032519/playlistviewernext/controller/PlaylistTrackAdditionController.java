@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.model.AddTrackRequest;
-import com.github.oosm032519.playlistviewernext.security.AuthService;
-import com.github.oosm032519.playlistviewernext.service.PlaylistAddSearvice;
+import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
+import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
+import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackAdditionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,21 +21,21 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/playlist")
-public class PlaylistAddController {
+public class PlaylistTrackAdditionController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistAddController.class);
-
-    @Autowired
-    private AuthService authService;
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistTrackAdditionController.class);
 
     @Autowired
-    private PlaylistAddSearvice spotifyService;
+    private UserAuthenticationService userAuthenticationService;
+
+    @Autowired
+    private SpotifyPlaylistTrackAdditionService spotifyService;
 
     @PostMapping("/add-track")
-    public ResponseEntity<String> addTrackToPlaylist(@RequestBody AddTrackRequest request, @AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<String> addTrackToPlaylist(@RequestBody PlaylistTrackAdditionRequest request, @AuthenticationPrincipal OAuth2User principal) {
         logger.info("トラック追加リクエストを受信しました。プレイリストID: {}, トラックID: {}", request.getPlaylistId(), request.getTrackId());
 
-        String accessToken = authService.getAccessToken(principal);
+        String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
             logger.error("ユーザーが認証されていないか、アクセストークンが見つかりません。");
             return ResponseEntity.status(401).body("認証が必要です。");

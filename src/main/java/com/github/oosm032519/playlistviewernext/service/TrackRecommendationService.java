@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class RecommendationService {
+public class TrackRecommendationService {
 
     @Autowired
     private SpotifyRecommendationService recommendationService;
@@ -21,7 +21,7 @@ public class RecommendationService {
                 recommendations = recommendationService.getRecommendations(top5Genres);
             }
         } catch (Exception e) {
-            LoggerFactory.getLogger(RecommendationService.class).error("RecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);
+            LoggerFactory.getLogger(TrackRecommendationService.class).error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);
         }
         return recommendations;
     }

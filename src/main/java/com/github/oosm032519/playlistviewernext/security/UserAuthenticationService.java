@@ -5,7 +5,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthService {
+public class UserAuthenticationService {
 
     public String getAccessToken(@AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) {

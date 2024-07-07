@@ -17,13 +17,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AnalyticsServiceTest {
+class PlaylistAnalyticsServiceTest {
 
     @Mock
-    private SpotifyAnalyticsService analyticsService;
+    private SpotifyPlaylistAnalyticsService analyticsService;
 
     @InjectMocks
-    private AnalyticsService analyticsServiceWrapper;
+    private PlaylistAnalyticsService playlistAnalyticsServiceWrapper;
 
     @BeforeEach
     void setUp() {
@@ -39,7 +39,7 @@ class AnalyticsServiceTest {
         when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
 
         // When
-        Map<String, Integer> result = analyticsServiceWrapper.getGenreCountsForPlaylist(playlistId);
+        Map<String, Integer> result = playlistAnalyticsServiceWrapper.getGenreCountsForPlaylist(playlistId);
 
         // Then
         assertThat(result).isEqualTo(genreCounts);
@@ -56,7 +56,7 @@ class AnalyticsServiceTest {
         when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
 
         // When
-        List<String> result = analyticsServiceWrapper.getTop5GenresForPlaylist(playlistId);
+        List<String> result = playlistAnalyticsServiceWrapper.getTop5GenresForPlaylist(playlistId);
 
         // Then
         assertThat(result).isEqualTo(top5Genres);

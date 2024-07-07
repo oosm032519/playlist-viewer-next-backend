@@ -27,7 +27,7 @@ class PlaylistSearchControllerTest {
     private SpotifyPlaylistSearchService playlistSearchService;
 
     @Mock
-    private PlaylistAuthController authController;
+    private SpotifyClientCredentialsAuthentication authController;
 
     @InjectMocks
     private PlaylistSearchController searchController;

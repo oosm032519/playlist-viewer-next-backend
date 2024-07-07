@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
-import com.github.oosm032519.playlistviewernext.service.PlaylistRemoveService;
+import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
+import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackRemovalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,16 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/playlist")
-public class PlaylistRemoveController {
+public class PlaylistTrackRemovalController {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistRemoveController.class);
+    private static final Logger logger = LoggerFactory.getLogger(PlaylistTrackRemovalController.class);
 
     @Autowired
-    private PlaylistRemoveService playlistRemoveService;
+    private SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
 
     @PostMapping("/remove-track")
     public ResponseEntity<String> removeTrackFromPlaylist(
-            @RequestBody RemoveTrackRequest request,
+            @RequestBody PlaylistTrackRemovalRequest request,
             @AuthenticationPrincipal OAuth2User principal) {
         logger.info("removeTrackFromPlaylist メソッドが呼び出されました。リクエスト: {}", request);
 
@@ -34,6 +34,6 @@ public class PlaylistRemoveController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("認証が必要です。");
         }
 
-        return playlistRemoveService.removeTrackFromPlaylist(request, principal);
+        return spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal);
     }
 }

@@ -19,20 +19,20 @@ public class PlaylistDetailsController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistDetailsController.class);
 
-    private final GetPlaylistDetails getPlaylistDetails;
+    private final PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
     @Autowired
     public PlaylistDetailsController(
-            GetPlaylistDetails getPlaylistDetails
+            PlaylistDetailsRetrievalService playlistDetailsRetrievalService
     ) {
-        this.getPlaylistDetails = getPlaylistDetails;
+        this.playlistDetailsRetrievalService = playlistDetailsRetrievalService;
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistDetailsController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            Map<String, Object> response = getPlaylistDetails.getPlaylistDetails(id);
+            Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(id);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("PlaylistDetailsController: プレイリストの取得中にエラーが発生しました", e);

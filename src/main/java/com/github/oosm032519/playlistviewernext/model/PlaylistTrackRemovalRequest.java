@@ -1,4 +1,4 @@
-// RemoveTrackRequest.java
+// PlaylistTrackRemovalRequest.java
 
 package com.github.oosm032519.playlistviewernext.model;
 
@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class RemoveTrackRequest {
+public class PlaylistTrackRemovalRequest {
     private String playlistId;
     private String trackId;
 }

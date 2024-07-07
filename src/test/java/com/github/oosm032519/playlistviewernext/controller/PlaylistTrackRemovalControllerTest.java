@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.model.RemoveTrackRequest;
-import com.github.oosm032519.playlistviewernext.service.PlaylistRemoveService;
+import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
+import com.github.oosm032519.playlistviewernext.service.SpotifyPlaylistTrackRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,21 +18,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistRemoveControllerTest {
+class PlaylistTrackRemovalControllerTest {
 
     @Mock
-    private PlaylistRemoveService playlistRemoveService;
+    private SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
 
     @InjectMocks
-    private PlaylistRemoveController playlistRemoveController;
+    private PlaylistTrackRemovalController playlistTrackRemovalController;
 
-    private RemoveTrackRequest removeTrackRequest;
+    private PlaylistTrackRemovalRequest playlistTrackRemovalRequest;
 
     @BeforeEach
     void setUp() {
-        removeTrackRequest = new RemoveTrackRequest();
-        removeTrackRequest.setPlaylistId("playlistId");
-        removeTrackRequest.setTrackId("trackId");
+        playlistTrackRemovalRequest = new PlaylistTrackRemovalRequest();
+        playlistTrackRemovalRequest.setPlaylistId("playlistId");
+        playlistTrackRemovalRequest.setTrackId("trackId");
     }
 
     @Nested
@@ -42,23 +42,23 @@ class PlaylistRemoveControllerTest {
         @Test
         @DisplayName("Should return unauthorized when principal is null")
         void shouldReturnUnauthorizedWhenPrincipalIsNull() {
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, null);
+            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, null);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
             assertThat(response.getBody()).isEqualTo("認証が必要です。");
         }
 
         @Test
-        @DisplayName("Should delegate to PlaylistRemoveService")
+        @DisplayName("Should delegate to SpotifyPlaylistTrackRemovalService")
         void shouldDelegateToPlaylistService() {
             OAuth2User principal = mock(OAuth2User.class);
             ResponseEntity<String> expectedResponse = ResponseEntity.ok("トラックが正常に削除されました。");
-            when(playlistRemoveService.removeTrackFromPlaylist(removeTrackRequest, principal)).thenReturn(expectedResponse);
+            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(expectedResponse);
 
-            ResponseEntity<String> response = playlistRemoveController.removeTrackFromPlaylist(removeTrackRequest, principal);
+            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             assertThat(response).isEqualTo(expectedResponse);
-            verify(playlistRemoveService).removeTrackFromPlaylist(removeTrackRequest, principal);
+            verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
     }
 }

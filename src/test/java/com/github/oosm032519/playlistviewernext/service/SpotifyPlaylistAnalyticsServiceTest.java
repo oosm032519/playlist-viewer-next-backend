@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class SpotifyAnalyticsServiceTest {
+class SpotifyPlaylistAnalyticsServiceTest {
 
     @Mock
     private SpotifyPlaylistDetailsService playlistDetailsService;
@@ -31,7 +31,7 @@ class SpotifyAnalyticsServiceTest {
     private GenreAggregatorService genreAggregatorService;
 
     @InjectMocks
-    private SpotifyAnalyticsService spotifyAnalyticsService;
+    private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
     @Test
     void getGenreCountsForPlaylist_ShouldReturnSortedGenreCounts() throws IOException, SpotifyWebApiException, ParseException {
@@ -46,7 +46,7 @@ class SpotifyAnalyticsServiceTest {
         when(genreAggregatorService.aggregateGenres(playlistTracks)).thenReturn(genreCounts);
 
         // Act
-        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
+        Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
         // Assert
         assertThat(result).isNotEmpty();
@@ -69,7 +69,7 @@ class SpotifyAnalyticsServiceTest {
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
-        Map<String, Integer> result = spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId);
+        Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
         // Assert
         assertThat(result).isEmpty();
@@ -82,7 +82,7 @@ class SpotifyAnalyticsServiceTest {
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId))
+        assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId))
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");
     }
@@ -99,7 +99,7 @@ class SpotifyAnalyticsServiceTest {
         genreCounts.put("classical", 2);
         genreCounts.put("country", 1);
 
-        SpotifyAnalyticsService spyService = spy(spotifyAnalyticsService);
+        SpotifyPlaylistAnalyticsService spyService = spy(spotifyPlaylistAnalyticsService);
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
         when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz", "blues", "classical"));
 
@@ -120,7 +120,7 @@ class SpotifyAnalyticsServiceTest {
         genreCounts.put("pop", 8);
         genreCounts.put("jazz", 6);
 
-        SpotifyAnalyticsService spyService = spy(spotifyAnalyticsService);
+        SpotifyPlaylistAnalyticsService spyService = spy(spotifyPlaylistAnalyticsService);
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
         when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz"));
 
@@ -140,7 +140,7 @@ class SpotifyAnalyticsServiceTest {
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
-        List<String> result = spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId);
+        List<String> result = spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId);
 
         // Assert
         assertThat(result).isEmpty();
@@ -153,7 +153,7 @@ class SpotifyAnalyticsServiceTest {
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId))
+        assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId))
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");
     }

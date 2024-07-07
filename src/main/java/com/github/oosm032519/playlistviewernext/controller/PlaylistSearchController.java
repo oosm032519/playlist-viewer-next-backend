@@ -23,10 +23,10 @@ public class PlaylistSearchController {
     @Autowired
     private final SpotifyPlaylistSearchService playlistSearchService;
     @Autowired
-    private final PlaylistAuthController authController;
+    private final SpotifyClientCredentialsAuthentication authController;
 
     @Autowired
-    public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService, PlaylistAuthController authController) {
+    public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService, SpotifyClientCredentialsAuthentication authController) {
         this.playlistSearchService = playlistSearchService;
         this.authController = authController;
     }

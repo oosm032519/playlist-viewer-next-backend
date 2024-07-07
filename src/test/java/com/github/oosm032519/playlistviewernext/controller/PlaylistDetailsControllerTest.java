@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.GetPlaylistDetails;
-import com.github.oosm032519.playlistviewernext.service.AnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.RecommendationService;
+import com.github.oosm032519.playlistviewernext.service.PlaylistDetailsRetrievalService;
+import com.github.oosm032519.playlistviewernext.service.PlaylistAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.TrackRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,13 +22,13 @@ import static org.mockito.Mockito.*;
 class PlaylistDetailsControllerTest {
 
     @Mock
-    private GetPlaylistDetails getPlaylistDetails;
+    private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
     @Mock
-    private AnalyticsService analyticsService;
+    private PlaylistAnalyticsService playlistAnalyticsService;
 
     @Mock
-    private RecommendationService recommendationService;
+    private TrackRecommendationService trackRecommendationService;
 
     @InjectMocks
     private PlaylistDetailsController detailsController;
@@ -51,7 +51,7 @@ class PlaylistDetailsControllerTest {
                 "ownerName", "Owner Name"
         );
 
-        when(getPlaylistDetails.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
+        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -61,14 +61,14 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody()).isEqualTo(playlistDetails);
 
-        verify(getPlaylistDetails).getPlaylistDetails(playlistId);
+        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }
 
     @Test
     void getPlaylistById_HandlesExceptionGracefully() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
-        when(getPlaylistDetails.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
+        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -78,6 +78,6 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
-        verify(getPlaylistDetails).getPlaylistDetails(playlistId);
+        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }
 }

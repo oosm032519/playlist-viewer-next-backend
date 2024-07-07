@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistAuthControllerTest {
+class SpotifyClientCredentialsAuthenticationTest {
 
     @Mock
     private SpotifyAuthService authService;
 
     @InjectMocks
-    private PlaylistAuthController authController;
+    private SpotifyClientCredentialsAuthentication authController;
 
     @BeforeEach
     void setUp() {
