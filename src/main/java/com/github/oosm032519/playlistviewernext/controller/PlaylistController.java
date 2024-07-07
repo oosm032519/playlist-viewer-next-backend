@@ -24,7 +24,11 @@ public class PlaylistController {
     @Autowired
     private final SpotifyAuthService authService;
     @Autowired
-    private final SpotifyPlaylistService playlistService;
+    private final SpotifyPlaylistSearchService playlistSearchService;
+    @Autowired
+    private final SpotifyPlaylistDetailsService playlistDetailsService;
+    @Autowired
+    private final SpotifyUserPlaylistsService userPlaylistsService;
     @Autowired
     private final SpotifyTrackService trackService;
     @Autowired
@@ -34,14 +38,18 @@ public class PlaylistController {
 
     @Autowired
     public PlaylistController(
-                              SpotifyAuthService authService,
-                              SpotifyPlaylistService playlistService,
-                              SpotifyTrackService trackService,
-                              SpotifyAnalyticsService analyticsService,
-                              SpotifyRecommendationService recommendationService
+            SpotifyAuthService authService,
+            SpotifyPlaylistSearchService playlistSearchService,
+            SpotifyPlaylistDetailsService playlistDetailsService,
+            SpotifyUserPlaylistsService userPlaylistsService,
+            SpotifyTrackService trackService,
+            SpotifyAnalyticsService analyticsService,
+            SpotifyRecommendationService recommendationService
     ) {
         this.authService = authService;
-        this.playlistService = playlistService;
+        this.playlistSearchService = playlistSearchService;
+        this.playlistDetailsService = playlistDetailsService;
+        this.userPlaylistsService = userPlaylistsService;
         this.trackService = trackService;
         this.analyticsService = analyticsService;
         this.recommendationService = recommendationService;
@@ -52,7 +60,7 @@ public class PlaylistController {
         logger.info("PlaylistController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
         try {
             authService.getClientCredentialsToken(); // 認証トークンを取得
-            List<PlaylistSimplified> playlists = playlistService.searchPlaylists(query);
+            List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query);
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
             logger.error("PlaylistController: プレイリストの検索中にエラーが発生しました", e);
@@ -66,7 +74,7 @@ public class PlaylistController {
         try {
             authService.getClientCredentialsToken(); // 認証トークンを取得
 
-            PlaylistTrack[] tracks = playlistService.getPlaylistTracks(id);
+            PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = getTrackListData(tracks);
 
             Map<String, Integer> genreCounts = analyticsService.getGenreCountsForPlaylist(id);
@@ -74,8 +82,8 @@ public class PlaylistController {
 
             List<Track> recommendations = getRecommendations(top5Genres);
 
-            String playlistName = playlistService.getPlaylistName(id);
-            User owner = playlistService.getPlaylistOwner(id);
+            String playlistName = playlistDetailsService.getPlaylistName(id);
+            User owner = playlistDetailsService.getPlaylistOwner(id);
 
             Map<String, Object> response = createPlaylistResponse(trackList, genreCounts, recommendations, playlistName, owner);
 
@@ -130,7 +138,7 @@ public class PlaylistController {
     @GetMapping("/followed")
     public ResponseEntity<?> getFollowedPlaylists(OAuth2AuthenticationToken authentication) {
         try {
-            return ResponseEntity.ok(playlistService.getCurrentUsersPlaylists(authentication));
+            return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists(authentication));
         } catch (Exception e) {
             logger.error("PlaylistController: フォロー中のプレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());

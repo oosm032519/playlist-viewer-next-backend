@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 class SpotifyAnalyticsServiceTest {
 
     @Mock
-    private SpotifyPlaylistService playlistService;
+    private SpotifyPlaylistDetailsService playlistDetailsService;
 
     @Mock
     private GenreAggregatorService genreAggregatorService;
@@ -38,7 +38,7 @@ class SpotifyAnalyticsServiceTest {
         // Arrange
         String playlistId = "testPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
         Map<String, Integer> genreCounts = new LinkedHashMap<>();
         genreCounts.put("rock", 2);
         genreCounts.put("pop", 1);
@@ -65,7 +65,7 @@ class SpotifyAnalyticsServiceTest {
     void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "emptyPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
@@ -79,7 +79,7 @@ class SpotifyAnalyticsServiceTest {
     void getGenreCountsForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "errorPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAnalyticsService.getGenreCountsForPlaylist(playlistId))
@@ -136,7 +136,7 @@ class SpotifyAnalyticsServiceTest {
     void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "emptyPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
         // Act
@@ -150,7 +150,7 @@ class SpotifyAnalyticsServiceTest {
     void getTop5GenresForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String playlistId = "errorPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new IOException("API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAnalyticsService.getTop5GenresForPlaylist(playlistId))

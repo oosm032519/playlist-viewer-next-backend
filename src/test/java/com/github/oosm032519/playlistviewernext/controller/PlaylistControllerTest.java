@@ -28,7 +28,13 @@ import static org.mockito.Mockito.*;
 class PlaylistControllerTest {
 
     @Mock
-    private SpotifyPlaylistService playlistService;
+    private SpotifyPlaylistSearchService playlistSearchService;
+
+    @Mock
+    private SpotifyPlaylistDetailsService playlistDetailsService;
+
+    @Mock
+    private SpotifyUserPlaylistsService userPlaylistsService;
 
     @Mock
     private SpotifyAnalyticsService analyticsService;
@@ -61,7 +67,7 @@ class PlaylistControllerTest {
                 new PlaylistSimplified.Builder().setName("Playlist 2").build()
         );
 
-        when(playlistService.searchPlaylists(query)).thenReturn(expectedPlaylists);
+        when(playlistSearchService.searchPlaylists(query)).thenReturn(expectedPlaylists);
 
         // When
         ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
@@ -69,14 +75,14 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(playlistService).searchPlaylists(query);
+        verify(playlistSearchService).searchPlaylists(query);
     }
 
     @Test
     void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String query = "test query";
-        when(playlistService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
+        when(playlistSearchService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<List<PlaylistSimplified>> response = playlistController.searchPlaylists(query);
@@ -84,7 +90,7 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNull();
-        verify(playlistService).searchPlaylists(query);
+        verify(playlistSearchService).searchPlaylists(query);
     }
 
     @Test
@@ -104,12 +110,12 @@ class PlaylistControllerTest {
         String playlistName = "Test Playlist";
         User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
 
-        when(playlistService.getPlaylistTracks(playlistId)).thenReturn(tracks);
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
         when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
         when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
         when(recommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
-        when(playlistService.getPlaylistName(playlistId)).thenReturn(playlistName);
-        when(playlistService.getPlaylistOwner(playlistId)).thenReturn(owner);
+        when(playlistDetailsService.getPlaylistName(playlistId)).thenReturn(playlistName);
+        when(playlistDetailsService.getPlaylistOwner(playlistId)).thenReturn(owner);
         when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
 
         // When
@@ -126,12 +132,12 @@ class PlaylistControllerTest {
         assertThat(responseBody.get("ownerId")).isEqualTo(owner.getId());
         assertThat(responseBody.get("ownerName")).isEqualTo(owner.getDisplayName());
 
-        verify(playlistService).getPlaylistTracks(playlistId);
+        verify(playlistDetailsService).getPlaylistTracks(playlistId);
         verify(analyticsService).getGenreCountsForPlaylist(playlistId);
         verify(analyticsService).getTop5GenresForPlaylist(playlistId);
         verify(recommendationService).getRecommendations(top5Genres);
-        verify(playlistService).getPlaylistName(playlistId);
-        verify(playlistService).getPlaylistOwner(playlistId);
+        verify(playlistDetailsService).getPlaylistName(playlistId);
+        verify(playlistDetailsService).getPlaylistOwner(playlistId);
         verify(trackService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
     }
 
@@ -139,7 +145,7 @@ class PlaylistControllerTest {
     void getPlaylistById_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String playlistId = "testPlaylistId";
-        when(playlistService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = playlistController.getPlaylistById(playlistId);
@@ -149,7 +155,7 @@ class PlaylistControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
-        verify(playlistService).getPlaylistTracks(playlistId);
+        verify(playlistDetailsService).getPlaylistTracks(playlistId);
     }
 
     @Test
@@ -161,7 +167,7 @@ class PlaylistControllerTest {
                 new PlaylistSimplified.Builder().setName("Followed Playlist 2").build()
         );
 
-        when(playlistService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
+        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
 
         // When
         ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
@@ -169,14 +175,14 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(playlistService).getCurrentUsersPlaylists(authToken);
+        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
     }
 
     @Test
     void getFollowedPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        when(playlistService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
+        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
 
         // When
         ResponseEntity<?> response = playlistController.getFollowedPlaylists(authToken);
@@ -184,7 +190,7 @@ class PlaylistControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isEqualTo("Error: Authentication error");
-        verify(playlistService).getCurrentUsersPlaylists(authToken);
+        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
     }
 
 }
