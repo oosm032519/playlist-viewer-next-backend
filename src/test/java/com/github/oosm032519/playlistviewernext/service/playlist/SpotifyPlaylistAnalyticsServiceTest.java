@@ -1,8 +1,6 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.service.analytics.GenreAggregatorService;
-import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistAnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

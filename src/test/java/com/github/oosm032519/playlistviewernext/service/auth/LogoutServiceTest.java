@@ -1,6 +1,5 @@
-package com.github.oosm032519.playlistviewernext.service;
+package com.github.oosm032519.playlistviewernext.service.auth;
 
-import com.github.oosm032519.playlistviewernext.service.auth.LogoutService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

@@ -1,6 +1,5 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.controller.session.SessionCheckController;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

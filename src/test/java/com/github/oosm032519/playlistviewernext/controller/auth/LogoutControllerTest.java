@@ -1,6 +1,5 @@
-package com.github.oosm032519.playlistviewernext.controller;
+package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import com.github.oosm032519.playlistviewernext.controller.auth.LogoutController;
 import com.github.oosm032519.playlistviewernext.service.auth.LogoutService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
