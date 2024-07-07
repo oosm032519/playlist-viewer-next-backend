@@ -1,6 +1,6 @@
-package com.github.oosm032519.playlistviewernext.service.playlist;
+package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import com.github.oosm032519.playlistviewernext.service.analytics.GenreAggregatorService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

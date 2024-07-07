@@ -1,6 +1,6 @@
-package com.github.oosm032519.playlistviewernext.service.playlist;
+package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import com.github.oosm032519.playlistviewernext.service.analytics.GenreAggregatorService;
+import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,6 +86,19 @@ class SpotifyPlaylistAnalyticsServiceTest {
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId))
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");
+    }
+
+    @Test
+    void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        String playlistId = "nullTracksPlaylistId";
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(null);
+
+        // Act
+        Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
+
+        // Assert
+        assertThat(result).isEmpty();
     }
 
     @Test
