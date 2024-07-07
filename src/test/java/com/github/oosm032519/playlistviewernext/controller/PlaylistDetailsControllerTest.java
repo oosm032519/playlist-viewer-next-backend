@@ -1,7 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
-import com.github.oosm032519.playlistviewernext.service.*;
-import org.apache.hc.core5.http.ParseException;
+import com.github.oosm032519.playlistviewernext.service.PlaylistService;
+import com.github.oosm032519.playlistviewernext.service.AnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.RecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,11 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.*;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -25,19 +22,13 @@ import static org.mockito.Mockito.*;
 class PlaylistDetailsControllerTest {
 
     @Mock
-    private SpotifyPlaylistDetailsService playlistDetailsService;
+    private PlaylistService playlistService;
 
     @Mock
-    private SpotifyTrackService trackService;
+    private AnalyticsService analyticsService;
 
     @Mock
-    private SpotifyAnalyticsService analyticsService;
-
-    @Mock
-    private SpotifyRecommendationService recommendationService;
-
-    @Mock
-    private PlaylistAuthController authController;
+    private RecommendationService recommendationService;
 
     @InjectMocks
     private PlaylistDetailsController detailsController;
@@ -48,29 +39,19 @@ class PlaylistDetailsControllerTest {
     }
 
     @Test
-    void getPlaylistById_ReturnsPlaylistDetailsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
+    void getPlaylistById_ReturnsPlaylistDetailsSuccessfully() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
-        PlaylistTrack[] tracks = new PlaylistTrack[]{
-                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track1").build()).build(),
-                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track2").build()).build()
-        };
-        Map<String, Integer> genreCounts = Map.of("pop", 2, "rock", 1);
-        List<String> top5Genres = Arrays.asList("pop", "rock");
-        List<Track> recommendations = Arrays.asList(
-                new Track.Builder().setName("Recommended Track 1").build(),
-                new Track.Builder().setName("Recommended Track 2").build()
+        Map<String, Object> playlistDetails = Map.of(
+                "tracks", Map.of("items", List.of(Map.of("track", "track1"), Map.of("track", "track2"))),
+                "genreCounts", Map.of("pop", 2, "rock", 1),
+                "recommendations", List.of("Recommended Track 1", "Recommended Track 2"),
+                "playlistName", "Test Playlist",
+                "ownerId", "ownerId",
+                "ownerName", "Owner Name"
         );
-        String playlistName = "Test Playlist";
-        User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
 
-        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
-        when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
-        when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
-        when(recommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
-        when(playlistDetailsService.getPlaylistName(playlistId)).thenReturn(playlistName);
-        when(playlistDetailsService.getPlaylistOwner(playlistId)).thenReturn(owner);
-        when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
+        when(playlistService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -78,28 +59,16 @@ class PlaylistDetailsControllerTest {
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
-        Map<String, Object> responseBody = response.getBody();
-        assertThat(responseBody.get("tracks")).isInstanceOf(Map.class);
-        assertThat(responseBody.get("genreCounts")).isEqualTo(genreCounts);
-        assertThat(responseBody.get("recommendations")).isEqualTo(recommendations);
-        assertThat(responseBody.get("playlistName")).isEqualTo(playlistName);
-        assertThat(responseBody.get("ownerId")).isEqualTo(owner.getId());
-        assertThat(responseBody.get("ownerName")).isEqualTo(owner.getDisplayName());
+        assertThat(response.getBody()).isEqualTo(playlistDetails);
 
-        verify(playlistDetailsService).getPlaylistTracks(playlistId);
-        verify(analyticsService).getGenreCountsForPlaylist(playlistId);
-        verify(analyticsService).getTop5GenresForPlaylist(playlistId);
-        verify(recommendationService).getRecommendations(top5Genres);
-        verify(playlistDetailsService).getPlaylistName(playlistId);
-        verify(playlistDetailsService).getPlaylistOwner(playlistId);
-        verify(trackService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
+        verify(playlistService).getPlaylistDetails(playlistId);
     }
 
     @Test
-    void getPlaylistById_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
+    void getPlaylistById_HandlesExceptionGracefully() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
-        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("API error"));
+        when(playlistService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -109,6 +78,6 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
-        verify(playlistDetailsService).getPlaylistTracks(playlistId);
+        verify(playlistService).getPlaylistDetails(playlistId);
     }
 }
