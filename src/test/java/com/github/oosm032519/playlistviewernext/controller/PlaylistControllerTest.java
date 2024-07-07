@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller;
 
 import com.github.oosm032519.playlistviewernext.service.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,8 @@ class PlaylistControllerTest {
     @Mock
     private SpotifyRecommendationService recommendationService;
 
+    @Getter
+    @Setter
     @Mock
     private SpotifyAuthService authService;
 
@@ -182,4 +186,5 @@ class PlaylistControllerTest {
         assertThat(response.getBody()).isEqualTo("Error: Authentication error");
         verify(playlistService).getCurrentUsersPlaylists(authToken);
     }
+
 }
