@@ -45,7 +45,7 @@ public class PlaylistCreationController {
         }
 
         String userId = principal.getAttribute("id");
-        String userName = ((Map<String, String>) principal.getAttributes().get("display_name")).get("display_name");
+        String userName = (String) principal.getAttributes().get("display_name");
         String playlistName = String.format("%s さんへのおすすめ楽曲 %s", userName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy年MM月dd日 HH:mm:ss")));
 
         try {
