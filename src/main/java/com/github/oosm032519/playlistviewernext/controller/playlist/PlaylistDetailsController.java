@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/playlists/details")
+@RequestMapping("/api/playlists")
 public class PlaylistDetailsController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistDetailsController.class);
