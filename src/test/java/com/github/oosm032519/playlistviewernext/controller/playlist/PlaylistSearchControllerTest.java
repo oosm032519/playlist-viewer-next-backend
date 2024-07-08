@@ -42,34 +42,38 @@ class PlaylistSearchControllerTest {
     void searchPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String query = "test query";
+        int offset = 0;
+        int limit = 20;
         List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
                 new PlaylistSimplified.Builder().setName("Playlist 1").build(),
                 new PlaylistSimplified.Builder().setName("Playlist 2").build()
         );
 
-        when(playlistSearchService.searchPlaylists(query)).thenReturn(expectedPlaylists);
+        when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedPlaylists);
 
         // When
-        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query);
+        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(playlistSearchService).searchPlaylists(query);
+        verify(playlistSearchService).searchPlaylists(query, offset, limit);
     }
 
     @Test
     void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given
         String query = "test query";
-        when(playlistSearchService.searchPlaylists(query)).thenThrow(new RuntimeException("API error"));
+        int offset = 0;
+        int limit = 20;
+        when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(new RuntimeException("API error"));
 
         // When
-        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query);
+        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNull();
-        verify(playlistSearchService).searchPlaylists(query);
+        verify(playlistSearchService).searchPlaylists(query, offset, limit);
     }
 }

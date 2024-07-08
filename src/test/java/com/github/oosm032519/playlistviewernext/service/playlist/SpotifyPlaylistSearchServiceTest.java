@@ -37,19 +37,22 @@ class SpotifyPlaylistSearchServiceTest {
     void testSearchPlaylists_正常系_検索結果あり() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String query = "test query";
+        int offset = 0;
+        int limit = 20;
         SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
         SearchPlaylistsRequest searchPlaylistsRequest = mock(SearchPlaylistsRequest.class);
         Paging<PlaylistSimplified> playlistSimplifiedPaging = mock(Paging.class);
         PlaylistSimplified[] playlistSimplifieds = new PlaylistSimplified[]{mock(PlaylistSimplified.class)};
 
         when(spotifyApi.searchPlaylists(query)).thenReturn(builder);
-        when(builder.limit(20)).thenReturn(builder);
+        when(builder.limit(limit)).thenReturn(builder);
+        when(builder.offset(offset)).thenReturn(builder);
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(playlistSimplifieds);
 
         // Act
-        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query);
+        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
         // Assert
         assertThat(result).hasSize(1);
@@ -60,18 +63,21 @@ class SpotifyPlaylistSearchServiceTest {
     void testSearchPlaylists_正常系_検索結果なし() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String query = "empty query";
+        int offset = 0;
+        int limit = 20;
         SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
         SearchPlaylistsRequest searchPlaylistsRequest = mock(SearchPlaylistsRequest.class);
         Paging<PlaylistSimplified> playlistSimplifiedPaging = mock(Paging.class);
 
         when(spotifyApi.searchPlaylists(query)).thenReturn(builder);
-        when(builder.limit(20)).thenReturn(builder);
+        when(builder.limit(limit)).thenReturn(builder);
+        when(builder.offset(offset)).thenReturn(builder);
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(null);
 
         // Act
-        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query);
+        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
         // Assert
         assertThat(result).isEmpty();
@@ -81,16 +87,19 @@ class SpotifyPlaylistSearchServiceTest {
     void testSearchPlaylists_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         String query = "test query";
+        int offset = 0;
+        int limit = 20;
         SearchPlaylistsRequest.Builder builder = mock(SearchPlaylistsRequest.Builder.class);
         SearchPlaylistsRequest searchPlaylistsRequest = mock(SearchPlaylistsRequest.class);
 
         when(spotifyApi.searchPlaylists(query)).thenReturn(builder);
-        when(builder.limit(20)).thenReturn(builder);
+        when(builder.limit(limit)).thenReturn(builder);
+        when(builder.offset(offset)).thenReturn(builder);
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenThrow(new IOException("API error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query))
+        assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query, offset, limit))
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");
     }

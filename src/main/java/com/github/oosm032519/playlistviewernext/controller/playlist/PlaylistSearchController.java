@@ -33,9 +33,9 @@ public class PlaylistSearchController {
     }
 
     @GetMapping
-    public ResponseEntity<?> searchPlaylists(@RequestParam String query,
-                                             @RequestParam(defaultValue = "0") int offset,
-                                             @RequestParam(defaultValue = "20") int limit) {
+    public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query,
+                                                                    @RequestParam(defaultValue = "0") int offset,
+                                                                    @RequestParam(defaultValue = "20") int limit) {
         logger.info("PlaylistSearchController: searchPlaylists メソッドが呼び出されました。クエリ: {}, オフセット: {}, リミット: {}", query, offset, limit);
         try {
             authController.authenticate();
