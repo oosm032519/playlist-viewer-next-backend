@@ -54,7 +54,7 @@ class PlaylistCreationControllerTest {
     void createPlaylist_Success() throws Exception {
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
         when(principal.getAttribute("id")).thenReturn(userId);
-        when(principal.getAttributes()).thenReturn(Map.of("display_name", Map.of("display_name", userName)));
+        when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
         when(spotifyUserPlaylistCreationService.createPlaylist(any(), any(), any(), any())).thenReturn("playlistId");
 
         ResponseEntity<String> response = playlistCreationController.createPlaylist(trackIds, principal);
@@ -83,7 +83,7 @@ class PlaylistCreationControllerTest {
     void createPlaylist_InternalServerError() throws Exception {
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
         when(principal.getAttribute("id")).thenReturn(userId);
-        when(principal.getAttributes()).thenReturn(Map.of("display_name", Map.of("display_name", userName)));
+        when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
         when(spotifyUserPlaylistCreationService.createPlaylist(any(), any(), any(), any())).thenThrow(new RuntimeException("Internal error"));
 
         ResponseEntity<String> response = playlistCreationController.createPlaylist(trackIds, principal);
