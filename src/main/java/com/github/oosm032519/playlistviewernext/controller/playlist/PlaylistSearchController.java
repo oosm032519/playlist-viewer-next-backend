@@ -33,11 +33,13 @@ public class PlaylistSearchController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(@RequestParam String query) {
-        logger.info("PlaylistSearchController: searchPlaylists メソッドが呼び出されました。クエリ: {}", query);
+    public ResponseEntity<?> searchPlaylists(@RequestParam String query,
+                                             @RequestParam(defaultValue = "0") int offset,
+                                             @RequestParam(defaultValue = "20") int limit) {
+        logger.info("PlaylistSearchController: searchPlaylists メソッドが呼び出されました。クエリ: {}, オフセット: {}, リミット: {}", query, offset, limit);
         try {
             authController.authenticate();
-            List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query);
+            List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query, offset, limit);
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
             logger.error("PlaylistSearchController: プレイリストの検索中にエラーが発生しました", e);

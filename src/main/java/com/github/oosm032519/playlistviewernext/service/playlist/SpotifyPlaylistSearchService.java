@@ -22,8 +22,11 @@ public class SpotifyPlaylistSearchService {
         this.spotifyApi = spotifyApi;
     }
 
-    public List<PlaylistSimplified> searchPlaylists(String query) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        SearchPlaylistsRequest searchPlaylistsRequest = spotifyApi.searchPlaylists(query).limit(20).build();
+    public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        SearchPlaylistsRequest searchPlaylistsRequest = spotifyApi.searchPlaylists(query)
+                .limit(limit)
+                .offset(offset)
+                .build();
         Paging<PlaylistSimplified> playlistSimplifiedPaging = searchPlaylistsRequest.execute();
         return playlistSimplifiedPaging.getItems() != null ? Arrays.asList(playlistSimplifiedPaging.getItems()) : Collections.emptyList();
     }
