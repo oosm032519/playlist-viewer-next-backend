@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class PlaylistDetailsController {
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
         logger.info("PlaylistDetailsController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
         try {
-            Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(id);
+            Map<String, Object> response = new HashMap<>(playlistDetailsRetrievalService.getPlaylistDetails(id));
 
             // 全てのジャンルとその数を取得
             Map<String, Integer> genreCounts = playlistAnalyticsService.getGenreCountsForPlaylist(id);
