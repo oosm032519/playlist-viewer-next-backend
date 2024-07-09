@@ -17,11 +17,11 @@ public class TrackRecommendationService {
     @Autowired
     private SpotifyRecommendationService recommendationService;
 
-    public List<Track> getRecommendations(List<String> top5Genres) {
+    public List<Track> getRecommendations(List<String> top5Genres, float maxDanceability) {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = recommendationService.getRecommendations(top5Genres);
+                recommendations = recommendationService.getRecommendations(top5Genres, maxDanceability);
             }
         } catch (Exception e) {
             logger.error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);

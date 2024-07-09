@@ -41,25 +41,33 @@ public class PlaylistDetailsController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
-        logger.info("PlaylistDetailsController: getPlaylistById メソッドが呼び出されました。プレイリストID: {}", id);
+        logger.info("getPlaylistById: プレイリストID: {}", id);
         try {
             Map<String, Object> response = new HashMap<>(playlistDetailsRetrievalService.getPlaylistDetails(id));
+            logger.info("getPlaylistById: プレイリスト詳細取得成功");
 
             // 全てのジャンルとその数を取得
             Map<String, Integer> genreCounts = playlistAnalyticsService.getGenreCountsForPlaylist(id);
+            logger.info("getPlaylistById: ジャンル数: {}", genreCounts);
 
             // トップ5ジャンルを取得
             List<String> top5Genres = playlistAnalyticsService.getTop5GenresForPlaylist(id);
+            logger.info("getPlaylistById: トップ5ジャンル: {}", top5Genres);
 
-            // おすすめトラックはトップ5ジャンルで取得
-            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres);
+            // 最大ダンスアビリティを取得
+            float maxDanceability = (float) response.get("maxDanceability");
+            logger.info("getPlaylistById: 最大ダンスアビリティ: {}", maxDanceability);
+
+            // おすすめトラックはトップ5ジャンルと最大ダンスアビリティで取得
+            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxDanceability);
+            logger.info("getPlaylistById: 推奨トラック数: {}", recommendations.size());
 
             response.put("genreCounts", genreCounts); // 全てのジャンルと数を返す
             response.put("recommendations", recommendations); // おすすめトラックはトップ5に基づく
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("PlaylistDetailsController: プレイリストの取得中にエラーが発生しました", e);
+            logger.error("getPlaylistById: プレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
