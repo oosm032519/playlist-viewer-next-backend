@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
 import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

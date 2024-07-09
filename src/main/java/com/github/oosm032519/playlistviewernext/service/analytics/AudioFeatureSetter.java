@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.service.recommendation;
+package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
