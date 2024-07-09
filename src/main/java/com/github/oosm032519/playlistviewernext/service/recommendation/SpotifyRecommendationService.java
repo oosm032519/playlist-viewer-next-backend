@@ -27,8 +27,8 @@ public class SpotifyRecommendationService {
         this.spotifyApi = spotifyApi;
     }
 
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
-        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}", seedGenres, maxAudioFeatures);
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures);
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
         }
@@ -62,6 +62,32 @@ public class SpotifyRecommendationService {
         }
         if (maxAudioFeatures.containsKey("speechiness")) {
             recommendationsRequestBuilder.max_speechiness(maxAudioFeatures.get("speechiness"));
+        }
+
+        // 最小オーディオフィーチャーを設定
+        if (minAudioFeatures.containsKey("danceability")) {
+            recommendationsRequestBuilder.min_danceability(minAudioFeatures.get("danceability"));
+        }
+        if (minAudioFeatures.containsKey("energy")) {
+            recommendationsRequestBuilder.min_energy(minAudioFeatures.get("energy"));
+        }
+        if (minAudioFeatures.containsKey("valence")) {
+            recommendationsRequestBuilder.min_valence(minAudioFeatures.get("valence"));
+        }
+        if (minAudioFeatures.containsKey("tempo")) {
+            recommendationsRequestBuilder.min_tempo(minAudioFeatures.get("tempo"));
+        }
+        if (minAudioFeatures.containsKey("acousticness")) {
+            recommendationsRequestBuilder.min_acousticness(minAudioFeatures.get("acousticness"));
+        }
+        if (minAudioFeatures.containsKey("instrumentalness")) {
+            recommendationsRequestBuilder.min_instrumentalness(minAudioFeatures.get("instrumentalness"));
+        }
+        if (minAudioFeatures.containsKey("liveness")) {
+            recommendationsRequestBuilder.min_liveness(minAudioFeatures.get("liveness"));
+        }
+        if (minAudioFeatures.containsKey("speechiness")) {
+            recommendationsRequestBuilder.min_speechiness(minAudioFeatures.get("speechiness"));
         }
 
         GetRecommendationsRequest recommendationsRequest = recommendationsRequestBuilder.build();

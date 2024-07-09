@@ -37,9 +37,13 @@ public class PlaylistDetailsRetrievalService {
         String playlistName = playlistDetailsService.getPlaylistName(id);
         User owner = playlistDetailsService.getPlaylistOwner(id);
 
-        // オーディオフィーチャーの最大値を計算
+        // 最大オーディオフィーチャーを計算
         Map<String, Float> maxAudioFeatures = calculateMaxAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 最大オーディオフィーチャー: {}", maxAudioFeatures);
+
+        // 最小オーディオフィーチャーを計算
+        Map<String, Float> minAudioFeatures = calculateMinAudioFeatures(trackList);
+        logger.info("getPlaylistDetails: 最小オーディオフィーチャー: {}", minAudioFeatures);
 
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
@@ -47,6 +51,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("ownerId", owner.getId());
         response.put("ownerName", owner.getDisplayName());
         response.put("maxAudioFeatures", maxAudioFeatures); // 最大オーディオフィーチャーを追加
+        response.put("minAudioFeatures", minAudioFeatures); // 最小オーディオフィーチャーを追加
         return response;
     }
 
@@ -94,5 +99,34 @@ public class PlaylistDetailsRetrievalService {
         }
         logger.info("calculateMaxAudioFeatures: 最大オーディオフィーチャー計算完了: {}", maxAudioFeatures);
         return maxAudioFeatures;
+    }
+
+    private Map<String, Float> calculateMinAudioFeatures(List<Map<String, Object>> trackList) {
+        logger.info("calculateMinAudioFeatures: 計算開始");
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        minAudioFeatures.put("danceability", Float.MAX_VALUE);
+        minAudioFeatures.put("energy", Float.MAX_VALUE);
+        minAudioFeatures.put("valence", Float.MAX_VALUE);
+        minAudioFeatures.put("tempo", Float.MAX_VALUE);
+        minAudioFeatures.put("acousticness", Float.MAX_VALUE);
+        minAudioFeatures.put("instrumentalness", Float.MAX_VALUE);
+        minAudioFeatures.put("liveness", Float.MAX_VALUE);
+        minAudioFeatures.put("speechiness", Float.MAX_VALUE);
+
+        for (Map<String, Object> trackData : trackList) {
+            AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+            if (audioFeatures != null) {
+                minAudioFeatures.put("danceability", Math.min(minAudioFeatures.get("danceability"), audioFeatures.getDanceability()));
+                minAudioFeatures.put("energy", Math.min(minAudioFeatures.get("energy"), audioFeatures.getEnergy()));
+                minAudioFeatures.put("valence", Math.min(minAudioFeatures.get("valence"), audioFeatures.getValence()));
+                minAudioFeatures.put("tempo", Math.min(minAudioFeatures.get("tempo"), audioFeatures.getTempo()));
+                minAudioFeatures.put("acousticness", Math.min(minAudioFeatures.get("acousticness"), audioFeatures.getAcousticness()));
+                minAudioFeatures.put("instrumentalness", Math.min(minAudioFeatures.get("instrumentalness"), audioFeatures.getInstrumentalness()));
+                minAudioFeatures.put("liveness", Math.min(minAudioFeatures.get("liveness"), audioFeatures.getLiveness()));
+                minAudioFeatures.put("speechiness", Math.min(minAudioFeatures.get("speechiness"), audioFeatures.getSpeechiness()));
+            }
+        }
+        logger.info("calculateMinAudioFeatures: 最小オーディオフィーチャー計算完了: {}", minAudioFeatures);
+        return minAudioFeatures;
     }
 }

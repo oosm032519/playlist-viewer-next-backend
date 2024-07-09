@@ -58,8 +58,12 @@ public class PlaylistDetailsController {
             Map<String, Float> maxAudioFeatures = (Map<String, Float>) response.get("maxAudioFeatures");
             logger.info("getPlaylistById: 最大オーディオフィーチャー: {}", maxAudioFeatures);
 
-            // おすすめトラックはトップ5ジャンルと最大オーディオフィーチャーで取得
-            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxAudioFeatures);
+            // 最小オーディオフィーチャーを取得
+            Map<String, Float> minAudioFeatures = (Map<String, Float>) response.get("minAudioFeatures");
+            logger.info("getPlaylistById: 最小オーディオフィーチャー: {}", minAudioFeatures);
+
+            // おすすめトラックはトップ5ジャンルと最大・最小オーディオフィーチャーで取得
+            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures);
             logger.info("getPlaylistById: 推奨トラック数: {}", recommendations.size());
 
             response.put("genreCounts", genreCounts); // 全てのジャンルと数を返す
