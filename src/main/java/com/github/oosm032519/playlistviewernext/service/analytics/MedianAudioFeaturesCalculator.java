@@ -1,4 +1,4 @@
-package com.github.oosm032519.playlistviewernext.service.playlist;
+package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

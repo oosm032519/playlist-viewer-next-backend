@@ -1,6 +1,10 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MedianAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.ModeValuesCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
