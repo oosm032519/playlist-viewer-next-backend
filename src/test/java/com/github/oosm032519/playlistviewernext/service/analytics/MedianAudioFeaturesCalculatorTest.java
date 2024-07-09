@@ -4,8 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
 import java.util.*;
@@ -82,5 +80,54 @@ class MedianAudioFeaturesCalculatorTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testCalculateMedianAudioFeaturesWithNullAudioFeatures() {
+        // Arrange
+        List<Map<String, Object>> trackList = new ArrayList<>();
+        Map<String, Object> trackData = new HashMap<>();
+        trackData.put("audioFeatures", null);
+        trackList.add(trackData);
+
+        // Act
+        Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testCalculateMedianAudioFeaturesWithSingleElement() {
+        // Arrange
+        AudioFeatures audioFeatures = mock(AudioFeatures.class);
+        when(audioFeatures.getDanceability()).thenReturn(0.5f);
+        when(audioFeatures.getEnergy()).thenReturn(0.6f);
+        when(audioFeatures.getValence()).thenReturn(0.7f);
+        when(audioFeatures.getTempo()).thenReturn(120.0f);
+        when(audioFeatures.getAcousticness()).thenReturn(0.1f);
+        when(audioFeatures.getInstrumentalness()).thenReturn(0.0f);
+        when(audioFeatures.getLiveness()).thenReturn(0.2f);
+        when(audioFeatures.getSpeechiness()).thenReturn(0.3f);
+
+        List<Map<String, Object>> trackList = new ArrayList<>();
+        Map<String, Object> trackData = new HashMap<>();
+        trackData.put("audioFeatures", audioFeatures);
+        trackList.add(trackData);
+
+        // Act
+        Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.get("danceability")).isEqualTo(0.5f);
+        assertThat(result.get("energy")).isEqualTo(0.6f);
+        assertThat(result.get("valence")).isEqualTo(0.7f);
+        assertThat(result.get("tempo")).isEqualTo(120.0f);
+        assertThat(result.get("acousticness")).isEqualTo(0.1f);
+        assertThat(result.get("instrumentalness")).isEqualTo(0.0f);
+        assertThat(result.get("liveness")).isEqualTo(0.2f);
+        assertThat(result.get("speechiness")).isEqualTo(0.3f);
     }
 }

@@ -73,4 +73,30 @@ public class MinAudioFeaturesCalculatorTest {
         assertThat(result.get("liveness")).isEqualTo(0.2f);
         assertThat(result.get("speechiness")).isEqualTo(0.3f);
     }
+
+    @Test
+    public void testCalculateMinAudioFeaturesWithNullAudioFeatures() {
+        // Arrange
+        Map<String, Object> track1 = new HashMap<>();
+        track1.put("audioFeatures", null);
+
+        Map<String, Object> track2 = new HashMap<>();
+        track2.put("audioFeatures", null);
+
+        List<Map<String, Object>> trackList = List.of(track1, track2);
+
+        // Act
+        Map<String, Float> result = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.get("danceability")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("energy")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("valence")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("tempo")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("acousticness")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("instrumentalness")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("liveness")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result.get("speechiness")).isEqualTo(Float.MAX_VALUE);
+    }
 }
