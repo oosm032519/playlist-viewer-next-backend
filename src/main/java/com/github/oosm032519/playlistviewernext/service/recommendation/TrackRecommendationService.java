@@ -8,6 +8,7 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TrackRecommendationService {
@@ -17,11 +18,11 @@ public class TrackRecommendationService {
     @Autowired
     private SpotifyRecommendationService recommendationService;
 
-    public List<Track> getRecommendations(List<String> top5Genres, float maxDanceability) {
+    public List<Track> getRecommendations(List<String> top5Genres, Map<String, Float> maxAudioFeatures) {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = recommendationService.getRecommendations(top5Genres, maxDanceability);
+                recommendations = recommendationService.getRecommendations(top5Genres, maxAudioFeatures);
             }
         } catch (Exception e) {
             logger.error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);

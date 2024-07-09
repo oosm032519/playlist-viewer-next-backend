@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class SpotifyRecommendationService {
@@ -26,19 +27,44 @@ public class SpotifyRecommendationService {
         this.spotifyApi = spotifyApi;
     }
 
-    public List<Track> getRecommendations(List<String> seedGenres, float maxDanceability) throws IOException, SpotifyWebApiException, ParseException {
-        logger.info("getRecommendations: seedGenres: {}, maxDanceability: {}", seedGenres, maxDanceability);
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}", seedGenres, maxAudioFeatures);
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
         }
 
         String genres = String.join(",", seedGenres);
-        GetRecommendationsRequest recommendationsRequest = spotifyApi.getRecommendations()
+        GetRecommendationsRequest.Builder recommendationsRequestBuilder = spotifyApi.getRecommendations()
                 .seed_genres(genres)
-                .limit(20)
-                .max_danceability(maxDanceability)
-                .build();
+                .limit(20);
 
+        // 最大オーディオフィーチャーを設定
+        if (maxAudioFeatures.containsKey("danceability")) {
+            recommendationsRequestBuilder.max_danceability(maxAudioFeatures.get("danceability"));
+        }
+        if (maxAudioFeatures.containsKey("energy")) {
+            recommendationsRequestBuilder.max_energy(maxAudioFeatures.get("energy"));
+        }
+        if (maxAudioFeatures.containsKey("valence")) {
+            recommendationsRequestBuilder.max_valence(maxAudioFeatures.get("valence"));
+        }
+        if (maxAudioFeatures.containsKey("tempo")) {
+            recommendationsRequestBuilder.max_tempo(maxAudioFeatures.get("tempo"));
+        }
+        if (maxAudioFeatures.containsKey("acousticness")) {
+            recommendationsRequestBuilder.max_acousticness(maxAudioFeatures.get("acousticness"));
+        }
+        if (maxAudioFeatures.containsKey("instrumentalness")) {
+            recommendationsRequestBuilder.max_instrumentalness(maxAudioFeatures.get("instrumentalness"));
+        }
+        if (maxAudioFeatures.containsKey("liveness")) {
+            recommendationsRequestBuilder.max_liveness(maxAudioFeatures.get("liveness"));
+        }
+        if (maxAudioFeatures.containsKey("speechiness")) {
+            recommendationsRequestBuilder.max_speechiness(maxAudioFeatures.get("speechiness"));
+        }
+
+        GetRecommendationsRequest recommendationsRequest = recommendationsRequestBuilder.build();
         Recommendations recommendations = recommendationsRequest.execute();
 
         if (recommendations == null || recommendations.getTracks() == null) {

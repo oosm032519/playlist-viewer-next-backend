@@ -54,12 +54,12 @@ public class PlaylistDetailsController {
             List<String> top5Genres = playlistAnalyticsService.getTop5GenresForPlaylist(id);
             logger.info("getPlaylistById: トップ5ジャンル: {}", top5Genres);
 
-            // 最大ダンスアビリティを取得
-            float maxDanceability = (float) response.get("maxDanceability");
-            logger.info("getPlaylistById: 最大ダンスアビリティ: {}", maxDanceability);
+            // 最大オーディオフィーチャーを取得
+            Map<String, Float> maxAudioFeatures = (Map<String, Float>) response.get("maxAudioFeatures");
+            logger.info("getPlaylistById: 最大オーディオフィーチャー: {}", maxAudioFeatures);
 
-            // おすすめトラックはトップ5ジャンルと最大ダンスアビリティで取得
-            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxDanceability);
+            // おすすめトラックはトップ5ジャンルと最大オーディオフィーチャーで取得
+            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxAudioFeatures);
             logger.info("getPlaylistById: 推奨トラック数: {}", recommendations.size());
 
             response.put("genreCounts", genreCounts); // 全てのジャンルと数を返す
