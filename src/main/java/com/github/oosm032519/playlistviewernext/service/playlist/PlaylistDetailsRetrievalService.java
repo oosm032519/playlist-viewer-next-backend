@@ -22,7 +22,11 @@ public class PlaylistDetailsRetrievalService {
     @Autowired
     private SpotifyClientCredentialsAuthentication authController;
     @Autowired
-    private AudioFeaturesCalculator audioFeaturesCalculator;
+    private MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
+    @Autowired
+    private MinAudioFeaturesCalculator minAudioFeaturesCalculator;
+    @Autowired
+    private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
     @Autowired
     private TrackDataRetriever trackDataRetriever;
     @Autowired
@@ -38,13 +42,13 @@ public class PlaylistDetailsRetrievalService {
         String playlistName = playlistDetailsService.getPlaylistName(id);
         User owner = playlistDetailsService.getPlaylistOwner(id);
 
-        Map<String, Float> maxAudioFeatures = audioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
+        Map<String, Float> maxAudioFeatures = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 最大オーディオフィーチャー: {}", maxAudioFeatures);
 
-        Map<String, Float> minAudioFeatures = audioFeaturesCalculator.calculateMinAudioFeatures(trackList);
+        Map<String, Float> minAudioFeatures = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 最小オーディオフィーチャー: {}", minAudioFeatures);
 
-        Map<String, Float> medianAudioFeatures = audioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
+        Map<String, Float> medianAudioFeatures = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 中央オーディオフィーチャー: {}", medianAudioFeatures);
 
         Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
