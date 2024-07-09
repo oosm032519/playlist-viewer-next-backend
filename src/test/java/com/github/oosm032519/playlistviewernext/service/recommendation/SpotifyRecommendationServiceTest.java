@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ class SpotifyRecommendationServiceTest {
     @Mock
     private SpotifyApi spotifyApi;
 
+    @Mock
+    private AudioFeatureSetter audioFeatureSetter;
+
     @InjectMocks
     private SpotifyRecommendationService spotifyRecommendationService;
 
@@ -34,6 +38,11 @@ class SpotifyRecommendationServiceTest {
     void getRecommendations_ShouldReturnRecommendedTracks() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
+
         Track[] mockTracks = createMockTracks();
         Recommendations mockRecommendations = mock(Recommendations.class);
         when(mockRecommendations.getTracks()).thenReturn(mockTracks);
@@ -48,7 +57,7 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
         // Act
-        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Assert
         assertThat(result).hasSize(2);
@@ -56,15 +65,23 @@ class SpotifyRecommendationServiceTest {
         assertThat(result.get(1).getName()).isEqualTo("Track 2");
         verify(recommendationsBuilder).seed_genres("rock,pop");
         verify(recommendationsBuilder).limit(20);
+        verify(audioFeatureSetter).setMaxAudioFeatures(recommendationsBuilder, maxAudioFeatures);
+        verify(audioFeatureSetter).setMinAudioFeatures(recommendationsBuilder, minAudioFeatures);
+        verify(audioFeatureSetter).setMedianAudioFeatures(recommendationsBuilder, medianAudioFeatures);
+        verify(audioFeatureSetter).setModeValues(recommendationsBuilder, modeValues);
     }
 
     @Test
     void getRecommendations_ShouldHandleEmptySeedGenres() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Collections.emptyList();
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
 
         // Act
-        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Assert
         assertThat(result).isEmpty();
@@ -74,6 +91,11 @@ class SpotifyRecommendationServiceTest {
     void getRecommendations_ShouldHandleApiException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
+
         GetRecommendationsRequest.Builder recommendationsBuilder = mock(GetRecommendationsRequest.Builder.class);
         GetRecommendationsRequest recommendationsRequest = mock(GetRecommendationsRequest.class);
 
@@ -84,7 +106,7 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsRequest.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> spotifyRecommendationService.getRecommendations(seedGenres))
+        assertThatThrownBy(() -> spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .hasMessage("API error");
     }
@@ -93,6 +115,11 @@ class SpotifyRecommendationServiceTest {
     void getRecommendations_ShouldHandleNullRecommendations() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
+
         GetRecommendationsRequest.Builder recommendationsBuilder = mock(GetRecommendationsRequest.Builder.class);
         GetRecommendationsRequest recommendationsRequest = mock(GetRecommendationsRequest.class);
 
@@ -103,7 +130,7 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsRequest.execute()).thenReturn(null);
 
         // Act
-        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Assert
         assertThat(result).isEmpty();
@@ -113,6 +140,11 @@ class SpotifyRecommendationServiceTest {
     void getRecommendations_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
+
         Recommendations mockRecommendations = mock(Recommendations.class);
         when(mockRecommendations.getTracks()).thenReturn(null);
 
@@ -126,7 +158,7 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
         // Act
-        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Assert
         assertThat(result).isEmpty();
@@ -136,6 +168,11 @@ class SpotifyRecommendationServiceTest {
     void getRecommendations_ShouldHandleEmptyTracks() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
+        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Float> medianAudioFeatures = new HashMap<>();
+        Map<String, Object> modeValues = new HashMap<>();
+
         Recommendations mockRecommendations = mock(Recommendations.class);
         when(mockRecommendations.getTracks()).thenReturn(new Track[0]);
 
@@ -149,7 +186,7 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
         // Act
-        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres);
+        List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Assert
         assertThat(result).isEmpty();

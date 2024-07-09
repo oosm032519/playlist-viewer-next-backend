@@ -1,6 +1,10 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MedianAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.ModeValuesCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +30,21 @@ class PlaylistDetailsRetrievalServiceTest {
     @Mock
     private SpotifyClientCredentialsAuthentication authController;
 
+    @Mock
+    private MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
+
+    @Mock
+    private MinAudioFeaturesCalculator minAudioFeaturesCalculator;
+
+    @Mock
+    private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
+
+    @Mock
+    private TrackDataRetriever trackDataRetriever;
+
+    @Mock
+    private ModeValuesCalculator modeValuesCalculator;
+
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
@@ -44,11 +63,23 @@ class PlaylistDetailsRetrievalServiceTest {
         };
         String playlistName = "Test Playlist";
         User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
+        List<Map<String, Object>> trackList = new ArrayList<>();
+        trackList.add(Map.of("id", "track1"));
+        trackList.add(Map.of("id", "track2"));
+
+        Map<String, Float> maxAudioFeatures = Map.of("feature1", 1.0f);
+        Map<String, Float> minAudioFeatures = Map.of("feature1", 0.1f);
+        Map<String, Float> medianAudioFeatures = Map.of("feature1", 0.5f);
+        Map<String, Object> modeValues = Map.of("feature1", 0.3f);
 
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
         when(playlistDetailsService.getPlaylistName(playlistId)).thenReturn(playlistName);
         when(playlistDetailsService.getPlaylistOwner(playlistId)).thenReturn(owner);
-        when(trackService.getAudioFeaturesForTrack(anyString())).thenReturn(new AudioFeatures.Builder().build());
+        when(trackDataRetriever.getTrackListData(tracks)).thenReturn(trackList);
+        when(maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
+        when(minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
+        when(medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList)).thenReturn(medianAudioFeatures);
+        when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
 
         // When
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
@@ -58,10 +89,18 @@ class PlaylistDetailsRetrievalServiceTest {
         assertThat(response.get("playlistName")).isEqualTo(playlistName);
         assertThat(response.get("ownerId")).isEqualTo(owner.getId());
         assertThat(response.get("ownerName")).isEqualTo(owner.getDisplayName());
+        assertThat(response.get("maxAudioFeatures")).isEqualTo(maxAudioFeatures);
+        assertThat(response.get("minAudioFeatures")).isEqualTo(minAudioFeatures);
+        assertThat(response.get("medianAudioFeatures")).isEqualTo(medianAudioFeatures);
+        assertThat(response.get("modeValues")).isEqualTo(modeValues);
 
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
         verify(playlistDetailsService).getPlaylistName(playlistId);
         verify(playlistDetailsService).getPlaylistOwner(playlistId);
-        verify(trackService, times(tracks.length)).getAudioFeaturesForTrack(anyString());
+        verify(trackDataRetriever).getTrackListData(tracks);
+        verify(maxAudioFeaturesCalculator).calculateMaxAudioFeatures(trackList);
+        verify(minAudioFeaturesCalculator).calculateMinAudioFeatures(trackList);
+        verify(medianAudioFeaturesCalculator).calculateMedianAudioFeatures(trackList);
+        verify(modeValuesCalculator).calculateModeValues(trackList);
     }
 }

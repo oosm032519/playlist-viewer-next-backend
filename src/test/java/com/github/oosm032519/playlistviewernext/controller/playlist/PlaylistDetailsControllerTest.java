@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,11 @@ class PlaylistDetailsControllerTest {
                 "tracks", Map.of("items", List.of(Map.of("track", "track1"), Map.of("track", "track2"))),
                 "playlistName", "Test Playlist",
                 "ownerId", "ownerId",
-                "ownerName", "Owner Name"
+                "ownerName", "Owner Name",
+                "maxAudioFeatures", Map.of("feature1", 1.0f),
+                "minAudioFeatures", Map.of("feature1", 0.1f),
+                "medianAudioFeatures", Map.of("feature1", 0.5f),
+                "modeValues", Map.of("feature1", 0.5f)
         );
         Map<String, Integer> genreCounts = Map.of("pop", 2, "rock", 1);
         List<String> top5Genres = List.of("pop", "rock");
@@ -59,7 +63,13 @@ class PlaylistDetailsControllerTest {
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
         when(playlistAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
         when(playlistAnalyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
-        when(trackRecommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
+        when(trackRecommendationService.getRecommendations(
+                eq(top5Genres),
+                eq(Map.of("feature1", 1.0f)),
+                eq(Map.of("feature1", 0.1f)),
+                eq(Map.of("feature1", 0.5f)),
+                eq(Map.of("feature1", 0.5f))
+        )).thenReturn(recommendations);
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
@@ -77,7 +87,13 @@ class PlaylistDetailsControllerTest {
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
         verify(playlistAnalyticsService).getGenreCountsForPlaylist(playlistId);
         verify(playlistAnalyticsService).getTop5GenresForPlaylist(playlistId);
-        verify(trackRecommendationService).getRecommendations(top5Genres);
+        verify(trackRecommendationService).getRecommendations(
+                eq(top5Genres),
+                eq(Map.of("feature1", 1.0f)),
+                eq(Map.of("feature1", 0.1f)),
+                eq(Map.of("feature1", 0.5f)),
+                eq(Map.of("feature1", 0.5f))
+        );
     }
 
     @Test

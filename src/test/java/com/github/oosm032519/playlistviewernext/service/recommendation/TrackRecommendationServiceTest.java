@@ -14,6 +14,7 @@ import se.michaelthelin.spotify.model_objects.specification.Track;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -30,10 +31,21 @@ class TrackRecommendationServiceTest {
     @Mock
     private Logger logger;
 
+    private Map<String, Float> maxAudioFeatures;
+    private Map<String, Float> minAudioFeatures;
+    private Map<String, Float> medianAudioFeatures;
+    private Map<String, Object> modeValues;
+
     @BeforeEach
     void setUp() {
         // LoggerのモックをTrackRecommendationServiceに設定
         TrackRecommendationService.setLogger(logger);
+
+        // テスト用のダミーデータを初期化
+        maxAudioFeatures = Map.of("danceability", 0.9f);
+        minAudioFeatures = Map.of("danceability", 0.1f);
+        medianAudioFeatures = Map.of("danceability", 0.5f);
+        modeValues = Map.of("key", 1);
     }
 
     @Test
@@ -45,14 +57,14 @@ class TrackRecommendationServiceTest {
                 new Track.Builder().setName("Recommended Track 2").build()
         );
 
-        when(recommendationService.getRecommendations(top5Genres)).thenReturn(recommendations);
+        when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenReturn(recommendations);
 
         // When
-        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Then
         assertThat(result).isEqualTo(recommendations);
-        verify(recommendationService).getRecommendations(top5Genres);
+        verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
@@ -61,11 +73,11 @@ class TrackRecommendationServiceTest {
         List<String> top5Genres = Collections.emptyList();
 
         // When
-        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Then
         assertThat(result).isEmpty();
-        verify(recommendationService, never()).getRecommendations(anyList());
+        verify(recommendationService, never()).getRecommendations(anyList(), anyMap(), anyMap(), anyMap(), anyMap());
     }
 
     @Test
@@ -73,14 +85,14 @@ class TrackRecommendationServiceTest {
         // Given
         List<String> top5Genres = List.of("pop", "rock");
 
-        when(recommendationService.getRecommendations(top5Genres)).thenThrow(new SpotifyWebApiException("API Error"));
+        when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new SpotifyWebApiException("API Error"));
 
         // When
-        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Then
         assertThat(result).isEmpty();
-        verify(recommendationService).getRecommendations(top5Genres);
+        verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(SpotifyWebApiException.class));
     }
 
@@ -89,14 +101,14 @@ class TrackRecommendationServiceTest {
         // Given
         List<String> top5Genres = List.of("pop", "rock");
 
-        when(recommendationService.getRecommendations(top5Genres)).thenThrow(new IOException("IO Error"));
+        when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new IOException("IO Error"));
 
         // When
-        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Then
         assertThat(result).isEmpty();
-        verify(recommendationService).getRecommendations(top5Genres);
+        verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(IOException.class));
     }
 
@@ -105,14 +117,14 @@ class TrackRecommendationServiceTest {
         // Given
         List<String> top5Genres = List.of("pop", "rock");
 
-        when(recommendationService.getRecommendations(top5Genres)).thenThrow(new ParseException("Parse Error"));
+        when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new ParseException("Parse Error"));
 
         // When
-        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres);
+        List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         // Then
         assertThat(result).isEmpty();
-        verify(recommendationService).getRecommendations(top5Genres);
+        verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(ParseException.class));
     }
 }
