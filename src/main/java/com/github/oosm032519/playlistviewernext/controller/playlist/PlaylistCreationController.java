@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/playlists")
