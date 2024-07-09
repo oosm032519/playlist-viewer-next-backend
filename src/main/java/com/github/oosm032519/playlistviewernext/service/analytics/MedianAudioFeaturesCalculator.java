@@ -41,15 +41,17 @@ public class MedianAudioFeaturesCalculator {
         Map<String, Float> medianAudioFeatures = new HashMap<>();
         for (Map.Entry<String, List<Float>> entry : featureValues.entrySet()) {
             List<Float> values = entry.getValue();
-            Collections.sort(values);
-            int size = values.size();
-            float median;
-            if (size % 2 == 0) {
-                median = (values.get(size / 2 - 1) + values.get(size / 2)) / 2;
-            } else {
-                median = values.get(size / 2);
+            if (!values.isEmpty()) {
+                Collections.sort(values);
+                int size = values.size();
+                float median;
+                if (size % 2 == 0) {
+                    median = (values.get(size / 2 - 1) + values.get(size / 2)) / 2;
+                } else {
+                    median = values.get(size / 2);
+                }
+                medianAudioFeatures.put(entry.getKey(), median);
             }
-            medianAudioFeatures.put(entry.getKey(), median);
         }
         logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
         return medianAudioFeatures;
