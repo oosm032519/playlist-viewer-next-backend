@@ -18,11 +18,11 @@ public class TrackRecommendationService {
     @Autowired
     private SpotifyRecommendationService recommendationService;
 
-    public List<Track> getRecommendations(List<String> top5Genres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
+    public List<Track> getRecommendations(List<String> top5Genres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures) {
         List<Track> recommendations = new ArrayList<>();
         try {
             if (!top5Genres.isEmpty()) {
-                recommendations = recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures);
+                recommendations = recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures);
             }
         } catch (Exception e) {
             logger.error("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。", e);

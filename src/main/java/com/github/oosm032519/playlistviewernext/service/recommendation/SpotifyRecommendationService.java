@@ -27,8 +27,8 @@ public class SpotifyRecommendationService {
         this.spotifyApi = spotifyApi;
     }
 
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
-        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures);
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures);
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
         }
@@ -88,6 +88,32 @@ public class SpotifyRecommendationService {
         }
         if (minAudioFeatures.containsKey("speechiness")) {
             recommendationsRequestBuilder.min_speechiness(minAudioFeatures.get("speechiness"));
+        }
+
+        // 中央オーディオフィーチャーを設定
+        if (medianAudioFeatures.containsKey("danceability")) {
+            recommendationsRequestBuilder.target_danceability(medianAudioFeatures.get("danceability"));
+        }
+        if (medianAudioFeatures.containsKey("energy")) {
+            recommendationsRequestBuilder.target_energy(medianAudioFeatures.get("energy"));
+        }
+        if (medianAudioFeatures.containsKey("valence")) {
+            recommendationsRequestBuilder.target_valence(medianAudioFeatures.get("valence"));
+        }
+        if (medianAudioFeatures.containsKey("tempo")) {
+            recommendationsRequestBuilder.target_tempo(medianAudioFeatures.get("tempo"));
+        }
+        if (medianAudioFeatures.containsKey("acousticness")) {
+            recommendationsRequestBuilder.target_acousticness(medianAudioFeatures.get("acousticness"));
+        }
+        if (medianAudioFeatures.containsKey("instrumentalness")) {
+            recommendationsRequestBuilder.target_instrumentalness(medianAudioFeatures.get("instrumentalness"));
+        }
+        if (medianAudioFeatures.containsKey("liveness")) {
+            recommendationsRequestBuilder.target_liveness(medianAudioFeatures.get("liveness"));
+        }
+        if (medianAudioFeatures.containsKey("speechiness")) {
+            recommendationsRequestBuilder.target_speechiness(medianAudioFeatures.get("speechiness"));
         }
 
         GetRecommendationsRequest recommendationsRequest = recommendationsRequestBuilder.build();
