@@ -27,8 +27,8 @@ public class SpotifyRecommendationService {
         this.spotifyApi = spotifyApi;
     }
 
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures) throws IOException, SpotifyWebApiException, ParseException {
-        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures);
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) throws IOException, SpotifyWebApiException, ParseException {
+        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}, modeValues: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
         }
@@ -114,6 +114,17 @@ public class SpotifyRecommendationService {
         }
         if (medianAudioFeatures.containsKey("speechiness")) {
             recommendationsRequestBuilder.target_speechiness(medianAudioFeatures.get("speechiness"));
+        }
+
+        // modeValuesの設定
+        if (modeValues.containsKey("key")) {
+            recommendationsRequestBuilder.target_key((Integer) modeValues.get("key"));
+        }
+        if (modeValues.containsKey("mode")) {
+            recommendationsRequestBuilder.target_mode(Integer.parseInt((String) modeValues.get("mode")));
+        }
+        if (modeValues.containsKey("time_signature")) {
+            recommendationsRequestBuilder.target_time_signature((Integer) modeValues.get("time_signature"));
         }
 
         GetRecommendationsRequest recommendationsRequest = recommendationsRequestBuilder.build();

@@ -66,8 +66,12 @@ public class PlaylistDetailsController {
             Map<String, Float> medianAudioFeatures = (Map<String, Float>) response.get("medianAudioFeatures");
             logger.info("getPlaylistById: 中央オーディオフィーチャー: {}", medianAudioFeatures);
 
-            // おすすめトラックはトップ5ジャンルと最大・最小・中央値オーディオフィーチャーで取得
-            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures);
+            // modeValuesを取得
+            Map<String, Object> modeValues = (Map<String, Object>) response.get("modeValues");
+            logger.info("getPlaylistById: 最頻値: {}", modeValues);
+
+            // おすすめトラックはトップ5ジャンルと最大・最小・中央値オーディオフィーチャー、最頻値で取得
+            List<Track> recommendations = trackRecommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
             logger.info("getPlaylistById: 推奨トラック数: {}", recommendations.size());
 
             response.put("genreCounts", genreCounts); // 全てのジャンルと数を返す

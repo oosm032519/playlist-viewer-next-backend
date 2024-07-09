@@ -46,6 +46,10 @@ public class PlaylistDetailsRetrievalService {
         Map<String, Float> medianAudioFeatures = calculateMedianAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 中央オーディオフィーチャー: {}", medianAudioFeatures);
 
+        // key, mode, time_signatureの最頻値を計算
+        Map<String, Object> modeValues = calculateModeValues(trackList);
+        logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
+
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
         response.put("playlistName", playlistName);
@@ -54,6 +58,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("maxAudioFeatures", maxAudioFeatures); // 最大オーディオフィーチャーを追加
         response.put("minAudioFeatures", minAudioFeatures); // 最小オーディオフィーチャーを追加
         response.put("medianAudioFeatures", medianAudioFeatures); // 中央オーディオフィーチャーを追加
+        response.put("modeValues", modeValues);
         return response;
     }
 
@@ -176,4 +181,48 @@ public class PlaylistDetailsRetrievalService {
         return medianAudioFeatures;
     }
 
+    private Map<String, Object> calculateModeValues(List<Map<String, Object>> trackList) {
+        logger.info("calculateModeValues: 計算開始");
+        Map<String, List<Integer>> numericFeatureValues = new HashMap<>();
+        numericFeatureValues.put("key", new ArrayList<>());
+        numericFeatureValues.put("time_signature", new ArrayList<>());
+
+        Map<String, List<String>> stringFeatureValues = new HashMap<>();
+        stringFeatureValues.put("mode", new ArrayList<>());
+
+        for (Map<String, Object> trackData : trackList) {
+            AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+            if (audioFeatures != null) {
+                numericFeatureValues.get("key").add(audioFeatures.getKey());
+                numericFeatureValues.get("time_signature").add(audioFeatures.getTimeSignature());
+                stringFeatureValues.get("mode").add(audioFeatures.getMode().toString());
+            }
+        }
+
+        Map<String, Object> modeValues = new HashMap<>();
+        for (Map.Entry<String, List<Integer>> entry : numericFeatureValues.entrySet()) {
+            modeValues.put(entry.getKey(), calculateNumericMode(entry.getValue()));
+        }
+        for (Map.Entry<String, List<String>> entry : stringFeatureValues.entrySet()) {
+            modeValues.put(entry.getKey(), calculateStringMode(entry.getValue()));
+        }
+        logger.info("calculateModeValues: 最頻値計算完了: {}", modeValues);
+        return modeValues;
+    }
+
+    private int calculateNumericMode(List<Integer> values) {
+        Map<Integer, Integer> frequencyMap = new HashMap<>();
+        for (int value : values) {
+            frequencyMap.put(value, frequencyMap.getOrDefault(value, 0) + 1);
+        }
+        return Collections.max(frequencyMap.entrySet(), Map.Entry.comparingByValue()).getKey();
+    }
+
+    private String calculateStringMode(List<String> values) {
+        Map<String, Integer> frequencyMap = new HashMap<>();
+        for (String value : values) {
+            frequencyMap.put(value, frequencyMap.getOrDefault(value, 0) + 1);
+        }
+        return Collections.max(frequencyMap.entrySet(), Map.Entry.comparingByValue()).getKey();
+    }
 }
