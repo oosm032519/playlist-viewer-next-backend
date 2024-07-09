@@ -121,7 +121,7 @@ public class SpotifyRecommendationService {
             recommendationsRequestBuilder.target_key((Integer) modeValues.get("key"));
         }
         if (modeValues.containsKey("mode")) {
-            recommendationsRequestBuilder.target_mode(Integer.parseInt((String) modeValues.get("mode")));
+            recommendationsRequestBuilder.target_mode("MAJOR".equals(modeValues.get("mode")) ? 1 : 0);
         }
         if (modeValues.containsKey("time_signature")) {
             recommendationsRequestBuilder.target_time_signature((Integer) modeValues.get("time_signature"));
