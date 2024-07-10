@@ -1,10 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
-import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MedianAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.ModeValuesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +29,8 @@ public class PlaylistDetailsRetrievalService {
     @Autowired
     private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
     @Autowired
+    private AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
+    @Autowired
     private TrackDataRetriever trackDataRetriever;
     @Autowired
     private ModeValuesCalculator modeValuesCalculator;
@@ -55,6 +54,9 @@ public class PlaylistDetailsRetrievalService {
         Map<String, Float> medianAudioFeatures = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
         logger.info("getPlaylistDetails: 中央オーディオフィーチャー: {}", medianAudioFeatures);
 
+        Map<String, Float> averageAudioFeatures = averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
+        logger.info("getPlaylistDetails: 平均オーディオフィーチャー: {}", averageAudioFeatures);
+
         Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
         logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
 
@@ -66,6 +68,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("maxAudioFeatures", maxAudioFeatures);
         response.put("minAudioFeatures", minAudioFeatures);
         response.put("medianAudioFeatures", medianAudioFeatures);
+        response.put("averageAudioFeatures", averageAudioFeatures);
         response.put("modeValues", modeValues);
         return response;
     }
