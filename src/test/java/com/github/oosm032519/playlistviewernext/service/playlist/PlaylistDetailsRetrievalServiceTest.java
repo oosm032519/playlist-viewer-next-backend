@@ -1,10 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
-import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MedianAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.ModeValuesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +37,9 @@ class PlaylistDetailsRetrievalServiceTest {
     private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
 
     @Mock
+    private AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
+
+    @Mock
     private TrackDataRetriever trackDataRetriever;
 
     @Mock
@@ -70,6 +70,7 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Float> maxAudioFeatures = Map.of("feature1", 1.0f);
         Map<String, Float> minAudioFeatures = Map.of("feature1", 0.1f);
         Map<String, Float> medianAudioFeatures = Map.of("feature1", 0.5f);
+        Map<String, Float> averageAudioFeatures = Map.of("feature1", 0.3f);
         Map<String, Object> modeValues = Map.of("feature1", 0.3f);
 
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
@@ -79,6 +80,7 @@ class PlaylistDetailsRetrievalServiceTest {
         when(maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
         when(minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
         when(medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList)).thenReturn(medianAudioFeatures);
+        when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
 
         // When
@@ -92,6 +94,7 @@ class PlaylistDetailsRetrievalServiceTest {
         assertThat(response.get("maxAudioFeatures")).isEqualTo(maxAudioFeatures);
         assertThat(response.get("minAudioFeatures")).isEqualTo(minAudioFeatures);
         assertThat(response.get("medianAudioFeatures")).isEqualTo(medianAudioFeatures);
+        assertThat(response.get("averageAudioFeatures")).isEqualTo(averageAudioFeatures);
         assertThat(response.get("modeValues")).isEqualTo(modeValues);
 
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
@@ -101,6 +104,7 @@ class PlaylistDetailsRetrievalServiceTest {
         verify(maxAudioFeaturesCalculator).calculateMaxAudioFeatures(trackList);
         verify(minAudioFeaturesCalculator).calculateMinAudioFeatures(trackList);
         verify(medianAudioFeaturesCalculator).calculateMedianAudioFeatures(trackList);
+        verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
         verify(modeValuesCalculator).calculateModeValues(trackList);
     }
 }
