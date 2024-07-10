@@ -40,7 +40,7 @@ public class PlaylistCreationController {
         String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
             logger.error("ユーザーが認証されていないか、アクセストークンが見つかりません。");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("認証が必要です。");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\": \"認証が必要です。\"}");
         }
 
         String userId = principal.getAttribute("id");
@@ -50,10 +50,10 @@ public class PlaylistCreationController {
         try {
             String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, playlistName, trackIds);
             logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
-            return ResponseEntity.ok(playlistId);
+            return ResponseEntity.ok("{\"playlistId\": \"" + playlistId + "\"}");
         } catch (Exception e) {
             logger.error("プレイリストの作成中にエラーが発生しました。", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("エラー: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("{\"error\": \"エラー: " + e.getMessage() + "\"}");
         }
     }
 }
