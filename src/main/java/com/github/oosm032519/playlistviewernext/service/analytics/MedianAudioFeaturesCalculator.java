@@ -1,3 +1,5 @@
+// MedianAudioFeaturesCalculator.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -10,10 +12,19 @@ import java.util.*;
 @Service
 public class MedianAudioFeaturesCalculator {
 
+    // ロガーのインスタンスを作成
     private static final Logger logger = LoggerFactory.getLogger(MedianAudioFeaturesCalculator.class);
 
+    /**
+     * トラックリストのオーディオフィーチャーの中央値を計算するメソッド
+     *
+     * @param trackList 各トラックのオーディオフィーチャーを含むリスト
+     * @return 各オーディオフィーチャーの中央値を含むマップ
+     */
     public Map<String, Float> calculateMedianAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMedianAudioFeatures: 計算開始");
+
+        // 各オーディオフィーチャーの値を格納するマップ
         Map<String, List<Float>> featureValues = new HashMap<>();
         featureValues.put("danceability", new ArrayList<>());
         featureValues.put("energy", new ArrayList<>());
@@ -24,6 +35,7 @@ public class MedianAudioFeaturesCalculator {
         featureValues.put("liveness", new ArrayList<>());
         featureValues.put("speechiness", new ArrayList<>());
 
+        // トラックリストをループして各オーディオフィーチャーの値を収集
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
@@ -38,6 +50,7 @@ public class MedianAudioFeaturesCalculator {
             }
         }
 
+        // 各オーディオフィーチャーの中央値を計算
         Map<String, Float> medianAudioFeatures = new HashMap<>();
         for (Map.Entry<String, List<Float>> entry : featureValues.entrySet()) {
             List<Float> values = entry.getValue();
@@ -53,6 +66,7 @@ public class MedianAudioFeaturesCalculator {
                 medianAudioFeatures.put(entry.getKey(), median);
             }
         }
+
         logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
         return medianAudioFeatures;
     }

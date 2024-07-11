@@ -1,3 +1,5 @@
+// AudioFeatureSetter.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.springframework.stereotype.Component;
@@ -8,6 +10,12 @@ import java.util.Map;
 @Component
 public class AudioFeatureSetter {
 
+    /**
+     * GetRecommendationsRequest.Builderに最大オーディオ特徴量を設定します。
+     *
+     * @param builder          GetRecommendationsRequest.Builderオブジェクト
+     * @param maxAudioFeatures 最大オーディオ特徴量のマップ
+     */
     public void setMaxAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> maxAudioFeatures) {
         if (maxAudioFeatures.containsKey("danceability")) {
             builder.max_danceability(maxAudioFeatures.get("danceability"));
@@ -35,6 +43,12 @@ public class AudioFeatureSetter {
         }
     }
 
+    /**
+     * GetRecommendationsRequest.Builderに最小オーディオ特徴量を設定します。
+     *
+     * @param builder          GetRecommendationsRequest.Builderオブジェクト
+     * @param minAudioFeatures 最小オーディオ特徴量のマップ
+     */
     public void setMinAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> minAudioFeatures) {
         if (minAudioFeatures.containsKey("danceability")) {
             builder.min_danceability(minAudioFeatures.get("danceability"));
@@ -62,6 +76,12 @@ public class AudioFeatureSetter {
         }
     }
 
+    /**
+     * GetRecommendationsRequest.Builderに中央値のオーディオ特徴量を設定します。
+     *
+     * @param builder             GetRecommendationsRequest.Builderオブジェクト
+     * @param medianAudioFeatures 中央値のオーディオ特徴量のマップ
+     */
     public void setMedianAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> medianAudioFeatures) {
         if (medianAudioFeatures.containsKey("danceability")) {
             builder.target_danceability(medianAudioFeatures.get("danceability"));
@@ -89,6 +109,12 @@ public class AudioFeatureSetter {
         }
     }
 
+    /**
+     * GetRecommendationsRequest.Builderにモード値を設定します。
+     *
+     * @param builder    GetRecommendationsRequest.Builderオブジェクト
+     * @param modeValues モード値のマップ
+     */
     public void setModeValues(GetRecommendationsRequest.Builder builder, Map<String, Object> modeValues) {
         if (modeValues.containsKey("key")) {
             builder.target_key((Integer) modeValues.get("key"));

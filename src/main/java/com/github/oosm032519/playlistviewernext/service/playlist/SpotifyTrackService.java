@@ -1,3 +1,5 @@
+// SpotifyTrackService.java
+
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +15,31 @@ import java.io.IOException;
 public class SpotifyTrackService {
     private final SpotifyApi spotifyApi;
 
+    /**
+     * コンストラクタ
+     * SpotifyApiオブジェクトを注入します。
+     *
+     * @param spotifyApi Spotify APIクライアント
+     */
     @Autowired
     public SpotifyTrackService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
 
+    /**
+     * 指定されたトラックIDのオーディオ特徴を取得します。
+     *
+     * @param trackId トラックのID
+     * @return AudioFeatures オーディオ特徴オブジェクト
+     * @throws IOException                             入出力例外
+     * @throws SpotifyWebApiException                  Spotify API例外
+     * @throws org.apache.hc.core5.http.ParseException パース例外
+     */
     public AudioFeatures getAudioFeaturesForTrack(String trackId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // トラックIDに基づいてオーディオ特徴を取得するリクエストを作成
         GetAudioFeaturesForTrackRequest audioFeaturesRequest = spotifyApi.getAudioFeaturesForTrack(trackId).build();
+
+        // リクエストを実行してオーディオ特徴を取得
         return audioFeaturesRequest.execute();
     }
 }

@@ -1,3 +1,5 @@
+// MaxAudioFeaturesCalculator.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -12,10 +14,19 @@ import java.util.Map;
 @Service
 public class MaxAudioFeaturesCalculator {
 
+    // ロガーのインスタンスを生成
     private static final Logger logger = LoggerFactory.getLogger(MaxAudioFeaturesCalculator.class);
 
+    /**
+     * トラックリストから最大のオーディオフィーチャーを計算するメソッド
+     *
+     * @param trackList トラックデータのリスト
+     * @return 各オーディオフィーチャーの最大値を含むマップ
+     */
     public Map<String, Float> calculateMaxAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMaxAudioFeatures: 計算開始");
+
+        // 最大オーディオフィーチャーを格納するマップを初期化
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         maxAudioFeatures.put("danceability", 0.0f);
         maxAudioFeatures.put("energy", 0.0f);
@@ -26,9 +37,11 @@ public class MaxAudioFeaturesCalculator {
         maxAudioFeatures.put("liveness", 0.0f);
         maxAudioFeatures.put("speechiness", 0.0f);
 
+        // トラックリストをループして各トラックのオーディオフィーチャーを取得
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
+                // 各オーディオフィーチャーの最大値を更新
                 maxAudioFeatures.put("danceability", Math.max(maxAudioFeatures.get("danceability"), audioFeatures.getDanceability()));
                 maxAudioFeatures.put("energy", Math.max(maxAudioFeatures.get("energy"), audioFeatures.getEnergy()));
                 maxAudioFeatures.put("valence", Math.max(maxAudioFeatures.get("valence"), audioFeatures.getValence()));
@@ -39,6 +52,7 @@ public class MaxAudioFeaturesCalculator {
                 maxAudioFeatures.put("speechiness", Math.max(maxAudioFeatures.get("speechiness"), audioFeatures.getSpeechiness()));
             }
         }
+
         logger.info("calculateMaxAudioFeatures: 最大オーディオフィーチャー計算完了: {}", maxAudioFeatures);
         return maxAudioFeatures;
     }

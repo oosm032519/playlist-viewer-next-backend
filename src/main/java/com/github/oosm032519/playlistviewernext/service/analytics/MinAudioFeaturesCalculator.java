@@ -1,3 +1,5 @@
+// MinAudioFeaturesCalculator.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -12,10 +14,19 @@ import java.util.Map;
 @Service
 public class MinAudioFeaturesCalculator {
 
+    // ロガーの初期化
     private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculator.class);
 
+    /**
+     * トラックリストから各オーディオフィーチャーの最小値を計算するメソッド
+     *
+     * @param trackList トラックのリスト。各トラックはオーディオフィーチャーを含むマップで表される
+     * @return 各オーディオフィーチャーの最小値を含むマップ
+     */
     public Map<String, Float> calculateMinAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMinAudioFeatures: 計算開始");
+
+        // 最小オーディオフィーチャーを格納するマップの初期化
         Map<String, Float> minAudioFeatures = new HashMap<>();
         minAudioFeatures.put("danceability", Float.MAX_VALUE);
         minAudioFeatures.put("energy", Float.MAX_VALUE);
@@ -26,6 +37,7 @@ public class MinAudioFeaturesCalculator {
         minAudioFeatures.put("liveness", Float.MAX_VALUE);
         minAudioFeatures.put("speechiness", Float.MAX_VALUE);
 
+        // トラックリストをループして各オーディオフィーチャーの最小値を計算
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
@@ -39,6 +51,7 @@ public class MinAudioFeaturesCalculator {
                 minAudioFeatures.put("speechiness", Math.min(minAudioFeatures.get("speechiness"), audioFeatures.getSpeechiness()));
             }
         }
+
         logger.info("calculateMinAudioFeatures: 最小オーディオフィーチャー計算完了: {}", minAudioFeatures);
         return minAudioFeatures;
     }
