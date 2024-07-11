@@ -17,40 +17,24 @@ import java.io.IOException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-/**
- * SpotifyClientCredentialsAuthenticationTestクラスは、
- * SpotifyClientCredentialsAuthenticationクラスのユニットテストを行います。
- */
 @ExtendWith(MockitoExtension.class)
 class SpotifyClientCredentialsAuthenticationTest {
 
-    /**
-     * SpotifyAuthServiceのモックオブジェクト
-     */
+    // SpotifyAuthServiceのモックオブジェクト
     @Mock
     private SpotifyAuthService authService;
 
-    /**
-     * テスト対象のSpotifyClientCredentialsAuthenticationオブジェクト
-     */
+    // テスト対象のSpotifyClientCredentialsAuthenticationオブジェクト
     @InjectMocks
     private SpotifyClientCredentialsAuthentication authController;
 
-    /**
-     * 各テストメソッドの前に実行される設定メソッド
-     */
+    // 各テストメソッドの前に実行される設定メソッド
     @BeforeEach
     void setUp() {
         // 各テストメソッドの前に実行される設定
     }
 
-    /**
-     * 認証が成功する場合のテストメソッド
-     *
-     * @throws IOException            入出力例外
-     * @throws ParseException         パース例外
-     * @throws SpotifyWebApiException Spotify API例外
-     */
+    // 認証が成功する場合のテストメソッド
     @Test
     void authenticate_Successfully() throws IOException, ParseException, SpotifyWebApiException {
         // When: 認証メソッドを呼び出す
@@ -60,13 +44,7 @@ class SpotifyClientCredentialsAuthenticationTest {
         verify(authService).getClientCredentialsToken();
     }
 
-    /**
-     * 認証時に例外が発生する場合のテストメソッド
-     *
-     * @throws IOException            入出力例外
-     * @throws ParseException         パース例外
-     * @throws SpotifyWebApiException Spotify API例外
-     */
+    // 認証時に例外が発生する場合のテストメソッド
     @Test
     void authenticate_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
         // Given: authServiceのgetClientCredentialsTokenメソッドがRuntimeExceptionをスローするように設定
