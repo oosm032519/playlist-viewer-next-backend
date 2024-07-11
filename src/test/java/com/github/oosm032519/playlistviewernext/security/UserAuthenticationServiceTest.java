@@ -1,3 +1,5 @@
+// UserAuthenticationServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.security;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+/**
+ * UserAuthenticationServiceのテストクラス
+ */
 @ExtendWith(MockitoExtension.class)
 class UserAuthenticationServiceTest {
 
@@ -20,39 +25,48 @@ class UserAuthenticationServiceTest {
 
     private final UserAuthenticationService userAuthenticationService = new UserAuthenticationService();
 
+    /**
+     * アクセストークンが正常に取得できる場合のテスト
+     */
     @Test
     void getAccessToken_成功時() {
-        // Arrange
+        // Arrange: モックのOAuth2Userから返されるアクセストークンを設定
         String accessToken = "validAccessToken";
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("access_token", accessToken);
         when(principal.getAttributes()).thenReturn(attributes);
 
-        // Act
+        // Act: アクセストークンを取得
         String result = userAuthenticationService.getAccessToken(principal);
 
-        // Assert
+        // Assert: 取得したアクセストークンが期待通りであることを確認
         assertThat(result).isEqualTo(accessToken);
     }
 
+    /**
+     * principalがnullの場合のテスト
+     */
     @Test
     void getAccessToken_認証されていない場合() {
-        // Act
+        // Act: nullのprincipalでアクセストークンを取得
         String result = userAuthenticationService.getAccessToken(null);
 
-        // Assert
+        // Assert: 取得したアクセストークンがnullであることを確認
         assertThat(result).isNull();
     }
 
+    /**
+     * アクセストークンが存在しない場合のテスト
+     */
     @Test
     void getAccessToken_アクセストークンがない場合() {
-        // Arrange
+        // Arrange: モックのOAuth2Userから返される属性にアクセストークンが含まれないように設定
         when(principal.getAttributes()).thenReturn(new HashMap<>());
 
-        // Act
+        // Act: アクセストークンを取得
         String result = userAuthenticationService.getAccessToken(principal);
 
-        // Assert
+        // Assert: 取得したアクセストークンがnullであることを確認
         assertThat(result).isNull();
     }
 }

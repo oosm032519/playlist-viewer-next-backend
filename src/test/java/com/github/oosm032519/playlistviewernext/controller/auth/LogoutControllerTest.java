@@ -1,3 +1,5 @@
+// LogoutControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.service.auth.LogoutService;
@@ -15,6 +17,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
+/**
+ * LogoutControllerのテストクラス
+ */
 class LogoutControllerTest {
 
     private LogoutController logoutController;
@@ -31,6 +36,10 @@ class LogoutControllerTest {
     @Mock
     private HttpServletResponse response;
 
+    /**
+     * 各テストの前に実行されるセットアップメソッド
+     * モックの初期化とLogoutControllerのインスタンス化を行う
+     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -43,28 +52,34 @@ class LogoutControllerTest {
         };
     }
 
+    /**
+     * ログアウトが成功する場合のテスト
+     */
     @Test
     void testLogoutSuccess() {
-        // Arrange
+        // Arrange: ログアウトサービスのモックが何もしないように設定
         doNothing().when(logoutService).processLogout(request, response);
 
-        // Act
+        // Act: ログアウトメソッドを呼び出し
         ResponseEntity<String> responseEntity = logoutController.logout(request, response);
 
-        // Assert
+        // Assert: ステータスコードとレスポンスボディの検証
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals("ログアウトしました", responseEntity.getBody());
     }
 
+    /**
+     * ログアウトが失敗する場合のテスト
+     */
     @Test
     void testLogoutFailure() {
-        // Arrange
+        // Arrange: ログアウトサービスのモックが例外をスローするように設定
         doThrow(new RuntimeException("Logout failed")).when(logoutService).processLogout(request, response);
 
-        // Act
+        // Act: ログアウトメソッドを呼び出し
         ResponseEntity<String> responseEntity = logoutController.logout(request, response);
 
-        // Assert
+        // Assert: ステータスコードとレスポンスボディの検証
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
         assertEquals("ログアウト処理中にエラーが発生しました", responseEntity.getBody());
     }

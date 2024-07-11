@@ -1,3 +1,5 @@
+// SpotifyAuthServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import org.apache.hc.core5.http.ParseException;
@@ -33,13 +35,23 @@ class SpotifyAuthServiceTest {
     @InjectMocks
     private SpotifyAuthService authService;
 
+    /**
+     * 各テストの前に実行されるセットアップメソッド
+     */
     @BeforeEach
     void setUp() {
     }
 
+    /**
+     * 正常系のテスト: クライアントクレデンシャルトークンを取得する
+     *
+     * @throws IOException
+     * @throws SpotifyWebApiException
+     * @throws ParseException
+     */
     @Test
     void testGetClientCredentialsToken_正常系() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
+        // Arrange: モックの設定
         ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
         ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
         ClientCredentials clientCredentials = mock(ClientCredentials.class);
@@ -48,31 +60,41 @@ class SpotifyAuthServiceTest {
         when(clientCredentialsRequest.execute()).thenReturn(clientCredentials);
         when(clientCredentials.getAccessToken()).thenReturn("test-access-token");
 
-        // Act
+        // Act: メソッドの実行
         authService.getClientCredentialsToken();
 
-        // Assert
+        // Assert: 結果の検証
         verify(spotifyApi).setAccessToken("test-access-token");
     }
 
+    /**
+     * 異常系のテスト: APIエラーが発生する場合
+     *
+     * @throws IOException
+     * @throws SpotifyWebApiException
+     * @throws ParseException
+     */
     @Test
     void testGetClientCredentialsToken_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
+        // Arrange: モックの設定
         ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
         ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
         when(spotifyApi.clientCredentials()).thenReturn(builder);
         when(builder.build()).thenReturn(clientCredentialsRequest);
         when(clientCredentialsRequest.execute()).thenThrow(new IOException("API error"));
 
-        // Act & Assert
+        // Act & Assert: メソッドの実行と例外の検証
         assertThatThrownBy(() -> authService.getClientCredentialsToken())
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");
     }
 
+    /**
+     * 正常系のテスト: アクセストークンを設定する
+     */
     @Test
     void testSetAccessToken_正常系() {
-        // Arrange
+        // Arrange: モックの設定
         OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
         OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
         OAuth2AccessToken accessToken = mock(OAuth2AccessToken.class);
@@ -82,21 +104,24 @@ class SpotifyAuthServiceTest {
         when(authorizedClient.getAccessToken()).thenReturn(accessToken);
         when(accessToken.getTokenValue()).thenReturn("test-access-token");
 
-        // Act
+        // Act: メソッドの実行
         authService.setAccessToken(authentication);
 
-        // Assert
+        // Assert: 結果の検証
         verify(spotifyApi).setAccessToken("test-access-token");
     }
 
+    /**
+     * 異常系のテスト: 認証情報が存在しない場合
+     */
     @Test
     void testSetAccessToken_異常系_認証情報なし() {
-        // Arrange
+        // Arrange: モックの設定
         OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
         when(authentication.getName()).thenReturn("test-user");
         when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(null);
 
-        // Act & Assert
+        // Act & Assert: メソッドの実行と例外の検証
         assertThatThrownBy(() -> authService.setAccessToken(authentication))
                 .isInstanceOf(NullPointerException.class);
     }

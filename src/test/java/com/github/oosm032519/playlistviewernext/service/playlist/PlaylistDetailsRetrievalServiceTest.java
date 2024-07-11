@@ -1,3 +1,5 @@
+// PlaylistDetailsRetrievalServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
@@ -15,6 +17,9 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+/**
+ * PlaylistDetailsRetrievalServiceのテストクラス
+ */
 @ExtendWith(MockitoExtension.class)
 class PlaylistDetailsRetrievalServiceTest {
 
@@ -48,14 +53,22 @@ class PlaylistDetailsRetrievalServiceTest {
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
+    /**
+     * 各テストメソッドの前に実行される設定メソッド
+     */
     @BeforeEach
     void setUp() {
         // 各テストメソッドの前に実行される設定
     }
 
+    /**
+     * getPlaylistDetailsメソッドのテスト
+     *
+     * @throws Exception 例外が発生した場合
+     */
     @Test
     void getPlaylistDetails_ReturnsDetailsSuccessfully() throws Exception {
-        // Given
+        // Given: テストデータの準備
         String playlistId = "testPlaylistId";
         PlaylistTrack[] tracks = new PlaylistTrack[]{
                 new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track1").build()).build(),
@@ -73,6 +86,7 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Float> averageAudioFeatures = Map.of("feature1", 0.3f);
         Map<String, Object> modeValues = Map.of("feature1", 0.3f);
 
+        // モックの設定
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
         when(playlistDetailsService.getPlaylistName(playlistId)).thenReturn(playlistName);
         when(playlistDetailsService.getPlaylistOwner(playlistId)).thenReturn(owner);
@@ -83,10 +97,10 @@ class PlaylistDetailsRetrievalServiceTest {
         when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
 
-        // When
+        // When: テスト対象メソッドの実行
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
 
-        // Then
+        // Then: 結果の検証
         assertThat(response.get("tracks")).isInstanceOf(Map.class);
         assertThat(response.get("playlistName")).isEqualTo(playlistName);
         assertThat(response.get("ownerId")).isEqualTo(owner.getId());
@@ -97,6 +111,7 @@ class PlaylistDetailsRetrievalServiceTest {
         assertThat(response.get("averageAudioFeatures")).isEqualTo(averageAudioFeatures);
         assertThat(response.get("modeValues")).isEqualTo(modeValues);
 
+        // モックの呼び出し検証
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
         verify(playlistDetailsService).getPlaylistName(playlistId);
         verify(playlistDetailsService).getPlaylistOwner(playlistId);

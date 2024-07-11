@@ -1,3 +1,5 @@
+// PlaylistDetailsControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
@@ -60,6 +62,7 @@ class PlaylistDetailsControllerTest {
                 mock(Track.class)
         );
 
+        // モックサービスの戻り値を設定
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
         when(playlistAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
         when(playlistAnalyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
@@ -75,6 +78,7 @@ class PlaylistDetailsControllerTest {
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
 
         // Then
+        // レスポンスのステータスコードと内容を検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("genreCounts")).isEqualTo(genreCounts);
@@ -84,6 +88,7 @@ class PlaylistDetailsControllerTest {
         assertThat(response.getBody().get("ownerId")).isEqualTo("ownerId");
         assertThat(response.getBody().get("ownerName")).isEqualTo("Owner Name");
 
+        // モックサービスの呼び出しを検証
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
         verify(playlistAnalyticsService).getGenreCountsForPlaylist(playlistId);
         verify(playlistAnalyticsService).getTop5GenresForPlaylist(playlistId);
@@ -100,16 +105,19 @@ class PlaylistDetailsControllerTest {
     void getPlaylistById_HandlesExceptionGracefully() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
+        // モックサービスが例外をスローするように設定
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
 
         // When
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
 
         // Then
+        // エラーレスポンスのステータスコードと内容を検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("error")).isEqualTo("API error");
 
+        // モックサービスの呼び出しを検証
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }
 }

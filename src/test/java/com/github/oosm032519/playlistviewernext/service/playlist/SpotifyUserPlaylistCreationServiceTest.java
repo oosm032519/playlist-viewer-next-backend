@@ -1,3 +1,5 @@
+// SpotifyUserPlaylistCreationServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import org.junit.jupiter.api.Test;
@@ -50,8 +52,12 @@ class SpotifyUserPlaylistCreationServiceTest {
     private final List<String> trackIds = Arrays.asList("track1", "track2", "track3");
     private final String playlistId = "test_playlist_id";
 
+    /**
+     * プレイリストの作成が成功する場合のテスト
+     */
     @Test
     void createPlaylist_SuccessfulCreation() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
@@ -60,8 +66,10 @@ class SpotifyUserPlaylistCreationServiceTest {
         when(spotifyApi.addItemsToPlaylist(anyString(), any(String[].class))).thenReturn(addItemsToPlaylistRequestBuilder);
         when(addItemsToPlaylistRequestBuilder.build()).thenReturn(addItemsToPlaylistRequest);
 
+        // サービスメソッドの呼び出し
         String result = service.createPlaylist(accessToken, userId, playlistName, trackIds);
 
+        // 結果の検証
         assertThat(result).isEqualTo(playlistId);
         verify(spotifyApi).setAccessToken(accessToken);
         verify(spotifyApi).createPlaylist(userId, playlistName);
@@ -71,58 +79,83 @@ class SpotifyUserPlaylistCreationServiceTest {
         verify(addItemsToPlaylistRequest).execute();
     }
 
+    /**
+     * 空のトラックリストでプレイリストを作成する場合のテスト
+     */
     @Test
     void createPlaylist_EmptyTrackList() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
         when(createPlaylistRequest.execute()).thenReturn(playlist);
         when(playlist.getId()).thenReturn(playlistId);
 
+        // サービスメソッドの呼び出し
         String result = service.createPlaylist(accessToken, userId, playlistName, List.of());
 
+        // 結果の検証
         assertThat(result).isEqualTo(playlistId);
         verify(spotifyApi, never()).addItemsToPlaylist(anyString(), any(String[].class));
     }
 
+    /**
+     * Spotify APIの例外が発生する場合のテスト
+     */
     @Test
     void createPlaylist_SpotifyApiException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
         when(createPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
+        // 例外の検証
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .hasMessage("Spotify API error");
     }
 
+    /**
+     * ネットワークエラーが発生する場合のテスト
+     */
     @Test
     void createPlaylist_IOException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
         when(createPlaylistRequest.execute()).thenThrow(new IOException("Network error"));
 
+        // 例外の検証
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
                 .isInstanceOf(IOException.class)
                 .hasMessage("Network error");
     }
 
+    /**
+     * パースエラーが発生する場合のテスト
+     */
     @Test
     void createPlaylist_ParseException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
         when(createPlaylistRequest.execute()).thenThrow(new org.apache.hc.core5.http.ParseException("Parse error"));
 
+        // 例外の検証
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
                 .isInstanceOf(org.apache.hc.core5.http.ParseException.class)
                 .hasMessage("Parse error");
     }
 
+    /**
+     * トラックの追加に失敗する場合のテスト
+     */
     @Test
     void createPlaylist_AddTracksException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // モックの設定
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.build()).thenReturn(createPlaylistRequest);
@@ -132,6 +165,7 @@ class SpotifyUserPlaylistCreationServiceTest {
         when(addItemsToPlaylistRequestBuilder.build()).thenReturn(addItemsToPlaylistRequest);
         when(addItemsToPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Failed to add tracks"));
 
+        // 例外の検証
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .hasMessage("Failed to add tracks");

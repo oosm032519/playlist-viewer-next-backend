@@ -1,3 +1,5 @@
+// PlaylistViewerNextApplicationTests.java
+
 package com.github.oosm032519.playlistviewernext;
 
 import org.junit.jupiter.api.Test;
@@ -17,28 +19,43 @@ class PlaylistViewerNextApplicationTests {
     @Autowired
     private Environment environment;
 
+    /**
+     * コンテキストが正常にロードされることを確認するテスト
+     */
     @Test
     void contextLoads() {
         assertThat(applicationContext).isNotNull();
     }
 
+    /**
+     * メインメソッドがアプリケーションを正常に起動することを確認するテスト
+     */
     @Test
     void mainMethodStartsApplication() {
         PlaylistViewerNextApplication.main(new String[]{});
         assertThat(applicationContext).isNotNull();
     }
 
+    /**
+     * アプリケーションに期待されるBeanが存在することを確認するテスト
+     */
     @Test
     void applicationHasExpectedBeans() {
         assertThat(applicationContext.getBeanDefinitionNames()).isNotEmpty();
         assertThat(applicationContext.getBean(PlaylistViewerNextApplication.class)).isNotNull();
     }
 
+    /**
+     * アプリケーションの名前が正しいことを確認するテスト
+     */
     @Test
     void applicationNameIsCorrect() {
         assertThat(applicationContext.getId()).isEqualTo("playlist-viewer-next-backend");
     }
 
+    /**
+     * デフォルトのプロファイルが設定されていることを確認するテスト
+     */
     @Test
     void defaultProfileIsSet() {
         String[] activeProfiles = environment.getActiveProfiles();

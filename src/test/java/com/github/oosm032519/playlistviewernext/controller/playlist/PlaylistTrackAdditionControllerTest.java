@@ -1,3 +1,5 @@
+// PlaylistTrackAdditionControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
@@ -35,6 +37,9 @@ class PlaylistTrackAdditionControllerTest {
     @InjectMocks
     private PlaylistTrackAdditionController playlistTrackAdditionController;
 
+    /**
+     * 正常にトラックがプレイリストに追加される場合のテスト
+     */
     @Test
     void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -47,8 +52,10 @@ class PlaylistTrackAdditionControllerTest {
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
+        // ユーザーのアクセストークンを取得するモック設定
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
 
+        // SpotifyのAPI呼び出しの結果をモック設定
         SnapshotResult snapshotResult = mock(SnapshotResult.class);
         when(snapshotResult.getSnapshotId()).thenReturn(snapshotId);
         when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenReturn(snapshotResult);
@@ -60,15 +67,20 @@ class PlaylistTrackAdditionControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + snapshotId);
 
+        // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
         verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }
 
+    /**
+     * 認証されていない場合のテスト
+     */
     @Test
     void addTrackToPlaylist_認証されていない場合() {
         // Arrange
         PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
 
+        // 認証されていない場合のモック設定
         when(userAuthenticationService.getAccessToken(null)).thenReturn(null);
 
         // Act
@@ -78,10 +90,14 @@ class PlaylistTrackAdditionControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("認証が必要です。");
 
+        // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(null);
         verifyNoInteractions(spotifyService);
     }
 
+    /**
+     * アクセストークンがない場合のテスト
+     */
     @Test
     void addTrackToPlaylist_アクセストークンがない場合() {
         // Arrange
@@ -89,6 +105,7 @@ class PlaylistTrackAdditionControllerTest {
         request.setPlaylistId("playlistId123");
         request.setTrackId("trackId456");
 
+        // アクセストークンがない場合のモック設定
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
         // Act
@@ -98,10 +115,14 @@ class PlaylistTrackAdditionControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isEqualTo("認証が必要です。");
 
+        // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
         verifyNoInteractions(spotifyService);
     }
 
+    /**
+     * Spotify APIでエラーが発生した場合のテスト
+     */
     @Test
     void addTrackToPlaylist_SpotifyAPIエラーの場合() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -113,7 +134,10 @@ class PlaylistTrackAdditionControllerTest {
         request.setPlaylistId(playlistId);
         request.setTrackId(trackId);
 
+        // ユーザーのアクセストークンを取得するモック設定
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
+
+        // SpotifyのAPI呼び出しでエラーが発生するモック設定
         when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act
@@ -123,6 +147,7 @@ class PlaylistTrackAdditionControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isEqualTo("エラー: Spotify API error");
 
+        // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
         verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
     }

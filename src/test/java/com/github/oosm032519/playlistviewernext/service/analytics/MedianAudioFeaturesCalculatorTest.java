@@ -1,3 +1,5 @@
+// MedianAudioFeaturesCalculatorTest.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -12,19 +14,32 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.mockito.Mockito.*;
 
+/**
+ * MedianAudioFeaturesCalculatorのテストクラス
+ */
 class MedianAudioFeaturesCalculatorTest {
 
+    /**
+     * テスト対象のMedianAudioFeaturesCalculatorインスタンス
+     */
     @InjectMocks
     private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
 
+    /**
+     * 各テストの前にモックを初期化する
+     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * calculateMedianAudioFeaturesメソッドのテスト
+     * 複数のAudioFeaturesオブジェクトから中央値を計算する
+     */
     @Test
     void testCalculateMedianAudioFeatures() {
-        // Arrange
+        // Arrange: モックのAudioFeaturesオブジェクトを作成し、各プロパティの値を設定する
         AudioFeatures audioFeatures1 = mock(AudioFeatures.class);
         when(audioFeatures1.getDanceability()).thenReturn(0.5f);
         when(audioFeatures1.getEnergy()).thenReturn(0.6f);
@@ -54,10 +69,10 @@ class MedianAudioFeaturesCalculatorTest {
         trackData2.put("audioFeatures", audioFeatures2);
         trackList.add(trackData2);
 
-        // Act
+        // Act: メソッドを実行し、結果を取得する
         Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果が期待通りであることを検証する
         assertThat(result).isNotNull();
         assertThat(result.get("danceability")).isEqualTo(0.55f);
         assertThat(result.get("energy")).isEqualTo(0.65f);
@@ -69,38 +84,50 @@ class MedianAudioFeaturesCalculatorTest {
         assertThat(result.get("speechiness")).isCloseTo(0.35f, within(0.0001f));
     }
 
+    /**
+     * calculateMedianAudioFeaturesメソッドのテスト
+     * 空のリストを入力した場合の動作を確認する
+     */
     @Test
     void testCalculateMedianAudioFeaturesWithEmptyList() {
-        // Arrange
+        // Arrange: 空のリストを作成する
         List<Map<String, Object>> trackList = new ArrayList<>();
 
-        // Act
+        // Act: メソッドを実行し、結果を取得する
         Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果が空であることを検証する
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
     }
 
+    /**
+     * calculateMedianAudioFeaturesメソッドのテスト
+     * AudioFeaturesがnullの場合の動作を確認する
+     */
     @Test
     void testCalculateMedianAudioFeaturesWithNullAudioFeatures() {
-        // Arrange
+        // Arrange: AudioFeaturesがnullのデータを含むリストを作成する
         List<Map<String, Object>> trackList = new ArrayList<>();
         Map<String, Object> trackData = new HashMap<>();
         trackData.put("audioFeatures", null);
         trackList.add(trackData);
 
-        // Act
+        // Act: メソッドを実行し、結果を取得する
         Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果が空であることを検証する
         assertThat(result).isNotNull();
         assertThat(result).isEmpty();
     }
 
+    /**
+     * calculateMedianAudioFeaturesメソッドのテスト
+     * リストに1つのAudioFeaturesオブジェクトのみが含まれる場合の動作を確認する
+     */
     @Test
     void testCalculateMedianAudioFeaturesWithSingleElement() {
-        // Arrange
+        // Arrange: モックのAudioFeaturesオブジェクトを作成し、各プロパティの値を設定する
         AudioFeatures audioFeatures = mock(AudioFeatures.class);
         when(audioFeatures.getDanceability()).thenReturn(0.5f);
         when(audioFeatures.getEnergy()).thenReturn(0.6f);
@@ -116,10 +143,10 @@ class MedianAudioFeaturesCalculatorTest {
         trackData.put("audioFeatures", audioFeatures);
         trackList.add(trackData);
 
-        // Act
+        // Act: メソッドを実行し、結果を取得する
         Map<String, Float> result = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果が期待通りであることを検証する
         assertThat(result).isNotNull();
         assertThat(result.get("danceability")).isEqualTo(0.5f);
         assertThat(result.get("energy")).isEqualTo(0.6f);

@@ -1,3 +1,5 @@
+// LogoutServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,9 @@ class LogoutServiceTest {
     @Mock
     private SecurityContextLogoutHandler logoutHandler;
 
+    /**
+     * 各テストの前にモックの初期化とテスト対象のインスタンスのセットアップを行う
+     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -46,68 +51,83 @@ class LogoutServiceTest {
         SecurityContextHolder.setContext(securityContext);
     }
 
+    /**
+     * 認証されたユーザーがログアウトする際の処理をテストする
+     */
     @Test
     void testProcessLogoutWithAuthenticatedUser() {
-        // Arrange
+        // Arrange: モックの設定
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("testCookie", "testValue")});
 
-        // Act
+        // Act: ログアウト処理を実行
         logoutService.processLogout(request, response);
 
-        // Assert
+        // Assert: ログアウトハンドラが呼び出されたことを検証
         verify(logoutHandler, times(1)).logout(request, response, authentication);
         verify(response, times(1)).addCookie(any(Cookie.class));
     }
 
+    /**
+     * OAuth2認証トークンを持つユーザーがログアウトする際の処理をテストする
+     */
     @Test
     void testProcessLogoutWithOAuth2AuthenticationToken() {
-        // Arrange
+        // Arrange: モックの設定
         OAuth2AuthenticationToken oauthToken = mock(OAuth2AuthenticationToken.class);
         when(securityContext.getAuthentication()).thenReturn(oauthToken);
         when(oauthToken.getName()).thenReturn("testUser");
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("testCookie", "testValue")});
 
-        // Act
+        // Act: ログアウト処理を実行
         logoutService.processLogout(request, response);
 
-        // Assert
+        // Assert: OAuth2クライアントサービスとログアウトハンドラが呼び出されたことを検証
         verify(authorizedClientService, times(1)).removeAuthorizedClient("spotify", "testUser");
         verify(logoutHandler, times(1)).logout(request, response, oauthToken);
         verify(response, times(1)).addCookie(any(Cookie.class));
     }
 
+    /**
+     * 認証情報がない場合のログアウト処理をテストする
+     */
     @Test
     void testProcessLogoutWithoutAuthentication() {
-        // Arrange
+        // Arrange: モックの設定
         when(securityContext.getAuthentication()).thenReturn(null);
         when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("testCookie", "testValue")});
 
-        // Act
+        // Act: ログアウト処理を実行
         logoutService.processLogout(request, response);
 
-        // Assert
+        // Assert: ログアウトハンドラが呼び出されないことを検証
         verify(logoutHandler, never()).logout(request, response, null);
         verify(response, times(1)).addCookie(any(Cookie.class));
     }
 
+    /**
+     * クッキーがない場合のログアウト処理をテストする
+     */
     @Test
     void testProcessLogoutWithNoCookies() {
-        // Arrange
+        // Arrange: モックの設定
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(request.getCookies()).thenReturn(null);
 
-        // Act
+        // Act: ログアウト処理を実行
         logoutService.processLogout(request, response);
 
-        // Assert
+        // Assert: ログアウトハンドラが呼び出されたことを検証
         verify(logoutHandler, times(1)).logout(request, response, authentication);
         verify(response, never()).addCookie(any(Cookie.class));
     }
 
+    /**
+     * 複数のクッキーがある場合のログアウト処理をテストする
+     */
     @Test
     void testProcessLogoutWithMultipleCookies() {
-        // Arrange
+        // Arrange: モックの設定
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(request.getCookies()).thenReturn(new Cookie[]{
                 new Cookie("cookie1", "value1"),
@@ -115,10 +135,10 @@ class LogoutServiceTest {
                 new Cookie("cookie3", "value3")
         });
 
-        // Act
+        // Act: ログアウト処理を実行
         logoutService.processLogout(request, response);
 
-        // Assert
+        // Assert: ログアウトハンドラが呼び出されたことを検証
         verify(logoutHandler, times(1)).logout(request, response, authentication);
         verify(response, times(3)).addCookie(any(Cookie.class));
     }

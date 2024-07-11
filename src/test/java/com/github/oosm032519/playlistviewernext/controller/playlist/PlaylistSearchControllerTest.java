@@ -1,3 +1,5 @@
+// PlaylistSearchControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
@@ -40,40 +42,49 @@ class PlaylistSearchControllerTest {
 
     @Test
     void searchPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // テスト用のクエリ、オフセット、リミットを設定
         String query = "test query";
         int offset = 0;
         int limit = 20;
+
+        // 期待されるプレイリストのリストを作成
         List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
                 new PlaylistSimplified.Builder().setName("Playlist 1").build(),
                 new PlaylistSimplified.Builder().setName("Playlist 2").build()
         );
 
+        // モックサービスが期待されるプレイリストを返すように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedPlaylists);
 
-        // When
+        // コントローラーのメソッドを呼び出し、レスポンスを取得
         ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
-        // Then
+        // レスポンスのステータスコードとボディを検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
+
+        // モックサービスのメソッドが呼び出されたことを検証
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
     }
 
     @Test
     void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // テスト用のクエリ、オフセット、リミットを設定
         String query = "test query";
         int offset = 0;
         int limit = 20;
+
+        // モックサービスが例外をスローするように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(new RuntimeException("API error"));
 
-        // When
+        // コントローラーのメソッドを呼び出し、レスポンスを取得
         ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
-        // Then
+        // レスポンスのステータスコードとボディを検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNull();
+
+        // モックサービスのメソッドが呼び出されたことを検証
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
     }
 }

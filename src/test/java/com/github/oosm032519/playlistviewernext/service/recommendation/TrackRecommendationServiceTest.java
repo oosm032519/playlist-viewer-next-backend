@@ -1,3 +1,5 @@
+// TrackRecommendationServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
 import org.apache.hc.core5.http.ParseException;
@@ -50,47 +52,48 @@ class TrackRecommendationServiceTest {
 
     @Test
     void getRecommendations_ReturnsRecommendationsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // Given: テスト用のジャンルと推奨トラックのリストを設定
         List<String> top5Genres = List.of("pop", "rock");
         List<Track> recommendations = List.of(
                 new Track.Builder().setName("Recommended Track 1").build(),
                 new Track.Builder().setName("Recommended Track 2").build()
         );
 
+        // recommendationServiceのgetRecommendationsメソッドが呼ばれたときに、recommendationsを返すように設定
         when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenReturn(recommendations);
 
-        // When
+        // When: trackRecommendationServiceWrapperのgetRecommendationsメソッドを呼び出す
         List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Then
+        // Then: 結果が期待通りであることを確認し、recommendationServiceのgetRecommendationsメソッドが呼ばれたことを検証
         assertThat(result).isEqualTo(recommendations);
         verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
     void getRecommendations_ReturnsEmptyListWhenGenresAreEmpty() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // Given: 空のジャンルリストを設定
         List<String> top5Genres = Collections.emptyList();
 
-        // When
+        // When: trackRecommendationServiceWrapperのgetRecommendationsメソッドを呼び出す
         List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Then
+        // Then: 結果が空のリストであることを確認し、recommendationServiceのgetRecommendationsメソッドが呼ばれないことを検証
         assertThat(result).isEmpty();
         verify(recommendationService, never()).getRecommendations(anyList(), anyMap(), anyMap(), anyMap(), anyMap());
     }
 
     @Test
     void getRecommendations_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // Given: テスト用のジャンルリストを設定し、recommendationServiceのgetRecommendationsメソッドがSpotifyWebApiExceptionをスローするように設定
         List<String> top5Genres = List.of("pop", "rock");
 
         when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new SpotifyWebApiException("API Error"));
 
-        // When
+        // When: trackRecommendationServiceWrapperのgetRecommendationsメソッドを呼び出す
         List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Then
+        // Then: 結果が空のリストであることを確認し、recommendationServiceのgetRecommendationsメソッドが呼ばれたことと、エラーログが記録されたことを検証
         assertThat(result).isEmpty();
         verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(SpotifyWebApiException.class));
@@ -98,15 +101,15 @@ class TrackRecommendationServiceTest {
 
     @Test
     void getRecommendations_HandlesIOExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // Given: テスト用のジャンルリストを設定し、recommendationServiceのgetRecommendationsメソッドがIOExceptionをスローするように設定
         List<String> top5Genres = List.of("pop", "rock");
 
         when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new IOException("IO Error"));
 
-        // When
+        // When: trackRecommendationServiceWrapperのgetRecommendationsメソッドを呼び出す
         List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Then
+        // Then: 結果が空のリストであることを確認し、recommendationServiceのgetRecommendationsメソッドが呼ばれたことと、エラーログが記録されたことを検証
         assertThat(result).isEmpty();
         verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(IOException.class));
@@ -114,15 +117,15 @@ class TrackRecommendationServiceTest {
 
     @Test
     void getRecommendations_HandlesParseExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Given
+        // Given: テスト用のジャンルリストを設定し、recommendationServiceのgetRecommendationsメソッドがParseExceptionをスローするように設定
         List<String> top5Genres = List.of("pop", "rock");
 
         when(recommendationService.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)).thenThrow(new ParseException("Parse Error"));
 
-        // When
+        // When: trackRecommendationServiceWrapperのgetRecommendationsメソッドを呼び出す
         List<Track> result = trackRecommendationServiceWrapper.getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Then
+        // Then: 結果が空のリストであることを確認し、recommendationServiceのgetRecommendationsメソッドが呼ばれたことと、エラーログが記録されたことを検証
         assertThat(result).isEmpty();
         verify(recommendationService).getRecommendations(top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         verify(logger).error(eq("TrackRecommendationService: Spotify APIの呼び出し中にエラーが発生しました。"), any(ParseException.class));

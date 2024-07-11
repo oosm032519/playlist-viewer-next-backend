@@ -1,3 +1,5 @@
+// AudioFeatureSetterTest.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,11 +26,19 @@ class AudioFeatureSetterTest {
 
     private Map<String, Float> audioFeatures;
 
+    /**
+     * 各テストの前に実行されるセットアップメソッド。
+     * audioFeaturesマップを初期化します。
+     */
     @BeforeEach
     void setUp() {
         audioFeatures = new HashMap<>();
     }
 
+    /**
+     * setMaxAudioFeaturesメソッドのテスト。
+     * audioFeaturesマップに値を設定し、builderのmaxメソッドが正しく呼び出されることを検証します。
+     */
     @Test
     void testSetMaxAudioFeatures() {
         audioFeatures.put("danceability", 0.8f);
@@ -53,12 +63,20 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * setMaxAudioFeaturesメソッドのテスト。
+     * 空のaudioFeaturesマップを使用し、builderのメソッドが呼び出されないことを検証します。
+     */
     @Test
     void testSetMaxAudioFeatures_EmptyMap() {
         audioFeatureSetter.setMaxAudioFeatures(builder, audioFeatures);
         verifyNoInteractions(builder);
     }
 
+    /**
+     * setMinAudioFeaturesメソッドのテスト。
+     * audioFeaturesマップに値を設定し、builderのminメソッドが正しく呼び出されることを検証します。
+     */
     @Test
     void testSetMinAudioFeatures() {
         audioFeatures.put("danceability", 0.2f);
@@ -83,12 +101,20 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * setMinAudioFeaturesメソッドのテスト。
+     * 空のaudioFeaturesマップを使用し、builderのメソッドが呼び出されないことを検証します。
+     */
     @Test
     void testSetMinAudioFeatures_EmptyMap() {
         audioFeatureSetter.setMinAudioFeatures(builder, audioFeatures);
         verifyNoInteractions(builder);
     }
 
+    /**
+     * setMedianAudioFeaturesメソッドのテスト。
+     * audioFeaturesマップに値を設定し、builderのtargetメソッドが正しく呼び出されることを検証します。
+     */
     @Test
     void testSetMedianAudioFeatures() {
         audioFeatures.put("danceability", 0.5f);
@@ -113,12 +139,20 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * setMedianAudioFeaturesメソッドのテスト。
+     * 空のaudioFeaturesマップを使用し、builderのメソッドが呼び出されないことを検証します。
+     */
     @Test
     void testSetMedianAudioFeatures_EmptyMap() {
         audioFeatureSetter.setMedianAudioFeatures(builder, audioFeatures);
         verifyNoInteractions(builder);
     }
 
+    /**
+     * setModeValuesメソッドのテスト。
+     * modeValuesマップに値を設定し、builderのtargetメソッドが正しく呼び出されることを検証します。
+     */
     @Test
     void testSetModeValues() {
         Map<String, Object> modeValues = new HashMap<>();
@@ -134,6 +168,10 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * setModeValuesメソッドのテスト。
+     * 空のmodeValuesマップを使用し、builderのメソッドが呼び出されないことを検証します。
+     */
     @Test
     void testSetModeValues_EmptyMap() {
         Map<String, Object> modeValues = new HashMap<>();
@@ -141,6 +179,10 @@ class AudioFeatureSetterTest {
         verifyNoInteractions(builder);
     }
 
+    /**
+     * setModeValuesメソッドのテスト。
+     * modeValuesマップに"MINOR"モードを設定し、builderのtarget_modeメソッドが正しく呼び出されることを検証します。
+     */
     @Test
     void testSetModeValues_MinorMode() {
         Map<String, Object> modeValues = new HashMap<>();

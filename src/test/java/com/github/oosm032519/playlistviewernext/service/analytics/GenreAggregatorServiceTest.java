@@ -1,3 +1,5 @@
+// GenreAggregatorServiceTest.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
@@ -20,6 +22,9 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+/**
+ * GenreAggregatorServiceのテストクラス
+ */
 @ExtendWith(MockitoExtension.class)
 class GenreAggregatorServiceTest {
 
@@ -29,6 +34,9 @@ class GenreAggregatorServiceTest {
     @InjectMocks
     private GenreAggregatorService genreAggregatorService;
 
+    /**
+     * ジャンルを集計し、ソートされたジャンルのカウントを返すテスト
+     */
     @Test
     void aggregateGenres_ShouldReturnSortedGenreCounts() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -52,6 +60,9 @@ class GenreAggregatorServiceTest {
         assertThat(new ArrayList<>(result.entrySet())).isEqualTo(sortedEntries);
     }
 
+    /**
+     * 空のプレイリストを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleEmptyPlaylist() {
         // Arrange
@@ -64,6 +75,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * ジャンルがないアーティストを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleArtistsWithNoGenres() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -78,6 +92,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * アーティストがいないトラックを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleTracksWithNoArtists() {
         // Arrange
@@ -90,6 +107,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * 例外を処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -104,6 +124,9 @@ class GenreAggregatorServiceTest {
         }
     }
 
+    /**
+     * SpotifyWebApiExceptionを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleSpotifyWebApiException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -118,6 +141,9 @@ class GenreAggregatorServiceTest {
         }
     }
 
+    /**
+     * ParseExceptionを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleParseException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -132,6 +158,9 @@ class GenreAggregatorServiceTest {
         }
     }
 
+    /**
+     * nullのPlaylistTrackを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleNullPlaylistTrack() {
         // Arrange
@@ -144,6 +173,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * nullのTrackを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleNullTrack() {
         // Arrange
@@ -158,6 +190,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * 重複するジャンルを処理するテスト
+     */
     @Test
     void aggregateGenres_ShouldHandleDuplicateGenres() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -175,6 +210,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).containsEntry("pop", 2);
     }
 
+    /**
+     * 上位のジャンルを返すテスト
+     */
     @Test
     void getTopGenres_ShouldReturnTopGenres() {
         // Arrange
@@ -194,6 +232,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).containsExactly("rock", "pop", "jazz", "blues", "classical");
     }
 
+    /**
+     * 5つ未満のジャンルを処理するテスト
+     */
     @Test
     void getTopGenres_ShouldHandleLessThan5Genres() {
         // Arrange
@@ -210,6 +251,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).containsExactly("rock", "pop", "jazz");
     }
 
+    /**
+     * 制限がジャンル数より多い場合の処理をテスト
+     */
     @Test
     void getTopGenres_ShouldHandleLimitGreaterThanGenreCount() {
         // Arrange
@@ -225,6 +269,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).containsExactly("rock", "pop");
     }
 
+    /**
+     * 制限がゼロの場合の処理をテスト
+     */
     @Test
     void getTopGenres_ShouldHandleZeroLimit() {
         // Arrange
@@ -239,6 +286,9 @@ class GenreAggregatorServiceTest {
         assertThat(result).isEmpty();
     }
 
+    /**
+     * モックのPlaylistTrack配列を作成するヘルパーメソッド
+     */
     private PlaylistTrack[] createMockPlaylistTracks() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);
         PlaylistTrack track2 = mock(PlaylistTrack.class);
@@ -257,6 +307,9 @@ class GenreAggregatorServiceTest {
         return new PlaylistTrack[]{track1, track2};
     }
 
+    /**
+     * アーティストがいないモックのPlaylistTrack配列を作成するヘルパーメソッド
+     */
     private PlaylistTrack[] createMockPlaylistTracksWithNoArtists() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);
         PlaylistTrack track2 = mock(PlaylistTrack.class);

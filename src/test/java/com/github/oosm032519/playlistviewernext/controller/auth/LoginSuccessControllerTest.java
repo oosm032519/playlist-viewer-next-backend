@@ -1,3 +1,5 @@
+// LoginSuccessControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,27 +25,48 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+/**
+ * LoginSuccessControllerのテストクラス
+ */
 @WebMvcTest(LoginSuccessController.class)
 @ExtendWith(OutputCaptureExtension.class)
 public class LoginSuccessControllerTest {
 
+    /**
+     * MockMvcを使用してコントローラをテストするためのオブジェクト
+     */
     @Autowired
     private MockMvc mockMvc;
 
+    /**
+     * OAuth2Userのモックオブジェクト
+     */
     @MockBean
     private OAuth2User principal;
 
+    /**
+     * テスト対象のコントローラ
+     */
     @InjectMocks
     private LoginSuccessController loginSuccessController;
 
+    /**
+     * 各テストの前に実行されるセットアップメソッド
+     */
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * ログイン成功時のリダイレクトとログ出力をテストするメソッド
+     *
+     * @param output キャプチャされたログ出力
+     * @throws Exception テスト中に発生した例外
+     */
     @Test
     public void testLoginSuccess(CapturedOutput output) throws Exception {
-        // Arrange
+        // Arrange: テスト用のユーザー情報を設定
         String userId = "testUserId";
         String accessToken = "testAccessToken";
         Map<String, Object> attributes = new HashMap<>();
@@ -54,14 +77,14 @@ public class LoginSuccessControllerTest {
         when(principal.getAttribute("access_token")).thenReturn(accessToken);
         when(principal.getName()).thenReturn("testUser");
 
-        // Act
+        // Act: /loginSuccessエンドポイントにリクエストを送信
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/loginSuccess")
                         .with(SecurityMockMvcRequestPostProcessors.oauth2Login().oauth2User(principal)))
                 .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
                 .andExpect(MockMvcResultMatchers.redirectedUrl("http://localhost:3000/"))
                 .andReturn();
 
-        // Assert
+        // Assert: ログ出力とレスポンスの検証
         assertThat(output).contains("User successfully authenticated: testUserId");
         assertThat(output).contains("Access token: testAccessToken");
         assertThat(result.getResponse().getStatus()).isEqualTo(302);

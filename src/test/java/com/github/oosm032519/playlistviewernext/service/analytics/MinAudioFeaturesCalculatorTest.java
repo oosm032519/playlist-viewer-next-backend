@@ -1,3 +1,5 @@
+// MinAudioFeaturesCalculatorTest.java
+
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,14 +25,21 @@ public class MinAudioFeaturesCalculatorTest {
 
     private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculatorTest.class);
 
+    /**
+     * テストの前にモックの初期化を行うメソッド。
+     */
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
+    /**
+     * calculateMinAudioFeaturesメソッドの正常系テスト。
+     * 複数のAudioFeaturesオブジェクトから最小値を計算する。
+     */
     @Test
     public void testCalculateMinAudioFeatures() {
-        // Arrange
+        // Arrange: テストデータの準備
         AudioFeatures audioFeatures1 = mock(AudioFeatures.class);
         when(audioFeatures1.getDanceability()).thenReturn(0.5f);
         when(audioFeatures1.getEnergy()).thenReturn(0.6f);
@@ -59,10 +68,10 @@ public class MinAudioFeaturesCalculatorTest {
 
         List<Map<String, Object>> trackList = List.of(track1, track2);
 
-        // Act
+        // Act: メソッドの実行
         Map<String, Float> result = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isNotNull();
         assertThat(result.get("danceability")).isEqualTo(0.4f);
         assertThat(result.get("energy")).isEqualTo(0.5f);
@@ -74,9 +83,13 @@ public class MinAudioFeaturesCalculatorTest {
         assertThat(result.get("speechiness")).isEqualTo(0.3f);
     }
 
+    /**
+     * calculateMinAudioFeaturesメソッドの異常系テスト。
+     * AudioFeaturesがnullの場合の処理を確認する。
+     */
     @Test
     public void testCalculateMinAudioFeaturesWithNullAudioFeatures() {
-        // Arrange
+        // Arrange: テストデータの準備
         Map<String, Object> track1 = new HashMap<>();
         track1.put("audioFeatures", null);
 
@@ -85,10 +98,10 @@ public class MinAudioFeaturesCalculatorTest {
 
         List<Map<String, Object>> trackList = List.of(track1, track2);
 
-        // Act
+        // Act: メソッドの実行
         Map<String, Float> result = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isNotNull();
         assertThat(result.get("danceability")).isEqualTo(Float.MAX_VALUE);
         assertThat(result.get("energy")).isEqualTo(Float.MAX_VALUE);
