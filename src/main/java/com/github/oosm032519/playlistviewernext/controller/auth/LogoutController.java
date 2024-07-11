@@ -1,5 +1,3 @@
-// LogoutController.java
-
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.service.auth.LogoutService;
@@ -15,58 +13,53 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * ログアウト処理を担当するコントローラークラス。
+ */
 @RestController
 public class LogoutController {
 
-    // ロガーの初期化
-    private static final Logger logger = LoggerFactory.getLogger(LogoutController.class);
-
-    // ログアウト成功メッセージ
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogoutController.class);
     private static final String LOGOUT_SUCCESS_MESSAGE = "ログアウトしました";
-
-    // ログアウトエラーメッセージ
     private static final String LOGOUT_ERROR_MESSAGE = "ログアウト処理中にエラーが発生しました";
 
-    // LogoutServiceのインスタンス
     private final LogoutService logoutService;
 
     /**
-     * コンストラクタ
+     * LogoutControllerのコンストラクタ。
      *
-     * @param authorizedClientService OAuth2AuthorizedClientServiceのインスタンス
+     * @param authorizedClientService OAuth2認証済みクライアントサービス
      */
     public LogoutController(OAuth2AuthorizedClientService authorizedClientService) {
         this.logoutService = createLogoutService(authorizedClientService);
-        logger.debug("LogoutController initialized");
+        LOGGER.debug("LogoutController initialized");
     }
 
     /**
-     * LogoutServiceを生成するメソッド
+     * LogoutServiceを作成するメソッド。テスト時のモック化を容易にするためにprotectedにしています。
      *
-     * @param authorizedClientService OAuth2AuthorizedClientServiceのインスタンス
-     * @return 新しいLogoutServiceのインスタンス
+     * @param authorizedClientService OAuth2認証済みクライアントサービス
+     * @return 新しいLogoutServiceインスタンス
      */
     protected LogoutService createLogoutService(OAuth2AuthorizedClientService authorizedClientService) {
         return new LogoutService(authorizedClientService, new SecurityContextLogoutHandler());
     }
 
     /**
-     * ログアウト処理を行うエンドポイント
+     * ログアウト処理を行うエンドポイント。
      *
-     * @param request  HttpServletRequestのインスタンス
-     * @param response HttpServletResponseのインスタンス
+     * @param request  HTTPリクエスト
+     * @param response HTTPレスポンス
      * @return ログアウト結果のResponseEntity
      */
     @PostMapping("/api/logout")
     public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        logger.debug("Logout process started");
+        LOGGER.debug("Logout process started");
         try {
-            // ログアウト処理の実行
             logoutService.processLogout(request, response);
             return ResponseEntity.ok(LOGOUT_SUCCESS_MESSAGE);
         } catch (Exception e) {
-            // ログアウト処理中のエラーハンドリング
-            logger.error("Logout process failed", e);
+            LOGGER.error("Logout process failed", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(LOGOUT_ERROR_MESSAGE);
         }
     }

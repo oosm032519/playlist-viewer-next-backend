@@ -1,5 +1,3 @@
-// LogoutControllerTest.java
-
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.service.auth.LogoutService;
@@ -17,9 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-/**
- * LogoutControllerのテストクラス
- */
+// LogoutControllerのテストクラス
 class LogoutControllerTest {
 
     private LogoutController logoutController;
@@ -43,7 +39,6 @@ class LogoutControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        logoutController = new LogoutController(authorizedClientService);
         logoutController = new LogoutController(authorizedClientService) {
             @Override
             protected LogoutService createLogoutService(OAuth2AuthorizedClientService authorizedClientService) {
@@ -52,9 +47,7 @@ class LogoutControllerTest {
         };
     }
 
-    /**
-     * ログアウトが成功する場合のテスト
-     */
+    // ログアウトが成功する場合のテスト
     @Test
     void testLogoutSuccess() {
         // Arrange: ログアウトサービスのモックが何もしないように設定
@@ -68,9 +61,7 @@ class LogoutControllerTest {
         assertEquals("ログアウトしました", responseEntity.getBody());
     }
 
-    /**
-     * ログアウトが失敗する場合のテスト
-     */
+    // ログアウトが失敗する場合のテスト
     @Test
     void testLogoutFailure() {
         // Arrange: ログアウトサービスのモックが例外をスローするように設定
