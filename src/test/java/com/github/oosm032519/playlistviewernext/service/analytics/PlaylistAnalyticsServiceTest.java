@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,6 +51,21 @@ class PlaylistAnalyticsServiceTest {
     }
 
     @Test
+    void getGenreCountsForPlaylist_ThrowsPlaylistAnalyticsException() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
+        String playlistId = "testPlaylistId";
+        when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenThrow(new IOException("Test IOException"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistAnalyticsServiceWrapper.getGenreCountsForPlaylist(playlistId))
+                .isInstanceOf(PlaylistAnalyticsException.class)
+                .hasMessageContaining("Failed to get genre counts for playlist: " + playlistId);
+
+        // モックが正しく呼び出されたかを検証
+        verify(analyticsService).getGenreCountsForPlaylist(playlistId);
+    }
+
+    @Test
     void getTop5GenresForPlaylist_ReturnsTop5GenresSuccessfully() throws IOException, ParseException, SpotifyWebApiException, PlaylistAnalyticsException {
         // Arrange
         String playlistId = "testPlaylistId";
@@ -63,6 +79,21 @@ class PlaylistAnalyticsServiceTest {
 
         // Assert
         assertThat(actualTop5Genres).isEqualTo(expectedTop5Genres);
+
+        // モックが正しく呼び出されたかを検証
+        verify(analyticsService).getTop5GenresForPlaylist(playlistId);
+    }
+
+    @Test
+    void getTop5GenresForPlaylist_ThrowsPlaylistAnalyticsException() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
+        String playlistId = "testPlaylistId";
+        when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenThrow(new ParseException("Test ParseException"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistAnalyticsServiceWrapper.getTop5GenresForPlaylist(playlistId))
+                .isInstanceOf(PlaylistAnalyticsException.class)
+                .hasMessageContaining("Failed to get top 5 genres for playlist: " + playlistId);
 
         // モックが正しく呼び出されたかを検証
         verify(analyticsService).getTop5GenresForPlaylist(playlistId);

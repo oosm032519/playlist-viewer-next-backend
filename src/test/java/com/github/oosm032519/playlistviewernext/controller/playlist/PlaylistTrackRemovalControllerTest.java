@@ -17,7 +17,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-    // PlaylistTrackRemovalControllerTest クラスは、PlaylistTrackRemovalController クラスのユニットテストを行います。
 @ExtendWith(MockitoExtension.class)
 class PlaylistTrackRemovalControllerTest {
 
@@ -55,21 +54,52 @@ class PlaylistTrackRemovalControllerTest {
         }
 
         @Test
-        @DisplayName("Should delegate to SpotifyPlaylistTrackRemovalService")
-        void shouldDelegateToPlaylistService() {
+        @DisplayName("Should return OK when track is successfully removed")
+        void shouldReturnOkWhenTrackIsSuccessfullyRemoved() {
             // Arrange
             OAuth2User principal = mock(OAuth2User.class);
-            ResponseEntity<String> expectedResponse = ResponseEntity.ok()
-                    .header("Content-Type", "application/json")
-                    .body("{\"message\": \"トラックが正常に削除されました。\"}");
-            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(expectedResponse);
+            ResponseEntity<String> serviceResponse = ResponseEntity.ok().body("Success");
+            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
             // Act
             ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             // Assert
-            assertThat(response).isEqualTo(expectedResponse);
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isEqualTo("{\"message\": \"トラックが正常に削除されました。\"}");
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+        }
+
+        @Test
+        @DisplayName("Should return INTERNAL_SERVER_ERROR when track removal fails")
+        void shouldReturnInternalServerErrorWhenTrackRemovalFails() {
+            // Arrange
+            OAuth2User principal = mock(OAuth2User.class);
+            ResponseEntity<String> serviceResponse = ResponseEntity.ok().body(null);
+            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
+
+            // Act
+            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+
+            // Assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(response.getBody()).isEqualTo("{\"error\": \"トラックの削除に失敗しました。\"}");
+            verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+        }
+
+        @Test
+        @DisplayName("Should set correct content type")
+        void shouldSetCorrectContentType() {
+            // Arrange
+            OAuth2User principal = mock(OAuth2User.class);
+            ResponseEntity<String> serviceResponse = ResponseEntity.ok().body("Success");
+            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
+
+            // Act
+            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+
+            // Assert
+            assertThat(response.getHeaders().getContentType().toString()).isEqualTo("application/json");
         }
     }
 }
