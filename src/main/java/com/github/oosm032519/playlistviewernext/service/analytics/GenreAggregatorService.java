@@ -1,5 +1,3 @@
-// GenreAggregatorService.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
@@ -37,25 +35,21 @@ public class GenreAggregatorService {
     public Map<String, Integer> aggregateGenres(PlaylistTrack[] tracks) {
         Map<String, Integer> genreCount = new HashMap<>();
 
-        for (PlaylistTrack track : tracks) {
-            if (track == null || track.getTrack() == null) {
-                continue; // track または track.getTrack() が null の場合はスキップ
-            }
-            Track fullTrack = (Track) track.getTrack();
-            Arrays.stream(fullTrack.getArtists())
-                    .map(artist -> {
-                        try {
-                            // アーティストのジャンルを取得
-                            return artistService.getArtistGenres(artist.getId());
-                        } catch (IOException | SpotifyWebApiException | ParseException e) {
-                            throw new RuntimeException(e); // 例外発生時はランタイム例外をスロー
-                        }
-                    })
-                    .flatMap(Collection::stream)
-                    .forEach(genre -> genreCount.put(genre, genreCount.getOrDefault(genre, 0) + 1)); // ジャンルの出現回数をカウント
-        }
+        Arrays.stream(tracks)
+                .filter(Objects::nonNull)
+                .map(PlaylistTrack::getTrack)
+                .filter(Objects::nonNull)
+                .map(Track.class::cast)
+                .flatMap(track -> Arrays.stream(track.getArtists()))
+                .flatMap(artist -> {
+                    try {
+                        return artistService.getArtistGenres(artist.getId()).stream();
+                    } catch (IOException | SpotifyWebApiException | ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .forEach(genre -> genreCount.merge(genre, 1, Integer::sum));
 
-        // 出現回数の降順でソートして結果を返す
         return genreCount.entrySet()
                 .stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())

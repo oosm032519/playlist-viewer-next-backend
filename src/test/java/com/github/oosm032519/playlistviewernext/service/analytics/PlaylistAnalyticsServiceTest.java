@@ -52,7 +52,7 @@ class PlaylistAnalyticsServiceTest {
      * @throws SpotifyWebApiException Spotify API例外
      */
     @Test
-    void getGenreCountsForPlaylist_ReturnsGenreCountsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
+    void getGenreCountsForPlaylist_ReturnsGenreCountsSuccessfully() throws IOException, ParseException, SpotifyWebApiException, PlaylistAnalyticsException {
         // Given: テストの前提条件を設定
         String playlistId = "testPlaylistId";
         Map<String, Integer> genreCounts = Map.of("pop", 2, "rock", 1);
@@ -78,7 +78,7 @@ class PlaylistAnalyticsServiceTest {
      * @throws SpotifyWebApiException Spotify API例外
      */
     @Test
-    void getTop5GenresForPlaylist_ReturnsTop5GenresSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
+    void getTop5GenresForPlaylist_ReturnsTop5GenresSuccessfully() throws IOException, ParseException, SpotifyWebApiException, PlaylistAnalyticsException {
         // Given: テストの前提条件を設定
         String playlistId = "testPlaylistId";
         List<String> top5Genres = List.of("pop", "rock");

@@ -1,5 +1,3 @@
-// MaxAudioFeaturesCalculator.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -14,8 +12,19 @@ import java.util.Map;
 @Service
 public class MaxAudioFeaturesCalculator {
 
-    // ロガーのインスタンスを生成
     private static final Logger logger = LoggerFactory.getLogger(MaxAudioFeaturesCalculator.class);
+
+    private static final String DANCEABILITY = "danceability";
+    private static final String ENERGY = "energy";
+    private static final String VALENCE = "valence";
+    private static final String TEMPO = "tempo";
+    private static final String ACOUSTICNESS = "acousticness";
+    private static final String INSTRUMENTALNESS = "instrumentalness";
+    private static final String LIVENESS = "liveness";
+    private static final String SPEECHINESS = "speechiness";
+
+    private static final String CALCULATION_START = "calculateMaxAudioFeatures: 計算開始";
+    private static final String CALCULATION_COMPLETE = "calculateMaxAudioFeatures: 最大オーディオフィーチャー計算完了: {}";
 
     /**
      * トラックリストから最大のオーディオフィーチャーを計算するメソッド
@@ -24,36 +33,42 @@ public class MaxAudioFeaturesCalculator {
      * @return 各オーディオフィーチャーの最大値を含むマップ
      */
     public Map<String, Float> calculateMaxAudioFeatures(List<Map<String, Object>> trackList) {
-        logger.info("calculateMaxAudioFeatures: 計算開始");
+        logger.info(CALCULATION_START);
 
-        // 最大オーディオフィーチャーを格納するマップを初期化
-        Map<String, Float> maxAudioFeatures = new HashMap<>();
-        maxAudioFeatures.put("danceability", 0.0f);
-        maxAudioFeatures.put("energy", 0.0f);
-        maxAudioFeatures.put("valence", 0.0f);
-        maxAudioFeatures.put("tempo", 0.0f);
-        maxAudioFeatures.put("acousticness", 0.0f);
-        maxAudioFeatures.put("instrumentalness", 0.0f);
-        maxAudioFeatures.put("liveness", 0.0f);
-        maxAudioFeatures.put("speechiness", 0.0f);
+        Map<String, Float> maxAudioFeatures = initializeMaxAudioFeatures();
 
-        // トラックリストをループして各トラックのオーディオフィーチャーを取得
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
-                // 各オーディオフィーチャーの最大値を更新
-                maxAudioFeatures.put("danceability", Math.max(maxAudioFeatures.get("danceability"), audioFeatures.getDanceability()));
-                maxAudioFeatures.put("energy", Math.max(maxAudioFeatures.get("energy"), audioFeatures.getEnergy()));
-                maxAudioFeatures.put("valence", Math.max(maxAudioFeatures.get("valence"), audioFeatures.getValence()));
-                maxAudioFeatures.put("tempo", Math.max(maxAudioFeatures.get("tempo"), audioFeatures.getTempo()));
-                maxAudioFeatures.put("acousticness", Math.max(maxAudioFeatures.get("acousticness"), audioFeatures.getAcousticness()));
-                maxAudioFeatures.put("instrumentalness", Math.max(maxAudioFeatures.get("instrumentalness"), audioFeatures.getInstrumentalness()));
-                maxAudioFeatures.put("liveness", Math.max(maxAudioFeatures.get("liveness"), audioFeatures.getLiveness()));
-                maxAudioFeatures.put("speechiness", Math.max(maxAudioFeatures.get("speechiness"), audioFeatures.getSpeechiness()));
+                updateMaxAudioFeatures(maxAudioFeatures, audioFeatures);
             }
         }
 
-        logger.info("calculateMaxAudioFeatures: 最大オーディオフィーチャー計算完了: {}", maxAudioFeatures);
+        logger.info(CALCULATION_COMPLETE, maxAudioFeatures);
         return maxAudioFeatures;
+    }
+
+    private Map<String, Float> initializeMaxAudioFeatures() {
+        Map<String, Float> maxAudioFeatures = new HashMap<>(8);
+        maxAudioFeatures.put(DANCEABILITY, 0.0f);
+        maxAudioFeatures.put(ENERGY, 0.0f);
+        maxAudioFeatures.put(VALENCE, 0.0f);
+        maxAudioFeatures.put(TEMPO, 0.0f);
+        maxAudioFeatures.put(ACOUSTICNESS, 0.0f);
+        maxAudioFeatures.put(INSTRUMENTALNESS, 0.0f);
+        maxAudioFeatures.put(LIVENESS, 0.0f);
+        maxAudioFeatures.put(SPEECHINESS, 0.0f);
+        return maxAudioFeatures;
+    }
+
+    private void updateMaxAudioFeatures(Map<String, Float> maxAudioFeatures, AudioFeatures audioFeatures) {
+        maxAudioFeatures.put(DANCEABILITY, Math.max(maxAudioFeatures.get(DANCEABILITY), audioFeatures.getDanceability()));
+        maxAudioFeatures.put(ENERGY, Math.max(maxAudioFeatures.get(ENERGY), audioFeatures.getEnergy()));
+        maxAudioFeatures.put(VALENCE, Math.max(maxAudioFeatures.get(VALENCE), audioFeatures.getValence()));
+        maxAudioFeatures.put(TEMPO, Math.max(maxAudioFeatures.get(TEMPO), audioFeatures.getTempo()));
+        maxAudioFeatures.put(ACOUSTICNESS, Math.max(maxAudioFeatures.get(ACOUSTICNESS), audioFeatures.getAcousticness()));
+        maxAudioFeatures.put(INSTRUMENTALNESS, Math.max(maxAudioFeatures.get(INSTRUMENTALNESS), audioFeatures.getInstrumentalness()));
+        maxAudioFeatures.put(LIVENESS, Math.max(maxAudioFeatures.get(LIVENESS), audioFeatures.getLiveness()));
+        maxAudioFeatures.put(SPEECHINESS, Math.max(maxAudioFeatures.get(SPEECHINESS), audioFeatures.getSpeechiness()));
     }
 }

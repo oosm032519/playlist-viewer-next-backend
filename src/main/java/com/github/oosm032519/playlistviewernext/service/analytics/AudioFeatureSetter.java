@@ -1,11 +1,10 @@
-// AudioFeatureSetter.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 @Component
 public class AudioFeatureSetter {
@@ -17,30 +16,7 @@ public class AudioFeatureSetter {
      * @param maxAudioFeatures 最大オーディオ特徴量のマップ
      */
     public void setMaxAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> maxAudioFeatures) {
-        if (maxAudioFeatures.containsKey("danceability")) {
-            builder.max_danceability(maxAudioFeatures.get("danceability"));
-        }
-        if (maxAudioFeatures.containsKey("energy")) {
-            builder.max_energy(maxAudioFeatures.get("energy"));
-        }
-        if (maxAudioFeatures.containsKey("valence")) {
-            builder.max_valence(maxAudioFeatures.get("valence"));
-        }
-        if (maxAudioFeatures.containsKey("tempo")) {
-            builder.max_tempo(maxAudioFeatures.get("tempo"));
-        }
-        if (maxAudioFeatures.containsKey("acousticness")) {
-            builder.max_acousticness(maxAudioFeatures.get("acousticness"));
-        }
-        if (maxAudioFeatures.containsKey("instrumentalness")) {
-            builder.max_instrumentalness(maxAudioFeatures.get("instrumentalness"));
-        }
-        if (maxAudioFeatures.containsKey("liveness")) {
-            builder.max_liveness(maxAudioFeatures.get("liveness"));
-        }
-        if (maxAudioFeatures.containsKey("speechiness")) {
-            builder.max_speechiness(maxAudioFeatures.get("speechiness"));
-        }
+        setAudioFeatures(builder, maxAudioFeatures, this::setMaxFeature);
     }
 
     /**
@@ -50,30 +26,7 @@ public class AudioFeatureSetter {
      * @param minAudioFeatures 最小オーディオ特徴量のマップ
      */
     public void setMinAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> minAudioFeatures) {
-        if (minAudioFeatures.containsKey("danceability")) {
-            builder.min_danceability(minAudioFeatures.get("danceability"));
-        }
-        if (minAudioFeatures.containsKey("energy")) {
-            builder.min_energy(minAudioFeatures.get("energy"));
-        }
-        if (minAudioFeatures.containsKey("valence")) {
-            builder.min_valence(minAudioFeatures.get("valence"));
-        }
-        if (minAudioFeatures.containsKey("tempo")) {
-            builder.min_tempo(minAudioFeatures.get("tempo"));
-        }
-        if (minAudioFeatures.containsKey("acousticness")) {
-            builder.min_acousticness(minAudioFeatures.get("acousticness"));
-        }
-        if (minAudioFeatures.containsKey("instrumentalness")) {
-            builder.min_instrumentalness(minAudioFeatures.get("instrumentalness"));
-        }
-        if (minAudioFeatures.containsKey("liveness")) {
-            builder.min_liveness(minAudioFeatures.get("liveness"));
-        }
-        if (minAudioFeatures.containsKey("speechiness")) {
-            builder.min_speechiness(minAudioFeatures.get("speechiness"));
-        }
+        setAudioFeatures(builder, minAudioFeatures, this::setMinFeature);
     }
 
     /**
@@ -83,30 +36,7 @@ public class AudioFeatureSetter {
      * @param medianAudioFeatures 中央値のオーディオ特徴量のマップ
      */
     public void setMedianAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> medianAudioFeatures) {
-        if (medianAudioFeatures.containsKey("danceability")) {
-            builder.target_danceability(medianAudioFeatures.get("danceability"));
-        }
-        if (medianAudioFeatures.containsKey("energy")) {
-            builder.target_energy(medianAudioFeatures.get("energy"));
-        }
-        if (medianAudioFeatures.containsKey("valence")) {
-            builder.target_valence(medianAudioFeatures.get("valence"));
-        }
-        if (medianAudioFeatures.containsKey("tempo")) {
-            builder.target_tempo(medianAudioFeatures.get("tempo"));
-        }
-        if (medianAudioFeatures.containsKey("acousticness")) {
-            builder.target_acousticness(medianAudioFeatures.get("acousticness"));
-        }
-        if (medianAudioFeatures.containsKey("instrumentalness")) {
-            builder.target_instrumentalness(medianAudioFeatures.get("instrumentalness"));
-        }
-        if (medianAudioFeatures.containsKey("liveness")) {
-            builder.target_liveness(medianAudioFeatures.get("liveness"));
-        }
-        if (medianAudioFeatures.containsKey("speechiness")) {
-            builder.target_speechiness(medianAudioFeatures.get("speechiness"));
-        }
+        setAudioFeatures(builder, medianAudioFeatures, this::setMedianFeature);
     }
 
     /**
@@ -124,6 +54,99 @@ public class AudioFeatureSetter {
         }
         if (modeValues.containsKey("time_signature")) {
             builder.target_time_signature((Integer) modeValues.get("time_signature"));
+        }
+    }
+
+    private void setAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> audioFeatures, BiConsumer<GetRecommendationsRequest.Builder, Map.Entry<String, Float>> featureSetter) {
+        for (Map.Entry<String, Float> entry : audioFeatures.entrySet()) {
+            featureSetter.accept(builder, entry);
+        }
+    }
+
+    private void setMaxFeature(GetRecommendationsRequest.Builder builder, Map.Entry<String, Float> entry) {
+        switch (entry.getKey()) {
+            case "danceability":
+                builder.max_danceability(entry.getValue());
+                break;
+            case "energy":
+                builder.max_energy(entry.getValue());
+                break;
+            case "valence":
+                builder.max_valence(entry.getValue());
+                break;
+            case "tempo":
+                builder.max_tempo(entry.getValue());
+                break;
+            case "acousticness":
+                builder.max_acousticness(entry.getValue());
+                break;
+            case "instrumentalness":
+                builder.max_instrumentalness(entry.getValue());
+                break;
+            case "liveness":
+                builder.max_liveness(entry.getValue());
+                break;
+            case "speechiness":
+                builder.max_speechiness(entry.getValue());
+                break;
+        }
+    }
+
+    private void setMinFeature(GetRecommendationsRequest.Builder builder, Map.Entry<String, Float> entry) {
+        switch (entry.getKey()) {
+            case "danceability":
+                builder.min_danceability(entry.getValue());
+                break;
+            case "energy":
+                builder.min_energy(entry.getValue());
+                break;
+            case "valence":
+                builder.min_valence(entry.getValue());
+                break;
+            case "tempo":
+                builder.min_tempo(entry.getValue());
+                break;
+            case "acousticness":
+                builder.min_acousticness(entry.getValue());
+                break;
+            case "instrumentalness":
+                builder.min_instrumentalness(entry.getValue());
+                break;
+            case "liveness":
+                builder.min_liveness(entry.getValue());
+                break;
+            case "speechiness":
+                builder.min_speechiness(entry.getValue());
+                break;
+        }
+    }
+
+    private void setMedianFeature(GetRecommendationsRequest.Builder builder, Map.Entry<String, Float> entry) {
+        switch (entry.getKey()) {
+            case "danceability":
+                builder.target_danceability(entry.getValue());
+                break;
+            case "energy":
+                builder.target_energy(entry.getValue());
+                break;
+            case "valence":
+                builder.target_valence(entry.getValue());
+                break;
+            case "tempo":
+                builder.target_tempo(entry.getValue());
+                break;
+            case "acousticness":
+                builder.target_acousticness(entry.getValue());
+                break;
+            case "instrumentalness":
+                builder.target_instrumentalness(entry.getValue());
+                break;
+            case "liveness":
+                builder.target_liveness(entry.getValue());
+                break;
+            case "speechiness":
+                builder.target_speechiness(entry.getValue());
+                break;
         }
     }
 }

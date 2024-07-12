@@ -1,5 +1,3 @@
-// MedianAudioFeaturesCalculator.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -12,8 +10,12 @@ import java.util.*;
 @Service
 public class MedianAudioFeaturesCalculator {
 
-    // ロガーのインスタンスを作成
     private static final Logger logger = LoggerFactory.getLogger(MedianAudioFeaturesCalculator.class);
+
+    private static final List<String> FEATURE_KEYS = Arrays.asList(
+            "danceability", "energy", "valence", "tempo",
+            "acousticness", "instrumentalness", "liveness", "speechiness"
+    );
 
     /**
      * トラックリストのオーディオフィーチャーの中央値を計算するメソッド
@@ -24,50 +26,53 @@ public class MedianAudioFeaturesCalculator {
     public Map<String, Float> calculateMedianAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMedianAudioFeatures: 計算開始");
 
-        // 各オーディオフィーチャーの値を格納するマップ
-        Map<String, List<Float>> featureValues = new HashMap<>();
-        featureValues.put("danceability", new ArrayList<>());
-        featureValues.put("energy", new ArrayList<>());
-        featureValues.put("valence", new ArrayList<>());
-        featureValues.put("tempo", new ArrayList<>());
-        featureValues.put("acousticness", new ArrayList<>());
-        featureValues.put("instrumentalness", new ArrayList<>());
-        featureValues.put("liveness", new ArrayList<>());
-        featureValues.put("speechiness", new ArrayList<>());
+        Map<String, List<Float>> featureValues = initializeFeatureValues();
 
-        // トラックリストをループして各オーディオフィーチャーの値を収集
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
-                featureValues.get("danceability").add(audioFeatures.getDanceability());
-                featureValues.get("energy").add(audioFeatures.getEnergy());
-                featureValues.get("valence").add(audioFeatures.getValence());
-                featureValues.get("tempo").add(audioFeatures.getTempo());
-                featureValues.get("acousticness").add(audioFeatures.getAcousticness());
-                featureValues.get("instrumentalness").add(audioFeatures.getInstrumentalness());
-                featureValues.get("liveness").add(audioFeatures.getLiveness());
-                featureValues.get("speechiness").add(audioFeatures.getSpeechiness());
+                addFeatureValues(featureValues, audioFeatures);
             }
         }
 
-        // 各オーディオフィーチャーの中央値を計算
+        Map<String, Float> medianAudioFeatures = calculateMedians(featureValues);
+
+        logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
+        return medianAudioFeatures;
+    }
+
+    private Map<String, List<Float>> initializeFeatureValues() {
+        Map<String, List<Float>> featureValues = new HashMap<>();
+        for (String key : FEATURE_KEYS) {
+            featureValues.put(key, new ArrayList<>());
+        }
+        return featureValues;
+    }
+
+    private void addFeatureValues(Map<String, List<Float>> featureValues, AudioFeatures audioFeatures) {
+        featureValues.get("danceability").add(audioFeatures.getDanceability());
+        featureValues.get("energy").add(audioFeatures.getEnergy());
+        featureValues.get("valence").add(audioFeatures.getValence());
+        featureValues.get("tempo").add(audioFeatures.getTempo());
+        featureValues.get("acousticness").add(audioFeatures.getAcousticness());
+        featureValues.get("instrumentalness").add(audioFeatures.getInstrumentalness());
+        featureValues.get("liveness").add(audioFeatures.getLiveness());
+        featureValues.get("speechiness").add(audioFeatures.getSpeechiness());
+    }
+
+    private Map<String, Float> calculateMedians(Map<String, List<Float>> featureValues) {
         Map<String, Float> medianAudioFeatures = new HashMap<>();
         for (Map.Entry<String, List<Float>> entry : featureValues.entrySet()) {
             List<Float> values = entry.getValue();
             if (!values.isEmpty()) {
                 Collections.sort(values);
                 int size = values.size();
-                float median;
-                if (size % 2 == 0) {
-                    median = (values.get(size / 2 - 1) + values.get(size / 2)) / 2;
-                } else {
-                    median = values.get(size / 2);
-                }
+                float median = (size % 2 == 0) ?
+                        (values.get(size / 2 - 1) + values.get(size / 2)) / 2 :
+                        values.get(size / 2);
                 medianAudioFeatures.put(entry.getKey(), median);
             }
         }
-
-        logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
         return medianAudioFeatures;
     }
 }

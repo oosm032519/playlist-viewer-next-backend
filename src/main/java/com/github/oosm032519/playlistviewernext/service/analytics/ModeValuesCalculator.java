@@ -1,5 +1,3 @@
-// ModeValuesCalculator.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -8,11 +6,11 @@ import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ModeValuesCalculator {
 
-    // ロガーの初期化
     private static final Logger logger = LoggerFactory.getLogger(ModeValuesCalculator.class);
 
     /**
@@ -24,67 +22,73 @@ public class ModeValuesCalculator {
     public Map<String, Object> calculateModeValues(List<Map<String, Object>> trackList) {
         logger.info("calculateModeValues: 計算開始");
 
-        // 数値フィーチャーの値を格納するマップの初期化
-        Map<String, List<Integer>> numericFeatureValues = new HashMap<>();
-        numericFeatureValues.put("key", new ArrayList<>());
-        numericFeatureValues.put("time_signature", new ArrayList<>());
+        Map<String, List<Integer>> numericFeatureValues = initializeNumericFeatureValues();
+        Map<String, List<String>> stringFeatureValues = initializeStringFeatureValues();
 
-        // 文字列フィーチャーの値を格納するマップの初期化
-        Map<String, List<String>> stringFeatureValues = new HashMap<>();
-        stringFeatureValues.put("mode", new ArrayList<>());
-
-        // トラックリストをループし、各フィーチャーの値を収集
-        for (Map<String, Object> trackData : trackList) {
+        trackList.forEach(trackData -> {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
-                numericFeatureValues.get("key").add(audioFeatures.getKey());
-                numericFeatureValues.get("time_signature").add(audioFeatures.getTimeSignature());
-                stringFeatureValues.get("mode").add(audioFeatures.getMode().toString());
+                collectNumericFeatures(numericFeatureValues, audioFeatures);
+                collectStringFeatures(stringFeatureValues, audioFeatures);
             }
-        }
+        });
 
-        // 最頻値を格納するマップの初期化
         Map<String, Object> modeValues = new HashMap<>();
-
-        // 数値フィーチャーの最頻値を計算
-        for (Map.Entry<String, List<Integer>> entry : numericFeatureValues.entrySet()) {
-            modeValues.put(entry.getKey(), calculateNumericMode(entry.getValue()));
-        }
-
-        // 文字列フィーチャーの最頻値を計算
-        for (Map.Entry<String, List<String>> entry : stringFeatureValues.entrySet()) {
-            modeValues.put(entry.getKey(), calculateStringMode(entry.getValue()));
-        }
+        calculateModeValues(numericFeatureValues, modeValues, this::calculateNumericMode);
+        calculateModeValues(stringFeatureValues, modeValues, this::calculateStringMode);
 
         logger.info("calculateModeValues: 最頻値計算完了: {}", modeValues);
         return modeValues;
     }
 
-    /**
-     * 数値リストから最頻値を計算するヘルパーメソッド
-     *
-     * @param values 数値のリスト
-     * @return 最頻値
-     */
-    private int calculateNumericMode(List<Integer> values) {
-        Map<Integer, Integer> frequencyMap = new HashMap<>();
-        for (int value : values) {
-            frequencyMap.put(value, frequencyMap.getOrDefault(value, 0) + 1);
-        }
-        return Collections.max(frequencyMap.entrySet(), Map.Entry.comparingByValue()).getKey();
+    private Map<String, List<Integer>> initializeNumericFeatureValues() {
+        Map<String, List<Integer>> numericFeatureValues = new HashMap<>();
+        numericFeatureValues.put("key", new ArrayList<>());
+        numericFeatureValues.put("time_signature", new ArrayList<>());
+        return numericFeatureValues;
     }
 
-    /**
-     * 文字列リストから最頻値を計算するヘルパーメソッド
-     *
-     * @param values 文字列のリスト
-     * @return 最頻値
-     */
+    private Map<String, List<String>> initializeStringFeatureValues() {
+        Map<String, List<String>> stringFeatureValues = new HashMap<>();
+        stringFeatureValues.put("mode", new ArrayList<>());
+        return stringFeatureValues;
+    }
+
+    private void collectNumericFeatures(Map<String, List<Integer>> numericFeatureValues, AudioFeatures audioFeatures) {
+        numericFeatureValues.get("key").add(audioFeatures.getKey());
+        numericFeatureValues.get("time_signature").add(audioFeatures.getTimeSignature());
+    }
+
+    private void collectStringFeatures(Map<String, List<String>> stringFeatureValues, AudioFeatures audioFeatures) {
+        stringFeatureValues.get("mode").add(audioFeatures.getMode().toString());
+    }
+
+    private <T> void calculateModeValues(Map<String, List<T>> featureValues, Map<String, Object> modeValues, ModeCalculator<T> calculator) {
+        featureValues.forEach((key, values) -> modeValues.put(key, calculator.calculateMode(values)));
+    }
+
+    private int calculateNumericMode(List<Integer> values) {
+        return values.stream()
+                .collect(Collectors.groupingBy(value -> value, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow(() -> new IllegalArgumentException("List is empty"))
+                .getKey();
+    }
+
     private String calculateStringMode(List<String> values) {
-        Map<String, Integer> frequencyMap = new HashMap<>();
-        for (String value : values) {
-            frequencyMap.put(value, frequencyMap.getOrDefault(value, 0) + 1);
-        }
-        return Collections.max(frequencyMap.entrySet(), Map.Entry.comparingByValue()).getKey();
+        return values.stream()
+                .collect(Collectors.groupingBy(value -> value, Collectors.counting()))
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .orElseThrow(() -> new IllegalArgumentException("List is empty"))
+                .getKey();
+    }
+
+    @FunctionalInterface
+    private interface ModeCalculator<T> {
+        T calculateMode(List<T> values);
     }
 }

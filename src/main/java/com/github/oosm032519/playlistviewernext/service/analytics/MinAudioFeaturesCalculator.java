@@ -1,5 +1,3 @@
-// MinAudioFeaturesCalculator.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.slf4j.Logger;
@@ -7,15 +5,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * トラックリストから各オーディオフィーチャーの最小値を計算するサービスクラス
+ */
 @Service
 public class MinAudioFeaturesCalculator {
 
-    // ロガーの初期化
     private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculator.class);
+
+    /**
+     * オーディオフィーチャーの種類を列挙する列挙型
+     */
+    private enum AudioFeatureType {
+        DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS
+    }
 
     /**
      * トラックリストから各オーディオフィーチャーの最小値を計算するメソッド
@@ -27,32 +35,44 @@ public class MinAudioFeaturesCalculator {
         logger.info("calculateMinAudioFeatures: 計算開始");
 
         // 最小オーディオフィーチャーを格納するマップの初期化
-        Map<String, Float> minAudioFeatures = new HashMap<>();
-        minAudioFeatures.put("danceability", Float.MAX_VALUE);
-        minAudioFeatures.put("energy", Float.MAX_VALUE);
-        minAudioFeatures.put("valence", Float.MAX_VALUE);
-        minAudioFeatures.put("tempo", Float.MAX_VALUE);
-        minAudioFeatures.put("acousticness", Float.MAX_VALUE);
-        minAudioFeatures.put("instrumentalness", Float.MAX_VALUE);
-        minAudioFeatures.put("liveness", Float.MAX_VALUE);
-        minAudioFeatures.put("speechiness", Float.MAX_VALUE);
+        Map<AudioFeatureType, Float> minAudioFeatures = new EnumMap<>(AudioFeatureType.class);
+        for (AudioFeatureType featureType : AudioFeatureType.values()) {
+            minAudioFeatures.put(featureType, Float.MAX_VALUE);
+        }
 
         // トラックリストをループして各オーディオフィーチャーの最小値を計算
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
-                minAudioFeatures.put("danceability", Math.min(minAudioFeatures.get("danceability"), audioFeatures.getDanceability()));
-                minAudioFeatures.put("energy", Math.min(minAudioFeatures.get("energy"), audioFeatures.getEnergy()));
-                minAudioFeatures.put("valence", Math.min(minAudioFeatures.get("valence"), audioFeatures.getValence()));
-                minAudioFeatures.put("tempo", Math.min(minAudioFeatures.get("tempo"), audioFeatures.getTempo()));
-                minAudioFeatures.put("acousticness", Math.min(minAudioFeatures.get("acousticness"), audioFeatures.getAcousticness()));
-                minAudioFeatures.put("instrumentalness", Math.min(minAudioFeatures.get("instrumentalness"), audioFeatures.getInstrumentalness()));
-                minAudioFeatures.put("liveness", Math.min(minAudioFeatures.get("liveness"), audioFeatures.getLiveness()));
-                minAudioFeatures.put("speechiness", Math.min(minAudioFeatures.get("speechiness"), audioFeatures.getSpeechiness()));
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.DANCEABILITY, audioFeatures.getDanceability());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.ENERGY, audioFeatures.getEnergy());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.VALENCE, audioFeatures.getValence());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.TEMPO, audioFeatures.getTempo());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.ACOUSTICNESS, audioFeatures.getAcousticness());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.INSTRUMENTALNESS, audioFeatures.getInstrumentalness());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.LIVENESS, audioFeatures.getLiveness());
+                updateMinAudioFeature(minAudioFeatures, AudioFeatureType.SPEECHINESS, audioFeatures.getSpeechiness());
             }
         }
 
-        logger.info("calculateMinAudioFeatures: 最小オーディオフィーチャー計算完了: {}", minAudioFeatures);
-        return minAudioFeatures;
+        // 結果をマップに変換
+        Map<String, Float> result = new HashMap<>();
+        for (Map.Entry<AudioFeatureType, Float> entry : minAudioFeatures.entrySet()) {
+            result.put(entry.getKey().name().toLowerCase(), entry.getValue());
+        }
+
+        logger.info("calculateMinAudioFeatures: 最小オーディオフィーチャー計算完了: {}", result);
+        return result;
+    }
+
+    /**
+     * 指定されたオーディオフィーチャーの最小値を更新するヘルパーメソッド
+     *
+     * @param minAudioFeatures 最小オーディオフィーチャーを格納するマップ
+     * @param featureType      オーディオフィーチャーの種類
+     * @param newValue         新しい値
+     */
+    private void updateMinAudioFeature(Map<AudioFeatureType, Float> minAudioFeatures, AudioFeatureType featureType, float newValue) {
+        minAudioFeatures.put(featureType, Math.min(minAudioFeatures.get(featureType), newValue));
     }
 }
