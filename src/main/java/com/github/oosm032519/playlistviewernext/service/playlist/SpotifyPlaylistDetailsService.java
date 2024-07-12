@@ -1,11 +1,9 @@
-// SpotifyPlaylistDetailsService.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
@@ -24,9 +22,22 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param spotifyApi Spotify APIのインスタンス
      */
-    @Autowired
     public SpotifyPlaylistDetailsService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
+    }
+
+    /**
+     * 指定されたプレイリストIDのプレイリスト情報を取得するメソッド
+     *
+     * @param playlistId プレイリストのID
+     * @return プレイリスト情報
+     * @throws IOException                             Spotify APIとの通信中にエラーが発生した場合
+     * @throws SpotifyWebApiException                  Spotify APIがエラーレスポンスを返した場合
+     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析中にエラーが発生した場合
+     */
+    private Playlist getPlaylist(String playlistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
+        return getPlaylistRequest.execute();
     }
 
     /**
@@ -34,15 +45,12 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリスト内のトラックの配列
-     * @throws IOException                             入出力エラーが発生した場合
-     * @throws SpotifyWebApiException                  Spotify APIのエラーが発生した場合
-     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析エラーが発生した場合
+     * @throws IOException                             Spotify APIとの通信中にエラーが発生した場合
+     * @throws SpotifyWebApiException                  Spotify APIがエラーレスポンスを返した場合
+     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析中にエラーが発生した場合
      */
     public PlaylistTrack[] getPlaylistTracks(String playlistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // プレイリスト取得リクエストを作成
-        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-        // リクエストを実行し、プレイリストのトラック情報を取得
-        return getPlaylistRequest.execute().getTracks().getItems();
+        return getPlaylist(playlistId).getTracks().getItems();
     }
 
     /**
@@ -50,15 +58,12 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリストの名前
-     * @throws IOException                             入出力エラーが発生した場合
-     * @throws SpotifyWebApiException                  Spotify APIのエラーが発生した場合
-     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析エラーが発生した場合
+     * @throws IOException                             Spotify APIとの通信中にエラーが発生した場合
+     * @throws SpotifyWebApiException                  Spotify APIがエラーレスポンスを返した場合
+     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析中にエラーが発生した場合
      */
     public String getPlaylistName(String playlistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // プレイリスト取得リクエストを作成
-        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-        // リクエストを実行し、プレイリストの名前を取得
-        return getPlaylistRequest.execute().getName();
+        return getPlaylist(playlistId).getName();
     }
 
     /**
@@ -66,14 +71,11 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリストのオーナー情報
-     * @throws IOException                             入出力エラーが発生した場合
-     * @throws SpotifyWebApiException                  Spotify APIのエラーが発生した場合
-     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析エラーが発生した場合
+     * @throws IOException                             Spotify APIとの通信中にエラーが発生した場合
+     * @throws SpotifyWebApiException                  Spotify APIがエラーレスポンスを返した場合
+     * @throws org.apache.hc.core5.http.ParseException レスポンスの解析中にエラーが発生した場合
      */
     public User getPlaylistOwner(String playlistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // プレイリスト取得リクエストを作成
-        GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-        // リクエストを実行し、プレイリストのオーナー情報を取得
-        return getPlaylistRequest.execute().getOwner();
+        return getPlaylist(playlistId).getOwner();
     }
 }

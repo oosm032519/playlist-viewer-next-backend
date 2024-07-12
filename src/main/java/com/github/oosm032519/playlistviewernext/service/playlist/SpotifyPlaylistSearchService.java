@@ -1,8 +1,5 @@
-// SpotifyPlaylistSearchService.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -14,25 +11,19 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SpotifyPlaylistSearchService {
 
-    // Spotify APIのインスタンスを保持するフィールド
     private final SpotifyApi spotifyApi;
 
-    /**
-     * コンストラクタ
-     *
-     * @param spotifyApi Spotify APIのインスタンス
-     */
-    @Autowired
     public SpotifyPlaylistSearchService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
 
     /**
-     * 指定されたクエリに基づいてSpotifyのプレイリストを検索するメソッド
+     * 指定されたクエリに基づいてSpotifyのプレイリストを検索します。
      *
      * @param query  検索クエリ
      * @param offset 検索結果のオフセット
@@ -43,16 +34,25 @@ public class SpotifyPlaylistSearchService {
      * @throws org.apache.hc.core5.http.ParseException パース例外
      */
     public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // プレイリスト検索リクエストを構築
-        SearchPlaylistsRequest searchPlaylistsRequest = spotifyApi.searchPlaylists(query)
+        SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
+        Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
+        return getPlaylistsFromResult(searchResult);
+    }
+
+    private SearchPlaylistsRequest buildSearchRequest(String query, int offset, int limit) {
+        return spotifyApi.searchPlaylists(query)
                 .limit(limit)
                 .offset(offset)
                 .build();
+    }
 
-        // リクエストを実行して検索結果を取得
-        Paging<PlaylistSimplified> playlistSimplifiedPaging = searchPlaylistsRequest.execute();
+    private Paging<PlaylistSimplified> executeSearch(SearchPlaylistsRequest request) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        return request.execute();
+    }
 
-        // 検索結果のプレイリストをリストとして返す
-        return playlistSimplifiedPaging.getItems() != null ? Arrays.asList(playlistSimplifiedPaging.getItems()) : Collections.emptyList();
+    private List<PlaylistSimplified> getPlaylistsFromResult(Paging<PlaylistSimplified> result) {
+        return Optional.ofNullable(result.getItems())
+                .map(Arrays::asList)
+                .orElse(Collections.emptyList());
     }
 }

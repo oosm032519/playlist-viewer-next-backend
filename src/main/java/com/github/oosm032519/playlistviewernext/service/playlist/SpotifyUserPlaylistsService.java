@@ -1,5 +1,3 @@
-// SpotifyUserPlaylistsService.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
@@ -16,6 +14,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SpotifyUserPlaylistsService {
@@ -23,7 +22,7 @@ public class SpotifyUserPlaylistsService {
     private final SpotifyAuthService authService;
 
     /**
-     * コンストラクタ。SpotifyApiとSpotifyAuthServiceを注入します。
+     * SpotifyUserPlaylistsServiceのコンストラクタ。
      *
      * @param spotifyApi  Spotify API クライアント
      * @param authService Spotify 認証サービス
@@ -44,19 +43,15 @@ public class SpotifyUserPlaylistsService {
      * @throws org.apache.hc.core5.http.ParseException パース例外
      */
     public List<PlaylistSimplified> getCurrentUsersPlaylists(OAuth2AuthenticationToken authentication) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // 認証トークンを使用してアクセストークンを設定
         authService.setAccessToken(authentication);
+        return getPlaylists();
+    }
 
-        // 現在のユーザーのプレイリストを取得するリクエストを作成
+    private List<PlaylistSimplified> getPlaylists() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
         GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
-
-        // リクエストを実行してプレイリストのページング情報を取得
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
-
-        // プレイリストのアイテムを取得
-        PlaylistSimplified[] items = playlistsPaging.getItems();
-
-        // プレイリストのアイテムが存在する場合はリストとして返し、存在しない場合は空のリストを返す
-        return items != null ? Arrays.asList(items) : Collections.emptyList();
+        return Optional.ofNullable(playlistsPaging.getItems())
+                .map(Arrays::asList)
+                .orElse(Collections.emptyList());
     }
 }
