@@ -1,5 +1,3 @@
-// LogoutService.java
-
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import org.slf4j.Logger;
@@ -17,23 +15,23 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Optional;
 
+/**
+ * LogoutService handles the logout process including clearing the security context,
+ * removing OAuth2 authorized clients, and expiring cookies.
+ */
 public class LogoutService {
 
-    // ロガーのインスタンスを生成
     private static final Logger logger = LoggerFactory.getLogger(LogoutService.class);
-    // Spotifyのクライアント登録ID
     private static final String SPOTIFY_CLIENT_REGISTRATION_ID = "spotify";
 
-    // OAuth2AuthorizedClientServiceのインスタンス
     private final OAuth2AuthorizedClientService authorizedClientService;
-    // SecurityContextLogoutHandlerのインスタンス
     private final SecurityContextLogoutHandler logoutHandler;
 
     /**
-     * コンストラクタ
+     * Constructs a new LogoutService with the given OAuth2AuthorizedClientService and SecurityContextLogoutHandler.
      *
-     * @param authorizedClientService OAuth2AuthorizedClientServiceのインスタンス
-     * @param logoutHandler           SecurityContextLogoutHandlerのインスタンス
+     * @param authorizedClientService the OAuth2AuthorizedClientService instance
+     * @param logoutHandler           the SecurityContextLogoutHandler instance
      */
     public LogoutService(OAuth2AuthorizedClientService authorizedClientService, SecurityContextLogoutHandler logoutHandler) {
         this.authorizedClientService = authorizedClientService;
@@ -41,46 +39,29 @@ public class LogoutService {
     }
 
     /**
-     * ログアウト処理を行うメソッド
+     * Processes the logout by clearing the security context, removing OAuth2 clients, and expiring cookies.
      *
-     * @param request  HttpServletRequestのインスタンス
-     * @param response HttpServletResponseのインスタンス
+     * @param request  the HttpServletRequest instance
+     * @param response the HttpServletResponse instance
      */
     public void processLogout(HttpServletRequest request, HttpServletResponse response) {
-        // 認証情報が存在する場合はログアウト処理を実行
         Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
                 .ifPresentOrElse(
                         auth -> performLogout(auth, request, response),
                         () -> logger.debug("No authentication found in SecurityContext")
                 );
-        // 全てのクッキーを削除
         removeAllCookies(request, response);
-        // セキュリティコンテキストをクリア
         SecurityContextHolder.clearContext();
         logger.info("Logout process completed successfully");
     }
 
-    /**
-     * ログアウト処理を実行するメソッド
-     *
-     * @param auth     認証情報
-     * @param request  HttpServletRequestのインスタンス
-     * @param response HttpServletResponseのインスタンス
-     */
     private void performLogout(Authentication auth, HttpServletRequest request, HttpServletResponse response) {
         logger.debug("Performing logout for authentication: {}", auth);
-        // OAuth2の認証クライアントを削除
         removeOAuth2AuthorizedClient(auth);
-        // ログアウトハンドラを実行
         logoutHandler.logout(request, response, auth);
         logger.debug("Logout handler executed");
     }
 
-    /**
-     * OAuth2認証クライアントを削除するメソッド
-     *
-     * @param auth 認証情報
-     */
     private void removeOAuth2AuthorizedClient(Authentication auth) {
         if (auth instanceof OAuth2AuthenticationToken oauthToken) {
             logger.debug("Removing OAuth2 authorized client for user: {}", oauthToken.getName());
@@ -91,12 +72,6 @@ public class LogoutService {
         }
     }
 
-    /**
-     * 全てのクッキーを削除するメソッド
-     *
-     * @param request  HttpServletRequestのインスタンス
-     * @param response HttpServletResponseのインスタンス
-     */
     private void removeAllCookies(HttpServletRequest request, HttpServletResponse response) {
         logger.debug("Removing all cookies");
         Optional.ofNullable(request.getCookies())
@@ -107,12 +82,6 @@ public class LogoutService {
         logger.debug("All cookies removed");
     }
 
-    /**
-     * クッキーを無効にするメソッド
-     *
-     * @param cookie   クッキーのインスタンス
-     * @param response HttpServletResponseのインスタンス
-     */
     private void expireCookie(Cookie cookie, HttpServletResponse response) {
         logger.debug("Expiring cookie: {}", cookie.getName());
         cookie.setValue("");
