@@ -1,5 +1,3 @@
-// MaxAudioFeaturesCalculatorTest.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,23 +15,22 @@ public class MaxAudioFeaturesCalculatorTest {
     @InjectMocks
     private MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
 
-    /**
-     * テストの前にMockitoのモックを初期化するメソッド
-     */
+    // テストの前にMockitoのモックを初期化するメソッド
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    /**
-     * 空のトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
-     * 期待される結果は、すべてのオーディオフィーチャーが0.0fであること
-     */
+    // 空のトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
     @Test
     public void testCalculateMaxAudioFeatures_withEmptyTrackList() {
+        // Arrange
         List<Map<String, Object>> trackList = new ArrayList<>();
+
+        // Act
         Map<String, Float> result = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
 
+        // Assert
         assertThat(result).containsEntry("danceability", 0.0f)
                 .containsEntry("energy", 0.0f)
                 .containsEntry("valence", 0.0f)
@@ -44,12 +41,10 @@ public class MaxAudioFeaturesCalculatorTest {
                 .containsEntry("speechiness", 0.0f);
     }
 
-    /**
-     * 有効なトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
-     * 期待される結果は、各オーディオフィーチャーの最大値が正しく計算されること
-     */
+    // 有効なトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
     @Test
     public void testCalculateMaxAudioFeatures_withValidTrackList() {
+        // Arrange
         List<Map<String, Object>> trackList = new ArrayList<>();
 
         // AudioFeaturesオブジェクトを作成
@@ -86,10 +81,10 @@ public class MaxAudioFeaturesCalculatorTest {
         trackList.add(trackData1);
         trackList.add(trackData2);
 
-        // メソッドをテスト
+        // Act
         Map<String, Float> result = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
 
-        // 結果を検証
+        // Assert
         assertThat(result).containsEntry("danceability", 0.8f)
                 .containsEntry("energy", 0.9f)
                 .containsEntry("valence", 0.7f)
@@ -100,12 +95,10 @@ public class MaxAudioFeaturesCalculatorTest {
                 .containsEntry("speechiness", 0.4f);
     }
 
-    /**
-     * nullのオーディオフィーチャーを含むトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
-     * 期待される結果は、すべてのオーディオフィーチャーが0.0fであること
-     */
+    // nullのオーディオフィーチャーを含むトラックリストを使用してcalculateMaxAudioFeaturesメソッドをテストする
     @Test
     public void testCalculateMaxAudioFeatures_withNullAudioFeatures() {
+        // Arrange
         List<Map<String, Object>> trackList = new ArrayList<>();
 
         // nullのオーディオフィーチャーを含むトラックデータを作成
@@ -115,10 +108,10 @@ public class MaxAudioFeaturesCalculatorTest {
         // トラックリストに追加
         trackList.add(trackData1);
 
-        // メソッドをテスト
+        // Act
         Map<String, Float> result = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
 
-        // 結果を検証
+        // Assert
         assertThat(result).containsEntry("danceability", 0.0f)
                 .containsEntry("energy", 0.0f)
                 .containsEntry("valence", 0.0f)

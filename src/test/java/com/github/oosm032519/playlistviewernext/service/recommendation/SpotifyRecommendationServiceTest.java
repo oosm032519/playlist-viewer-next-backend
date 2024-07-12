@@ -1,5 +1,3 @@
-// SpotifyRecommendationServiceTest.java
-
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
@@ -36,16 +34,9 @@ class SpotifyRecommendationServiceTest {
     @InjectMocks
     private SpotifyRecommendationService spotifyRecommendationService;
 
-    /**
-     * 推奨トラックを取得するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldReturnRecommendedTracks() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
@@ -65,10 +56,10 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
-        // Act: メソッドの実行
+        // Act
         List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getName()).isEqualTo("Track 1");
         assertThat(result.get(1).getName()).isEqualTo("Track 2");
@@ -80,39 +71,25 @@ class SpotifyRecommendationServiceTest {
         verify(audioFeatureSetter).setModeValues(recommendationsBuilder, modeValues);
     }
 
-    /**
-     * 空のジャンルシードを処理するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldHandleEmptySeedGenres() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータの設定
+        // Arrange
         List<String> seedGenres = Collections.emptyList();
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
         Map<String, Float> medianAudioFeatures = new HashMap<>();
         Map<String, Object> modeValues = new HashMap<>();
 
-        // Act: メソッドの実行
+        // Act
         List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isEmpty();
     }
 
-    /**
-     * API例外を処理するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldHandleApiException() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
@@ -128,22 +105,15 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
         when(recommendationsRequest.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
-        // Act & Assert: メソッドの実行と例外の検証
+        // Act & Assert
         assertThatThrownBy(() -> spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .hasMessage("API error");
     }
 
-    /**
-     * nullの推奨を処理するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldHandleNullRecommendations() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
@@ -159,23 +129,16 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
         when(recommendationsRequest.execute()).thenReturn(null);
 
-        // Act: メソッドの実行
+        // Act
         List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isEmpty();
     }
 
-    /**
-     * nullのトラックを処理するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
@@ -194,23 +157,16 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
-        // Act: メソッドの実行
+        // Act
         List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isEmpty();
     }
 
-    /**
-     * 空のトラックを処理するテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void getRecommendations_ShouldHandleEmptyTracks() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         List<String> seedGenres = Arrays.asList("rock", "pop");
         Map<String, Float> maxAudioFeatures = new HashMap<>();
         Map<String, Float> minAudioFeatures = new HashMap<>();
@@ -229,18 +185,13 @@ class SpotifyRecommendationServiceTest {
         when(recommendationsBuilder.build()).thenReturn(recommendationsRequest);
         when(recommendationsRequest.execute()).thenReturn(mockRecommendations);
 
-        // Act: メソッドの実行
+        // Act
         List<Track> result = spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isEmpty();
     }
 
-    /**
-     * モックトラックを作成するヘルパーメソッド
-     *
-     * @return モックトラックの配列
-     */
     private Track[] createMockTracks() {
         Track track1 = mock(Track.class);
         Track track2 = mock(Track.class);

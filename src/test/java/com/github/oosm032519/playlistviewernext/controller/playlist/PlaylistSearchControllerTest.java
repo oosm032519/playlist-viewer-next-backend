@@ -1,5 +1,3 @@
-// PlaylistSearchControllerTest.java
-
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
@@ -41,35 +39,28 @@ class PlaylistSearchControllerTest {
     }
 
     @Test
-    void searchPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // テスト用のクエリ、オフセット、リミットを設定
+    void givenValidQuery_whenSearchPlaylists_thenReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
         String query = "test query";
         int offset = 0;
         int limit = 20;
-
-        // 期待されるプレイリストのリストを作成
-        List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
-                new PlaylistSimplified.Builder().setName("Playlist 1").build(),
-                new PlaylistSimplified.Builder().setName("Playlist 2").build()
-        );
+        List<PlaylistSimplified> expectedPlaylists = createMockPlaylists();
 
         // モックサービスが期待されるプレイリストを返すように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedPlaylists);
 
-        // コントローラーのメソッドを呼び出し、レスポンスを取得
+        // Act
         ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
-        // レスポンスのステータスコードとボディを検証
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-
-        // モックサービスのメソッドが呼び出されたことを検証
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
     }
 
     @Test
-    void searchPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // テスト用のクエリ、オフセット、リミットを設定
+    void givenServiceThrowsException_whenSearchPlaylists_thenHandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
         String query = "test query";
         int offset = 0;
         int limit = 20;
@@ -77,14 +68,19 @@ class PlaylistSearchControllerTest {
         // モックサービスが例外をスローするように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(new RuntimeException("API error"));
 
-        // コントローラーのメソッドを呼び出し、レスポンスを取得
+        // Act
         ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
 
-        // レスポンスのステータスコードとボディを検証
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNull();
-
-        // モックサービスのメソッドが呼び出されたことを検証
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
+    }
+
+    private List<PlaylistSimplified> createMockPlaylists() {
+        return Arrays.asList(
+                new PlaylistSimplified.Builder().setName("Playlist 1").build(),
+                new PlaylistSimplified.Builder().setName("Playlist 2").build()
+        );
     }
 }

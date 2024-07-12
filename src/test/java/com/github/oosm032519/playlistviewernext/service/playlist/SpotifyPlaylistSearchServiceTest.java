@@ -1,5 +1,3 @@
-// SpotifyPlaylistSearchServiceTest.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import org.apache.hc.core5.http.ParseException;
@@ -31,23 +29,14 @@ class SpotifyPlaylistSearchServiceTest {
     @InjectMocks
     private SpotifyPlaylistSearchService playlistSearchService;
 
-    /**
-     * 各テストの前に実行されるセットアップメソッド
-     */
     @BeforeEach
     void setUp() {
+        // 必要なセットアップがあればここに記述
     }
 
-    /**
-     * 正常系: 検索結果がある場合のテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void testSearchPlaylists_正常系_検索結果あり() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         String query = "test query";
         int offset = 0;
         int limit = 20;
@@ -63,24 +52,17 @@ class SpotifyPlaylistSearchServiceTest {
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(playlistSimplifieds);
 
-        // Act: メソッドの実行
+        // Act
         List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).isEqualTo(playlistSimplifieds[0]);
     }
 
-    /**
-     * 正常系: 検索結果がない場合のテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void testSearchPlaylists_正常系_検索結果なし() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         String query = "empty query";
         int offset = 0;
         int limit = 20;
@@ -95,23 +77,16 @@ class SpotifyPlaylistSearchServiceTest {
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(null);
 
-        // Act: メソッドの実行
+        // Act
         List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isEmpty();
     }
 
-    /**
-     * 異常系: APIエラーが発生した場合のテスト
-     *
-     * @throws IOException            入出力例外
-     * @throws SpotifyWebApiException Spotify API例外
-     * @throws ParseException         パース例外
-     */
     @Test
     void testSearchPlaylists_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange: テストデータとモックの設定
+        // Arrange
         String query = "test query";
         int offset = 0;
         int limit = 20;
@@ -124,7 +99,7 @@ class SpotifyPlaylistSearchServiceTest {
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenThrow(new IOException("API error"));
 
-        // Act & Assert: メソッドの実行と例外の検証
+        // Act & Assert
         assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query, offset, limit))
                 .isInstanceOf(IOException.class)
                 .hasMessage("API error");

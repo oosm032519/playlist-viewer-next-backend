@@ -1,5 +1,3 @@
-// SpotifyPlaylistTrackRemovalServiceTest.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
@@ -53,9 +51,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
 
     private PlaylistTrackRemovalRequest playlistTrackRemovalRequest;
 
-    /**
-     * 各テストの前に実行されるセットアップメソッド。
-     */
     @BeforeEach
     void setUp() {
         playlistTrackRemovalRequest = new PlaylistTrackRemovalRequest();
@@ -63,16 +58,10 @@ class SpotifyPlaylistTrackRemovalServiceTest {
         playlistTrackRemovalRequest.setTrackId("trackId");
     }
 
-    /**
-     * removeTrackFromPlaylist メソッドのテストを行うネストクラス。
-     */
     @Nested
     @DisplayName("removeTrackFromPlaylist method tests")
     class RemoveTrackFromPlaylistTests {
 
-        /**
-         * アクセストークンが null の場合に UNAUTHORIZED を返すことをテストします。
-         */
         @Test
         @DisplayName("Should return unauthorized when access token is null")
         void shouldReturnUnauthorizedWhenAccessTokenIsNull() {
@@ -84,9 +73,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
             assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
         }
 
-        /**
-         * アクセストークンが空の場合に UNAUTHORIZED を返すことをテストします。
-         */
         @Test
         @DisplayName("Should return unauthorized when access token is empty")
         void shouldReturnUnauthorizedWhenAccessTokenIsEmpty() {
@@ -100,9 +86,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
             assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
         }
 
-        /**
-         * トラックが正常に削除されることをテストします。
-         */
         @Test
         @DisplayName("Should remove track successfully")
         void shouldRemoveTrackSuccessfully() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
@@ -125,9 +108,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
             verify(spotifyApi).removeItemsFromPlaylist("playlistId", JsonParser.parseString("[{\"uri\":\"spotify:track:trackId\"}]").getAsJsonArray());
         }
 
-        /**
-         * IOException が発生した場合のエラーハンドリングをテストします。
-         */
         @Test
         @DisplayName("Should handle IOException")
         void shouldHandleIOException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
@@ -145,9 +125,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
             assertThat(response.getBody()).isEqualTo("エラー: IO Error");
         }
 
-        /**
-         * SpotifyWebApiException が発生した場合のエラーハンドリングをテストします。
-         */
         @Test
         @DisplayName("Should handle SpotifyWebApiException")
         void shouldHandleSpotifyWebApiException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
@@ -165,9 +142,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
             assertThat(response.getBody()).isEqualTo("エラー: Spotify API Error");
         }
 
-        /**
-         * ParseException が発生した場合のエラーハンドリングをテストします。
-         */
         @Test
         @DisplayName("Should handle ParseException")
         void shouldHandleParseException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {

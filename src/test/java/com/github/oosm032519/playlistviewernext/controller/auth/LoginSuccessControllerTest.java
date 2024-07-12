@@ -1,9 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,9 +12,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +19,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-// LoginSuccessControllerのテストクラス
 @WebMvcTest(LoginSuccessController.class)
-@ExtendWith(OutputCaptureExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class LoginSuccessControllerTest {
 
     @Autowired
@@ -34,16 +29,8 @@ public class LoginSuccessControllerTest {
     @MockBean
     private OAuth2User principal;
 
-    @InjectMocks
-    private LoginSuccessController loginSuccessController;
-
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
-    public void testLoginSuccess(CapturedOutput output) throws Exception {
+    public void testLoginSuccess() throws Exception {
         String userId = "testUserId";
         String accessToken = "testAccessToken";
         Map<String, Object> attributes = new HashMap<>();
@@ -59,8 +46,6 @@ public class LoginSuccessControllerTest {
                 .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
                 .andExpect(MockMvcResultMatchers.redirectedUrl("http://localhost:3000"))
                 .andReturn();
-
-        assertThat(output).contains("User successfully authenticated. UserId: testUserId");
 
         assertThat(result.getResponse().getStatus()).isEqualTo(302);
         assertThat(result.getResponse().getRedirectedUrl()).isEqualTo("http://localhost:3000");

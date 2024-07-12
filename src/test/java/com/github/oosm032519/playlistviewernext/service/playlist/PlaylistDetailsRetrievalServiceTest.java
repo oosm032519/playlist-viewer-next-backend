@@ -53,22 +53,14 @@ class PlaylistDetailsRetrievalServiceTest {
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
-    /**
-     * 各テストメソッドの前に実行される設定メソッド
-     */
     @BeforeEach
     void setUp() {
         // 各テストメソッドの前に実行される設定
     }
 
-    /**
-     * getPlaylistDetailsメソッドのテスト
-     *
-     * @throws Exception 例外が発生した場合
-     */
     @Test
     void getPlaylistDetails_ReturnsDetailsSuccessfully() throws Exception {
-        // Given: テストデータの準備
+        // Arrange: テストデータの準備
         String playlistId = "testPlaylistId";
         PlaylistTrack[] tracks = new PlaylistTrack[]{
                 new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track1").build()).build(),
@@ -76,9 +68,10 @@ class PlaylistDetailsRetrievalServiceTest {
         };
         String playlistName = "Test Playlist";
         User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
-        List<Map<String, Object>> trackList = new ArrayList<>();
-        trackList.add(Map.of("id", "track1"));
-        trackList.add(Map.of("id", "track2"));
+        List<Map<String, Object>> trackList = List.of(
+                Map.of("id", "track1"),
+                Map.of("id", "track2")
+        );
 
         Map<String, Float> maxAudioFeatures = Map.of("feature1", 1.0f);
         Map<String, Float> minAudioFeatures = Map.of("feature1", 0.1f);
@@ -97,19 +90,19 @@ class PlaylistDetailsRetrievalServiceTest {
         when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
 
-        // When: テスト対象メソッドの実行
+        // Act: テスト対象メソッドの実行
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
 
-        // Then: 結果の検証
-        assertThat(response.get("tracks")).isInstanceOf(Map.class);
-        assertThat(response.get("playlistName")).isEqualTo(playlistName);
-        assertThat(response.get("ownerId")).isEqualTo(owner.getId());
-        assertThat(response.get("ownerName")).isEqualTo(owner.getDisplayName());
-        assertThat(response.get("maxAudioFeatures")).isEqualTo(maxAudioFeatures);
-        assertThat(response.get("minAudioFeatures")).isEqualTo(minAudioFeatures);
-        assertThat(response.get("medianAudioFeatures")).isEqualTo(medianAudioFeatures);
-        assertThat(response.get("averageAudioFeatures")).isEqualTo(averageAudioFeatures);
-        assertThat(response.get("modeValues")).isEqualTo(modeValues);
+        // Assert: 結果の検証
+        assertThat(response).containsEntry("tracks", Map.of("items", trackList))
+                .containsEntry("playlistName", playlistName)
+                .containsEntry("ownerId", owner.getId())
+                .containsEntry("ownerName", owner.getDisplayName())
+                .containsEntry("maxAudioFeatures", maxAudioFeatures)
+                .containsEntry("minAudioFeatures", minAudioFeatures)
+                .containsEntry("medianAudioFeatures", medianAudioFeatures)
+                .containsEntry("averageAudioFeatures", averageAudioFeatures)
+                .containsEntry("modeValues", modeValues);
 
         // モックの呼び出し検証
         verify(playlistDetailsService).getPlaylistTracks(playlistId);

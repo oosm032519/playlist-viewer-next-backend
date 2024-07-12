@@ -1,5 +1,3 @@
-// SpotifyPlaylistAnalyticsServiceTest.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
@@ -36,9 +34,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
     @InjectMocks
     private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
-    /**
-     * プレイリストのジャンルカウントを取得し、ソートされた結果を返すテスト
-     */
     @Test
     void getGenreCountsForPlaylist_ShouldReturnSortedGenreCounts() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -55,21 +50,18 @@ class SpotifyPlaylistAnalyticsServiceTest {
         Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
         // Assert
-        assertThat(result).isNotEmpty();
-        assertThat(result).containsOnlyKeys("rock", "pop", "jazz");
-        assertThat(result).containsEntry("rock", 2);
-        assertThat(result).containsEntry("pop", 1);
-        assertThat(result).containsEntry("jazz", 1);
+        assertThat(result).isNotEmpty()
+                .containsOnlyKeys("rock", "pop", "jazz")
+                .containsEntry("rock", 2)
+                .containsEntry("pop", 1)
+                .containsEntry("jazz", 1);
 
-        // ソートの検証
+        // Verify sorting
         List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(result.entrySet());
         sortedEntries.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
         assertThat(new ArrayList<>(result.entrySet())).isEqualTo(sortedEntries);
     }
 
-    /**
-     * 空のプレイリストを処理するテスト
-     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -84,9 +76,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
         assertThat(result).isEmpty();
     }
 
-    /**
-     * 例外発生時の処理をテスト
-     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -99,9 +88,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
                 .hasMessage("API error");
     }
 
-    /**
-     * トラックがnullの場合の処理をテスト
-     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -115,9 +101,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
         assertThat(result).isEmpty();
     }
 
-    /**
-     * プレイリストのトップ5ジャンルを取得するテスト
-     */
     @Test
     void getTop5GenresForPlaylist_ShouldReturnTop5Genres() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -138,13 +121,10 @@ class SpotifyPlaylistAnalyticsServiceTest {
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
 
         // Assert
-        assertThat(result).hasSize(5);
-        assertThat(result).containsExactly("rock", "pop", "jazz", "blues", "classical");
+        assertThat(result).hasSize(5)
+                .containsExactly("rock", "pop", "jazz", "blues", "classical");
     }
 
-    /**
-     * ジャンルが5つ未満の場合の処理をテスト
-     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleLessThan5Genres() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -162,13 +142,10 @@ class SpotifyPlaylistAnalyticsServiceTest {
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
 
         // Assert
-        assertThat(result).hasSize(3);
-        assertThat(result).containsExactly("rock", "pop", "jazz");
+        assertThat(result).hasSize(3)
+                .containsExactly("rock", "pop", "jazz");
     }
 
-    /**
-     * 空のプレイリストを処理するテスト
-     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -183,9 +160,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
         assertThat(result).isEmpty();
     }
 
-    /**
-     * 例外発生時の処理をテスト
-     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleException() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
@@ -198,11 +172,6 @@ class SpotifyPlaylistAnalyticsServiceTest {
                 .hasMessage("API error");
     }
 
-    /**
-     * モックのプレイリストトラックを作成するヘルパーメソッド
-     *
-     * @return モックのPlaylistTrack配列
-     */
     private PlaylistTrack[] createMockPlaylistTracks() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);
         PlaylistTrack track2 = mock(PlaylistTrack.class);

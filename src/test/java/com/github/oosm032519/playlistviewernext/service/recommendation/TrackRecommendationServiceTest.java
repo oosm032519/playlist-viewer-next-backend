@@ -42,7 +42,8 @@ class TrackRecommendationServiceTest {
     }
 
     @Test
-    void getRecommendations_ReturnsRecommendationsSuccessfully() throws Exception {
+    void givenValidParameters_whenGetRecommendations_thenReturnsRecommendationsSuccessfully() throws Exception {
+        // Arrange
         List<Track> expectedRecommendations = List.of(
                 new Track.Builder().setName("Recommended Track 1").build(),
                 new Track.Builder().setName("Recommended Track 2").build()
@@ -50,38 +51,51 @@ class TrackRecommendationServiceTest {
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .thenReturn(expectedRecommendations);
 
+        // Act
         List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
+        // Assert
         assertThat(result).isEqualTo(expectedRecommendations);
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
-    void getRecommendations_ReturnsEmptyListWhenGenresAreEmpty() {
-        List<Track> result = trackRecommendationService.getRecommendations(Collections.emptyList(), maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+    void givenEmptyGenres_whenGetRecommendations_thenReturnsEmptyList() {
+        // Arrange
+        List<String> emptyGenres = Collections.emptyList();
 
+        // Act
+        List<Track> result = trackRecommendationService.getRecommendations(emptyGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+
+        // Assert
         assertThat(result).isEmpty();
         verifyNoInteractions(recommendationService);
     }
 
     @Test
-    void getRecommendations_HandlesExceptionGracefully() throws Exception {
+    void givenSpotifyWebApiException_whenGetRecommendations_thenReturnsEmptyList() throws Exception {
+        // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .thenThrow(new SpotifyWebApiException("API Error"));
 
+        // Act
         List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
+        // Assert
         assertThat(result).isEmpty();
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
-    void getRecommendations_HandlesIOExceptionGracefully() throws Exception {
+    void givenIOException_whenGetRecommendations_thenReturnsEmptyList() throws Exception {
+        // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .thenThrow(new IOException("IO Error"));
 
+        // Act
         List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
+        // Assert
         assertThat(result).isEmpty();
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }

@@ -1,5 +1,3 @@
-// PlaylistCreationControllerTest.java
-
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
@@ -35,39 +33,27 @@ class PlaylistCreationControllerTest {
     @InjectMocks
     private PlaylistCreationController playlistCreationController;
 
-    /**
-     * 各テストメソッドの前に実行されるセットアップメソッド。
-     * Mockitoのモックオブジェクトを初期化します。
-     */
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    /**
-     * 認証されていないユーザーがプレイリストを作成しようとした場合のテスト。
-     * 期待される結果はHTTPステータスコード401（UNAUTHORIZED）です。
-     */
     @Test
-    void createPlaylist_Unauthorized() {
-        // Arrange: 認証トークンがnullであることをモック
+    void whenUserIsNotAuthenticated_thenReturnUnauthorized() {
+        // Arrange
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
-        // Act: プレイリスト作成メソッドを呼び出し
+        // Act
         ResponseEntity<String> response = playlistCreationController.createPlaylist(List.of("track1", "track2"), principal);
 
-        // Assert: ステータスコードがUNAUTHORIZEDであることを確認
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).contains("認証が必要です。");
     }
 
-    /**
-     * 認証されたユーザーが正常にプレイリストを作成できる場合のテスト。
-     * 期待される結果はHTTPステータスコード200（OK）とプレイリストIDです。
-     */
     @Test
-    void createPlaylist_Success() throws Exception {
-        // Arrange: 必要なモックデータを設定
+    void whenUserIsAuthenticated_thenCreatePlaylistSuccessfully() throws Exception {
+        // Arrange
         String accessToken = "validAccessToken";
         String userId = "userId";
         String userName = "userName";
@@ -79,21 +65,17 @@ class PlaylistCreationControllerTest {
         when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
         when(spotifyUserPlaylistCreationService.createPlaylist(eq(accessToken), eq(userId), any(String.class), eq(trackIds))).thenReturn(playlistId);
 
-        // Act: プレイリスト作成メソッドを呼び出し
+        // Act
         ResponseEntity<String> response = playlistCreationController.createPlaylist(trackIds, principal);
 
-        // Assert: ステータスコードがOKであり、レスポンスボディにプレイリストIDが含まれていることを確認
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains(playlistId);
     }
 
-    /**
-     * プレイリスト作成中に内部サーバーエラーが発生した場合のテスト。
-     * 期待される結果はHTTPステータスコード500（INTERNAL_SERVER_ERROR）です。
-     */
     @Test
-    void createPlaylist_InternalServerError() throws Exception {
-        // Arrange: 必要なモックデータを設定し、例外をスローするように設定
+    void whenInternalServerErrorOccurs_thenReturnInternalServerError() throws Exception {
+        // Arrange
         String accessToken = "validAccessToken";
         String userId = "userId";
         String userName = "userName";
@@ -104,10 +86,10 @@ class PlaylistCreationControllerTest {
         when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
         when(spotifyUserPlaylistCreationService.createPlaylist(eq(accessToken), eq(userId), any(String.class), eq(trackIds))).thenThrow(new RuntimeException("Some error"));
 
-        // Act: プレイリスト作成メソッドを呼び出し
+        // Act
         ResponseEntity<String> response = playlistCreationController.createPlaylist(trackIds, principal);
 
-        // Assert: ステータスコードがINTERNAL_SERVER_ERRORであり、レスポンスボディにエラーメッセージが含まれていることを確認
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).contains("エラー: Some error");
     }

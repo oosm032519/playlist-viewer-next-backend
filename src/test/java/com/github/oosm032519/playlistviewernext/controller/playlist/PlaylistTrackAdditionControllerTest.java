@@ -25,6 +25,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PlaylistTrackAdditionControllerTest {
 
+    private static final String PLAYLIST_ID = "playlistId123";
+    private static final String TRACK_ID = "trackId456";
+    private static final String ACCESS_TOKEN = "validAccessToken";
+    private static final String SNAPSHOT_ID = "snapshotId789";
+
     @Mock
     private UserAuthenticationService userAuthenticationService;
 
@@ -37,39 +42,32 @@ class PlaylistTrackAdditionControllerTest {
     @InjectMocks
     private PlaylistTrackAdditionController playlistTrackAdditionController;
 
-    /**
-     * 正常にトラックがプレイリストに追加される場合のテスト
-     */
+    // 正常にトラックがプレイリストに追加される場合のテスト
     @Test
     void addTrackToPlaylist_成功時() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
-        String playlistId = "playlistId123";
-        String trackId = "trackId456";
-        String accessToken = "validAccessToken";
-        String snapshotId = "snapshotId789";
-
         PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
-        request.setPlaylistId(playlistId);
-        request.setTrackId(trackId);
+        request.setPlaylistId(PLAYLIST_ID);
+        request.setTrackId(TRACK_ID);
 
         // ユーザーのアクセストークンを取得するモック設定
-        when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
+        when(userAuthenticationService.getAccessToken(principal)).thenReturn(ACCESS_TOKEN);
 
         // SpotifyのAPI呼び出しの結果をモック設定
         SnapshotResult snapshotResult = mock(SnapshotResult.class);
-        when(snapshotResult.getSnapshotId()).thenReturn(snapshotId);
-        when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenReturn(snapshotResult);
+        when(snapshotResult.getSnapshotId()).thenReturn(SNAPSHOT_ID);
+        when(spotifyService.addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID)).thenReturn(snapshotResult);
 
         // Act
         ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + snapshotId);
+        assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + SNAPSHOT_ID);
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
-        verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
+        verify(spotifyService).addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID);
     }
 
     /**
@@ -95,15 +93,13 @@ class PlaylistTrackAdditionControllerTest {
         verifyNoInteractions(spotifyService);
     }
 
-    /**
-     * アクセストークンがない場合のテスト
-     */
+    // アクセストークンがない場合のテスト
     @Test
     void addTrackToPlaylist_アクセストークンがない場合() {
         // Arrange
         PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
-        request.setPlaylistId("playlistId123");
-        request.setTrackId("trackId456");
+        request.setPlaylistId(PLAYLIST_ID);
+        request.setTrackId(TRACK_ID);
 
         // アクセストークンがない場合のモック設定
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
@@ -120,25 +116,19 @@ class PlaylistTrackAdditionControllerTest {
         verifyNoInteractions(spotifyService);
     }
 
-    /**
-     * Spotify APIでエラーが発生した場合のテスト
-     */
+    // Spotify APIでエラーが発生した場合のテスト
     @Test
     void addTrackToPlaylist_SpotifyAPIエラーの場合() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
-        String playlistId = "playlistId123";
-        String trackId = "trackId456";
-        String accessToken = "validAccessToken";
-
         PlaylistTrackAdditionRequest request = new PlaylistTrackAdditionRequest();
-        request.setPlaylistId(playlistId);
-        request.setTrackId(trackId);
+        request.setPlaylistId(PLAYLIST_ID);
+        request.setTrackId(TRACK_ID);
 
         // ユーザーのアクセストークンを取得するモック設定
-        when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
+        when(userAuthenticationService.getAccessToken(principal)).thenReturn(ACCESS_TOKEN);
 
         // SpotifyのAPI呼び出しでエラーが発生するモック設定
-        when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenThrow(new SpotifyWebApiException("Spotify API error"));
+        when(spotifyService.addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID)).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act
         ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
@@ -149,6 +139,6 @@ class PlaylistTrackAdditionControllerTest {
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
-        verify(spotifyService).addTrackToPlaylist(accessToken, playlistId, trackId);
+        verify(spotifyService).addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID);
     }
 }

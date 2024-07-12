@@ -1,5 +1,3 @@
-// SessionCheckControllerTest.java
-
 package com.github.oosm032519.playlistviewernext.controller.session;
 
 import org.junit.jupiter.api.Test;
@@ -43,12 +41,9 @@ class SessionCheckControllerTest {
     @InjectMocks
     private SessionCheckController sessionCheckController;
 
-    /**
-     * ユーザーが認証されている場合、成功レスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenUserAuthenticated_ReturnsSuccessResponse() {
-        // Arrange: テストデータの準備
+        // Arrange
         String tokenValue = "testAccessToken";
         String userId = "testUserId";
 
@@ -58,10 +53,10 @@ class SessionCheckControllerTest {
         when(accessToken.getTokenValue()).thenReturn(tokenValue);
         when(principal.getAttribute("id")).thenReturn(userId);
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("success");
@@ -70,46 +65,37 @@ class SessionCheckControllerTest {
         assertThat(response.getBody().get("tokenPreview")).isEqualTo("testAccess...");
     }
 
-    /**
-     * ユーザーが認証されていない場合、エラーレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenUserNotAuthenticated_ReturnsErrorResponse() {
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, null);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("error");
         assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
     }
 
-    /**
-     * アクセストークンが存在しない場合、エラーレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenNoAccessToken_ReturnsErrorResponse() {
-        // Arrange: テストデータの準備
+        // Arrange
         when(authentication.getName()).thenReturn("testUser");
         when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(null);
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("error");
         assertThat(response.getBody().get("message")).isEqualTo("No access token found");
     }
 
-    /**
-     * アクセストークンが短い場合、正しいトークンプレビューを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenAccessTokenIsShort_ReturnsCorrectTokenPreview() {
-        // Arrange: テストデータの準備
+        // Arrange
         String shortTokenValue = "short";
         when(authentication.getName()).thenReturn("testUser");
         when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
@@ -117,78 +103,66 @@ class SessionCheckControllerTest {
         when(accessToken.getTokenValue()).thenReturn(shortTokenValue);
         when(principal.getAttribute("id")).thenReturn("testUserId");
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("tokenPreview")).isEqualTo("short...");
     }
 
-    /**
-     * ユーザーIDがnullの場合、ユーザーIDなしのレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenUserIdIsNull_ReturnsResponseWithoutUserId() {
-        // Arrange: テストデータの準備
+        // Arrange
         when(authentication.getName()).thenReturn("testUser");
         when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
         when(authorizedClient.getAccessToken()).thenReturn(accessToken);
         when(accessToken.getTokenValue()).thenReturn("testAccessToken");
         when(principal.getAttribute("id")).thenReturn(null);
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("userId")).isNull();
     }
 
-    /**
-     * principalがnullでauthenticationが存在する場合、エラーレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenPrincipalIsNullButAuthenticationIsNot_ReturnsErrorResponse() {
-        // Arrange: テストデータの準備
+        // Arrange
         when(authentication.getName()).thenReturn("testUser");
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("error");
         assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
     }
 
-    /**
-     * authenticationがnullでprincipalが存在する場合、エラーレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenAuthenticationIsNullButPrincipalIsNot_ReturnsErrorResponse() {
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, null);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("error");
         assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
     }
 
-    /**
-     * authorizedClientServiceが例外をスローした場合、エラーレスポンスを返すことを確認するテスト
-     */
     @Test
     void checkSession_WhenAuthorizedClientServiceThrowsException_ReturnsErrorResponse() {
-        // Arrange: テストデータの準備
+        // Arrange
         when(authentication.getName()).thenReturn("testUser");
         when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenThrow(new RuntimeException("Service error"));
 
-        // Act: テスト対象メソッドの実行
+        // Act
         ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("status")).isEqualTo("error");
         assertThat(response.getBody().get("message")).isEqualTo("Error loading authorized client: Service error");

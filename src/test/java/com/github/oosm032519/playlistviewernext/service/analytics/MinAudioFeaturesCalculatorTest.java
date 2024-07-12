@@ -1,13 +1,9 @@
-// MinAudioFeaturesCalculatorTest.java
-
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
 import java.util.HashMap;
@@ -23,93 +19,76 @@ public class MinAudioFeaturesCalculatorTest {
     @InjectMocks
     private MinAudioFeaturesCalculator minAudioFeaturesCalculator;
 
-    private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculatorTest.class);
-
-    /**
-     * テストの前にモックの初期化を行うメソッド。
-     */
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-    /**
-     * calculateMinAudioFeaturesメソッドの正常系テスト。
-     * 複数のAudioFeaturesオブジェクトから最小値を計算する。
-     */
     @Test
-    public void testCalculateMinAudioFeatures() {
-        // Arrange: テストデータの準備
-        AudioFeatures audioFeatures1 = mock(AudioFeatures.class);
-        when(audioFeatures1.getDanceability()).thenReturn(0.5f);
-        when(audioFeatures1.getEnergy()).thenReturn(0.6f);
-        when(audioFeatures1.getValence()).thenReturn(0.7f);
-        when(audioFeatures1.getTempo()).thenReturn(120.0f);
-        when(audioFeatures1.getAcousticness()).thenReturn(0.1f);
-        when(audioFeatures1.getInstrumentalness()).thenReturn(0.0f);
-        when(audioFeatures1.getLiveness()).thenReturn(0.2f);
-        when(audioFeatures1.getSpeechiness()).thenReturn(0.3f);
+    public void shouldCalculateMinAudioFeaturesCorrectly() {
+        // Arrange
+        AudioFeatures audioFeatures1 = createMockAudioFeatures(0.5f, 0.6f, 0.7f, 120.0f, 0.1f, 0.0f, 0.2f, 0.3f);
+        AudioFeatures audioFeatures2 = createMockAudioFeatures(0.4f, 0.5f, 0.6f, 110.0f, 0.2f, 0.1f, 0.3f, 0.4f);
 
-        AudioFeatures audioFeatures2 = mock(AudioFeatures.class);
-        when(audioFeatures2.getDanceability()).thenReturn(0.4f);
-        when(audioFeatures2.getEnergy()).thenReturn(0.5f);
-        when(audioFeatures2.getValence()).thenReturn(0.6f);
-        when(audioFeatures2.getTempo()).thenReturn(110.0f);
-        when(audioFeatures2.getAcousticness()).thenReturn(0.2f);
-        when(audioFeatures2.getInstrumentalness()).thenReturn(0.1f);
-        when(audioFeatures2.getLiveness()).thenReturn(0.3f);
-        when(audioFeatures2.getSpeechiness()).thenReturn(0.4f);
+        List<Map<String, Object>> trackList = List.of(
+                createTrackMap(audioFeatures1),
+                createTrackMap(audioFeatures2)
+        );
 
-        Map<String, Object> track1 = new HashMap<>();
-        track1.put("audioFeatures", audioFeatures1);
-
-        Map<String, Object> track2 = new HashMap<>();
-        track2.put("audioFeatures", audioFeatures2);
-
-        List<Map<String, Object>> trackList = List.of(track1, track2);
-
-        // Act: メソッドの実行
+        // Act
         Map<String, Float> result = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isNotNull();
-        assertThat(result.get("danceability")).isEqualTo(0.4f);
-        assertThat(result.get("energy")).isEqualTo(0.5f);
-        assertThat(result.get("valence")).isEqualTo(0.6f);
-        assertThat(result.get("tempo")).isEqualTo(110.0f);
-        assertThat(result.get("acousticness")).isEqualTo(0.1f);
-        assertThat(result.get("instrumentalness")).isEqualTo(0.0f);
-        assertThat(result.get("liveness")).isEqualTo(0.2f);
-        assertThat(result.get("speechiness")).isEqualTo(0.3f);
+        assertThat(result).containsEntry("danceability", 0.4f)
+                .containsEntry("energy", 0.5f)
+                .containsEntry("valence", 0.6f)
+                .containsEntry("tempo", 110.0f)
+                .containsEntry("acousticness", 0.1f)
+                .containsEntry("instrumentalness", 0.0f)
+                .containsEntry("liveness", 0.2f)
+                .containsEntry("speechiness", 0.3f);
     }
 
-    /**
-     * calculateMinAudioFeaturesメソッドの異常系テスト。
-     * AudioFeaturesがnullの場合の処理を確認する。
-     */
     @Test
-    public void testCalculateMinAudioFeaturesWithNullAudioFeatures() {
-        // Arrange: テストデータの準備
-        Map<String, Object> track1 = new HashMap<>();
-        track1.put("audioFeatures", null);
+    public void shouldHandleNullAudioFeaturesGracefully() {
+        // Arrange
+        List<Map<String, Object>> trackList = List.of(
+                createTrackMap(null),
+                createTrackMap(null)
+        );
 
-        Map<String, Object> track2 = new HashMap<>();
-        track2.put("audioFeatures", null);
-
-        List<Map<String, Object>> trackList = List.of(track1, track2);
-
-        // Act: メソッドの実行
+        // Act
         Map<String, Float> result = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
 
-        // Assert: 結果の検証
+        // Assert
         assertThat(result).isNotNull();
-        assertThat(result.get("danceability")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("energy")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("valence")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("tempo")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("acousticness")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("instrumentalness")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("liveness")).isEqualTo(Float.MAX_VALUE);
-        assertThat(result.get("speechiness")).isEqualTo(Float.MAX_VALUE);
+        assertThat(result).containsEntry("danceability", Float.MAX_VALUE)
+                .containsEntry("energy", Float.MAX_VALUE)
+                .containsEntry("valence", Float.MAX_VALUE)
+                .containsEntry("tempo", Float.MAX_VALUE)
+                .containsEntry("acousticness", Float.MAX_VALUE)
+                .containsEntry("instrumentalness", Float.MAX_VALUE)
+                .containsEntry("liveness", Float.MAX_VALUE)
+                .containsEntry("speechiness", Float.MAX_VALUE);
+    }
+
+    private AudioFeatures createMockAudioFeatures(float danceability, float energy, float valence, float tempo, float acousticness, float instrumentalness, float liveness, float speechiness) {
+        AudioFeatures audioFeatures = mock(AudioFeatures.class);
+        when(audioFeatures.getDanceability()).thenReturn(danceability);
+        when(audioFeatures.getEnergy()).thenReturn(energy);
+        when(audioFeatures.getValence()).thenReturn(valence);
+        when(audioFeatures.getTempo()).thenReturn(tempo);
+        when(audioFeatures.getAcousticness()).thenReturn(acousticness);
+        when(audioFeatures.getInstrumentalness()).thenReturn(instrumentalness);
+        when(audioFeatures.getLiveness()).thenReturn(liveness);
+        when(audioFeatures.getSpeechiness()).thenReturn(speechiness);
+        return audioFeatures;
+    }
+
+    private Map<String, Object> createTrackMap(AudioFeatures audioFeatures) {
+        Map<String, Object> trackMap = new HashMap<>();
+        trackMap.put("audioFeatures", audioFeatures);
+        return trackMap;
     }
 }

@@ -19,48 +19,45 @@ class PlaylistViewerNextApplicationTests {
     @Autowired
     private Environment environment;
 
-    /**
-     * コンテキストが正常にロードされることを確認するテスト
-     */
     @Test
     void contextLoads() {
+        // Arrange & Act are implicit in this case
+        // Assert
         assertThat(applicationContext).isNotNull();
     }
 
-    /**
-     * メインメソッドがアプリケーションを正常に起動することを確認するテスト
-     */
     @Test
     void mainMethodStartsApplication() {
+        // Arrange & Act
         PlaylistViewerNextApplication.main(new String[]{});
+        // Assert
         assertThat(applicationContext).isNotNull();
     }
 
-    /**
-     * アプリケーションに期待されるBeanが存在することを確認するテスト
-     */
     @Test
     void applicationHasExpectedBeans() {
-        assertThat(applicationContext.getBeanDefinitionNames()).isNotEmpty();
+        // Arrange & Act
+        String[] beanNames = applicationContext.getBeanDefinitionNames();
+        // Assert
+        assertThat(beanNames).isNotEmpty();
         assertThat(applicationContext.getBean(PlaylistViewerNextApplication.class)).isNotNull();
     }
 
-    /**
-     * アプリケーションの名前が正しいことを確認するテスト
-     */
     @Test
     void applicationNameIsCorrect() {
-        assertThat(applicationContext.getId()).isEqualTo("playlist-viewer-next-backend");
+        // Arrange & Act
+        String applicationId = applicationContext.getId();
+        // Assert
+        assertThat(applicationId).isEqualTo("playlist-viewer-next-backend");
     }
 
-    /**
-     * デフォルトのプロファイルが設定されていることを確認するテスト
-     */
     @Test
     void defaultProfileIsSet() {
+        // Arrange & Act
         String[] activeProfiles = environment.getActiveProfiles();
         String[] defaultProfiles = environment.getDefaultProfiles();
-
-        assertThat(activeProfiles.length == 0 ? defaultProfiles : activeProfiles).isNotEmpty();
+        String[] profiles = activeProfiles.length == 0 ? defaultProfiles : activeProfiles;
+        // Assert
+        assertThat(profiles).isNotEmpty();
     }
 }
