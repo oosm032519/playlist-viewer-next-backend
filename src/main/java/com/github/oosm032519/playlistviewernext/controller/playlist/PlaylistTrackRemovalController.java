@@ -1,12 +1,9 @@
-// PlaylistTrackRemovalController.java
-
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,16 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/playlist")
 public class PlaylistTrackRemovalController {
 
-    /**
-     * ロガーのインスタンス
-     */
-    private static final Logger logger = LoggerFactory.getLogger(PlaylistTrackRemovalController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PlaylistTrackRemovalController.class);
+    private static final String JSON_CONTENT_TYPE = MediaType.APPLICATION_JSON_VALUE;
 
-    /**
-     * SpotifyPlaylistTrackRemovalServiceのインスタンス
-     */
-    @Autowired
-    private SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
+    private final SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
+
+    public PlaylistTrackRemovalController(SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService) {
+        this.spotifyPlaylistTrackRemovalService = spotifyPlaylistTrackRemovalService;
+    }
 
     /**
      * プレイリストからトラックを削除するエンドポイント
@@ -46,28 +41,22 @@ public class PlaylistTrackRemovalController {
     public ResponseEntity<String> removeTrackFromPlaylist(
             @RequestBody PlaylistTrackRemovalRequest request,
             @AuthenticationPrincipal OAuth2User principal) {
-        logger.info("removeTrackFromPlaylist メソッドが呼び出されました。リクエスト: {}", request);
+        LOGGER.info("removeTrackFromPlaylist メソッドが呼び出されました。リクエスト: {}", request);
 
-        // 認証されていない場合は401エラーを返す
         if (principal == null) {
-            logger.warn("認証されていないユーザーがアクセスしようとしました。");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"認証が必要です。\"}");
+            LOGGER.warn("認証されていないユーザーがアクセスしようとしました。");
+            return createJsonResponse(HttpStatus.UNAUTHORIZED, "{\"error\": \"認証が必要です。\"}");
         }
 
-        // トラック削除サービスを呼び出し、結果を確認する
         boolean success = spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal).hasBody();
-        if (success) {
-            // 削除成功時のレスポンス
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"message\": \"トラックが正常に削除されました。\"}");
-        } else {
-            // 削除失敗時のレスポンス
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\": \"トラックの削除に失敗しました。\"}");
-        }
+        return success
+                ? createJsonResponse(HttpStatus.OK, "{\"message\": \"トラックが正常に削除されました。\"}")
+                : createJsonResponse(HttpStatus.INTERNAL_SERVER_ERROR, "{\"error\": \"トラックの削除に失敗しました。\"}");
+    }
+
+    private ResponseEntity<String> createJsonResponse(HttpStatus status, String body) {
+        return ResponseEntity.status(status)
+                .contentType(MediaType.parseMediaType(JSON_CONTENT_TYPE))
+                .body(body);
     }
 }
