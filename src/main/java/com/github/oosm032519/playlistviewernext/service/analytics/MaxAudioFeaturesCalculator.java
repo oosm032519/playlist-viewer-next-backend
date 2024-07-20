@@ -5,70 +5,74 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class MaxAudioFeaturesCalculator {
 
     private static final Logger logger = LoggerFactory.getLogger(MaxAudioFeaturesCalculator.class);
 
-    private static final String DANCEABILITY = "danceability";
-    private static final String ENERGY = "energy";
-    private static final String VALENCE = "valence";
-    private static final String TEMPO = "tempo";
-    private static final String ACOUSTICNESS = "acousticness";
-    private static final String INSTRUMENTALNESS = "instrumentalness";
-    private static final String LIVENESS = "liveness";
-    private static final String SPEECHINESS = "speechiness";
-
-    private static final String CALCULATION_START = "calculateMaxAudioFeatures: 計算開始";
-    private static final String CALCULATION_COMPLETE = "calculateMaxAudioFeatures: 最大オーディオフィーチャー計算完了: {}";
-
-    /**
-     * トラックリストから最大のオーディオフィーチャーを計算するメソッド
-     *
-     * @param trackList トラックデータのリスト
-     * @return 各オーディオフィーチャーの最大値を含むマップ
-     */
     public Map<String, Float> calculateMaxAudioFeatures(List<Map<String, Object>> trackList) {
-        logger.info(CALCULATION_START);
+        logger.info("calculateMaxAudioFeatures: 計算開始");
 
-        Map<String, Float> maxAudioFeatures = initializeMaxAudioFeatures();
+        Map<AudioFeatureType, List<Float>> audioFeatureValues = new EnumMap<>(AudioFeatureType.class);
+        for (AudioFeatureType featureType : AudioFeatureType.values()) {
+            audioFeatureValues.put(featureType, new ArrayList<>());
+        }
 
         for (Map<String, Object> trackData : trackList) {
             AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
             if (audioFeatures != null) {
-                updateMaxAudioFeatures(maxAudioFeatures, audioFeatures);
+                collectAudioFeatureValues(audioFeatureValues, audioFeatures);
             }
         }
 
-        logger.info(CALCULATION_COMPLETE, maxAudioFeatures);
-        return maxAudioFeatures;
+        Map<String, Float> result = calculateUpperBounds(audioFeatureValues);
+
+        logger.info("calculateMaxAudioFeatures: 上限オーディオフィーチャー計算完了: {}", result);
+        return result;
     }
 
-    private Map<String, Float> initializeMaxAudioFeatures() {
-        Map<String, Float> maxAudioFeatures = new HashMap<>(8);
-        maxAudioFeatures.put(DANCEABILITY, 0.0f);
-        maxAudioFeatures.put(ENERGY, 0.0f);
-        maxAudioFeatures.put(VALENCE, 0.0f);
-        maxAudioFeatures.put(TEMPO, 0.0f);
-        maxAudioFeatures.put(ACOUSTICNESS, 0.0f);
-        maxAudioFeatures.put(INSTRUMENTALNESS, 0.0f);
-        maxAudioFeatures.put(LIVENESS, 0.0f);
-        maxAudioFeatures.put(SPEECHINESS, 0.0f);
-        return maxAudioFeatures;
+    private void collectAudioFeatureValues(Map<AudioFeatureType, List<Float>> audioFeatureValues, AudioFeatures audioFeatures) {
+        audioFeatureValues.get(AudioFeatureType.DANCEABILITY).add(audioFeatures.getDanceability());
+        audioFeatureValues.get(AudioFeatureType.ENERGY).add(audioFeatures.getEnergy());
+        audioFeatureValues.get(AudioFeatureType.VALENCE).add(audioFeatures.getValence());
+        audioFeatureValues.get(AudioFeatureType.TEMPO).add(audioFeatures.getTempo());
+        audioFeatureValues.get(AudioFeatureType.ACOUSTICNESS).add(audioFeatures.getAcousticness());
+        audioFeatureValues.get(AudioFeatureType.INSTRUMENTALNESS).add(audioFeatures.getInstrumentalness());
+        audioFeatureValues.get(AudioFeatureType.LIVENESS).add(audioFeatures.getLiveness());
+        audioFeatureValues.get(AudioFeatureType.SPEECHINESS).add(audioFeatures.getSpeechiness());
     }
 
-    private void updateMaxAudioFeatures(Map<String, Float> maxAudioFeatures, AudioFeatures audioFeatures) {
-        maxAudioFeatures.put(DANCEABILITY, Math.max(maxAudioFeatures.get(DANCEABILITY), audioFeatures.getDanceability()));
-        maxAudioFeatures.put(ENERGY, Math.max(maxAudioFeatures.get(ENERGY), audioFeatures.getEnergy()));
-        maxAudioFeatures.put(VALENCE, Math.max(maxAudioFeatures.get(VALENCE), audioFeatures.getValence()));
-        maxAudioFeatures.put(TEMPO, Math.max(maxAudioFeatures.get(TEMPO), audioFeatures.getTempo()));
-        maxAudioFeatures.put(ACOUSTICNESS, Math.max(maxAudioFeatures.get(ACOUSTICNESS), audioFeatures.getAcousticness()));
-        maxAudioFeatures.put(INSTRUMENTALNESS, Math.max(maxAudioFeatures.get(INSTRUMENTALNESS), audioFeatures.getInstrumentalness()));
-        maxAudioFeatures.put(LIVENESS, Math.max(maxAudioFeatures.get(LIVENESS), audioFeatures.getLiveness()));
-        maxAudioFeatures.put(SPEECHINESS, Math.max(maxAudioFeatures.get(SPEECHINESS), audioFeatures.getSpeechiness()));
+    private Map<String, Float> calculateUpperBounds(Map<AudioFeatureType, List<Float>> audioFeatureValues) {
+        Map<String, Float> result = new HashMap<>();
+        for (Map.Entry<AudioFeatureType, List<Float>> entry : audioFeatureValues.entrySet()) {
+            List<Float> values = entry.getValue();
+            if (values.isEmpty()) {
+                continue;  // 空のリストの場合はスキップ
+            }
+            Collections.sort(values);
+            float q1 = calculateQuartile(values, 0.25);
+            float q3 = calculateQuartile(values, 0.75);
+            float iqr = q3 - q1;
+            float upperBound = q3 + 1.5f * iqr;
+            if (entry.getKey() != AudioFeatureType.TEMPO) {
+                upperBound = Math.min(upperBound, 1f);
+            }
+            result.put(entry.getKey().name().toLowerCase(), upperBound);
+        }
+        return result;
+    }
+
+    private float calculateQuartile(List<Float> sortedValues, double quartile) {
+        if (sortedValues.isEmpty()) {
+            return 0f;  // 空のリストの場合は0を返す
+        }
+        int index = (int) Math.ceil(sortedValues.size() * quartile) - 1;
+        return sortedValues.get(Math.max(0, Math.min(sortedValues.size() - 1, index)));
+    }
+
+    private enum AudioFeatureType {
+        DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS
     }
 }

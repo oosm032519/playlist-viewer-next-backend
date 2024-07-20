@@ -29,10 +29,12 @@ public class MinAudioFeaturesCalculatorTest {
         // Arrange
         AudioFeatures audioFeatures1 = createMockAudioFeatures(0.5f, 0.6f, 0.7f, 120.0f, 0.1f, 0.0f, 0.2f, 0.3f);
         AudioFeatures audioFeatures2 = createMockAudioFeatures(0.4f, 0.5f, 0.6f, 110.0f, 0.2f, 0.1f, 0.3f, 0.4f);
+        AudioFeatures audioFeatures3 = createMockAudioFeatures(0.6f, 0.7f, 0.8f, 130.0f, 0.3f, 0.2f, 0.4f, 0.5f);
 
         List<Map<String, Object>> trackList = List.of(
                 createTrackMap(audioFeatures1),
-                createTrackMap(audioFeatures2)
+                createTrackMap(audioFeatures2),
+                createTrackMap(audioFeatures3)
         );
 
         // Act
@@ -40,14 +42,15 @@ public class MinAudioFeaturesCalculatorTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result).containsEntry("danceability", 0.4f)
-                .containsEntry("energy", 0.5f)
-                .containsEntry("valence", 0.6f)
-                .containsEntry("tempo", 110.0f)
-                .containsEntry("acousticness", 0.1f)
-                .containsEntry("instrumentalness", 0.0f)
-                .containsEntry("liveness", 0.2f)
-                .containsEntry("speechiness", 0.3f);
+        // 下限値の計算: Q1 - 1.5 * IQR（ただし、0以上1以下に制限）
+        assertThat(result.get("danceability")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("energy")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("valence")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("tempo")).isGreaterThanOrEqualTo(0f);  // tempoは上限なし
+        assertThat(result.get("acousticness")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("instrumentalness")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("liveness")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
+        assertThat(result.get("speechiness")).isGreaterThanOrEqualTo(0f).isLessThanOrEqualTo(1f);
     }
 
     @Test
@@ -63,14 +66,7 @@ public class MinAudioFeaturesCalculatorTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result).containsEntry("danceability", Float.MAX_VALUE)
-                .containsEntry("energy", Float.MAX_VALUE)
-                .containsEntry("valence", Float.MAX_VALUE)
-                .containsEntry("tempo", Float.MAX_VALUE)
-                .containsEntry("acousticness", Float.MAX_VALUE)
-                .containsEntry("instrumentalness", Float.MAX_VALUE)
-                .containsEntry("liveness", Float.MAX_VALUE)
-                .containsEntry("speechiness", Float.MAX_VALUE);
+        assertThat(result).isEmpty();  // 有効なデータがない場合、空のマップが返されるべき
     }
 
     private AudioFeatures createMockAudioFeatures(float danceability, float energy, float valence, float tempo, float acousticness, float instrumentalness, float liveness, float speechiness) {
