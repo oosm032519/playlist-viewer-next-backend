@@ -6,11 +6,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
 import java.util.List;
 
+/**
+ * Spotifyのプレイリスト検索機能を提供するRESTコントローラー
+ * このクラスは、クライアントからのプレイリスト検索リクエストを処理し、
+ * SpotifyAPIを使用して検索結果を返します。
+ */
 @RestController
 @RequestMapping("/api/playlists/search")
 public class PlaylistSearchController {
@@ -20,6 +28,12 @@ public class PlaylistSearchController {
     private final SpotifyPlaylistSearchService playlistSearchService;
     private final SpotifyClientCredentialsAuthentication authController;
 
+    /**
+     * PlaylistSearchControllerのコンストラクタ
+     *
+     * @param playlistSearchService Spotifyプレイリスト検索サービス
+     * @param authController        Spotify認証コントローラー
+     */
     public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService,
                                     SpotifyClientCredentialsAuthentication authController) {
         this.playlistSearchService = playlistSearchService;
@@ -41,10 +55,16 @@ public class PlaylistSearchController {
             @RequestParam(defaultValue = "20") int limit) {
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
         try {
+            // Spotify APIの認証を行う
             authController.authenticate();
+
+            // プレイリストの検索を実行
             List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query, offset, limit);
+
+            // 検索結果を返す
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
+            // エラーが発生した場合はログに記録し、エラーレスポンスを返す
             logger.error("Error occurred while searching playlists", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
