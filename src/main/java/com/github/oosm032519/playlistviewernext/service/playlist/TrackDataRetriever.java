@@ -7,13 +7,16 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class TrackDataRetriever {
 
-    private static final Logger logger = LoggerFactory.getLogger(TrackDataRetriever.class);
+    public static Logger logger = LoggerFactory.getLogger(TrackDataRetriever.class);
 
     private final SpotifyTrackService trackService;
 
@@ -26,9 +29,8 @@ public class TrackDataRetriever {
      *
      * @param tracks プレイリストのトラック配列
      * @return トラック情報のリスト
-     * @throws Exception トラック情報の取得中に発生する可能性のある例外
      */
-    public List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) throws Exception {
+    public List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) {
         logger.info("getTrackListData: トラック数: {}", tracks.length);
 
         List<Map<String, Object>> trackList = Arrays.stream(tracks)

@@ -5,7 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -13,12 +16,6 @@ public class ModeValuesCalculator {
 
     private static final Logger logger = LoggerFactory.getLogger(ModeValuesCalculator.class);
 
-    /**
-     * トラックリストから各オーディオフィーチャーの最頻値を計算するメソッド
-     *
-     * @param trackList トラックデータのリスト
-     * @return 各フィーチャーの最頻値を含むマップ
-     */
     public Map<String, Object> calculateModeValues(List<Map<String, Object>> trackList) {
         logger.info("calculateModeValues: 計算開始");
 
@@ -64,17 +61,21 @@ public class ModeValuesCalculator {
     }
 
     private <T> void calculateModeValues(Map<String, List<T>> featureValues, Map<String, Object> modeValues, ModeCalculator<T> calculator) {
-        featureValues.forEach((key, values) -> modeValues.put(key, calculator.calculateMode(values)));
+        featureValues.forEach((key, values) -> {
+            if (!values.isEmpty()) {
+                modeValues.put(key, calculator.calculateMode(values));
+            }
+        });
     }
 
-    private int calculateNumericMode(List<Integer> values) {
+    private Integer calculateNumericMode(List<Integer> values) {
         return values.stream()
                 .collect(Collectors.groupingBy(value -> value, Collectors.counting()))
                 .entrySet()
                 .stream()
                 .max(Map.Entry.comparingByValue())
-                .orElseThrow(() -> new IllegalArgumentException("List is empty"))
-                .getKey();
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 
     private String calculateStringMode(List<String> values) {
@@ -83,8 +84,8 @@ public class ModeValuesCalculator {
                 .entrySet()
                 .stream()
                 .max(Map.Entry.comparingByValue())
-                .orElseThrow(() -> new IllegalArgumentException("List is empty"))
-                .getKey();
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 
     @FunctionalInterface

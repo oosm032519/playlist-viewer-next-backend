@@ -42,10 +42,61 @@ public class ModeValuesCalculatorTest {
         assertThat(result.get("mode")).isEqualTo("MAJOR");
     }
 
+    @Test
+    public void shouldHandleEmptyTrackList() {
+        // Arrange
+        List<Map<String, Object>> emptyTrackList = new ArrayList<>();
+
+        // Act
+        Map<String, Object> result = modeValuesCalculator.calculateModeValues(emptyTrackList);
+
+        // Assert
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void shouldHandleNullAudioFeatures() {
+        // Arrange
+        List<Map<String, Object>> trackList = Arrays.asList(
+                createTrackDataWithNullAudioFeatures(),
+                createTrackData(1, 4, "MAJOR")
+        );
+
+        // Act
+        Map<String, Object> result = modeValuesCalculator.calculateModeValues(trackList);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.get("key")).isEqualTo(1);
+        assertThat(result.get("time_signature")).isEqualTo(4);
+        assertThat(result.get("mode")).isEqualTo("MAJOR");
+    }
+
+    private Map<String, Object> createTrackDataWithNullAudioFeatures() {
+        Map<String, Object> trackData = new HashMap<>();
+        trackData.put("audioFeatures", null);
+        return trackData;
+    }
+
     private Map<String, Object> createTrackData(int key, int timeSignature, String mode) {
         Map<String, Object> trackData = new HashMap<>();
         trackData.put("audioFeatures", createAudioFeatures(key, timeSignature, mode));
         return trackData;
+    }
+
+    @Test
+    public void shouldHandleAllNullAudioFeatures() {
+        // Arrange
+        List<Map<String, Object>> trackList = Arrays.asList(
+                createTrackDataWithNullAudioFeatures(),
+                createTrackDataWithNullAudioFeatures()
+        );
+
+        // Act
+        Map<String, Object> result = modeValuesCalculator.calculateModeValues(trackList);
+
+        // Assert
+        assertThat(result).isEmpty();
     }
 
     private AudioFeatures createAudioFeatures(int key, int timeSignature, String mode) {
