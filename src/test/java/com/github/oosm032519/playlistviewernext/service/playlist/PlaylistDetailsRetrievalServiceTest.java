@@ -10,12 +10,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.michaelthelin.spotify.model_objects.specification.*;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
+import se.michaelthelin.spotify.model_objects.specification.User;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * PlaylistDetailsRetrievalServiceのテストクラス
@@ -63,8 +67,8 @@ class PlaylistDetailsRetrievalServiceTest {
         // Arrange: テストデータの準備
         String playlistId = "testPlaylistId";
         PlaylistTrack[] tracks = new PlaylistTrack[]{
-                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track1").build()).build(),
-                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track2").build()).build()
+                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track1").setDurationMs(180000).build()).build(),
+                new PlaylistTrack.Builder().setTrack(new Track.Builder().setId("track2").setDurationMs(240000).build()).build()
         };
         String playlistName = "Test Playlist";
         User owner = new User.Builder().setId("ownerId").setDisplayName("Owner Name").build();
@@ -78,6 +82,7 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Float> medianAudioFeatures = Map.of("feature1", 0.5f);
         Map<String, Float> averageAudioFeatures = Map.of("feature1", 0.3f);
         Map<String, Object> modeValues = Map.of("feature1", 0.3f);
+        long expectedTotalDuration = 420000; // 180000 + 240000
 
         // モックの設定
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
@@ -94,7 +99,8 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
 
         // Assert: 結果の検証
-        assertThat(response).containsEntry("tracks", Map.of("items", trackList))
+        assertThat(response)
+                .containsEntry("tracks", Map.of("items", trackList))
                 .containsEntry("playlistName", playlistName)
                 .containsEntry("ownerId", owner.getId())
                 .containsEntry("ownerName", owner.getDisplayName())
@@ -102,7 +108,8 @@ class PlaylistDetailsRetrievalServiceTest {
                 .containsEntry("minAudioFeatures", minAudioFeatures)
                 .containsEntry("medianAudioFeatures", medianAudioFeatures)
                 .containsEntry("averageAudioFeatures", averageAudioFeatures)
-                .containsEntry("modeValues", modeValues);
+                .containsEntry("modeValues", modeValues)
+                .containsEntry("totalDuration", expectedTotalDuration);
 
         // モックの呼び出し検証
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
