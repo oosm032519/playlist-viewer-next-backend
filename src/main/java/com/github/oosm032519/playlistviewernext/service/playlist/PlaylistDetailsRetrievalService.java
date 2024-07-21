@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class PlaylistDetailsRetrievalService {
@@ -71,7 +73,23 @@ public class PlaylistDetailsRetrievalService {
 
         logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
 
-        return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
+        long totalDuration = calculateTotalDuration(tracks);
+
+        return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+    }
+
+    /**
+     * プレイリストの総再生時間を計算するメソッド
+     *
+     * @param tracks プレイリストのトラック配列
+     * @return 総再生時間（ミリ秒）
+     */
+    public long calculateTotalDuration(PlaylistTrack[] tracks) {
+        long totalDuration = 0;
+        for (PlaylistTrack track : tracks) {
+            totalDuration += track.getTrack().getDurationMs();
+        }
+        return totalDuration;
     }
 
     private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues) {
@@ -82,7 +100,7 @@ public class PlaylistDetailsRetrievalService {
         logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
     }
 
-    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues) {
+    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues, long totalDuration) {
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
         response.put("playlistName", playlistName);
@@ -93,6 +111,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("medianAudioFeatures", medianAudioFeatures);
         response.put("averageAudioFeatures", averageAudioFeatures);
         response.put("modeValues", modeValues);
+        response.put("totalDuration", totalDuration);
         return response;
     }
 }
