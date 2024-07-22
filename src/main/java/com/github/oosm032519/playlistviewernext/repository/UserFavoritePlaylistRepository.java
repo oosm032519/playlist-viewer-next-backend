@@ -11,4 +11,6 @@ public interface UserFavoritePlaylistRepository extends JpaRepository<UserFavori
     long deleteByUserIdAndPlaylistId(String userId, String playlistId);
 
     List<UserFavoritePlaylist> findByUserId(String userId);
+
+    UserFavoritePlaylist findByUserIdAndPlaylistId(String userId, String playlistId);
 }

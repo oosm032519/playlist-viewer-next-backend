@@ -19,4 +19,7 @@ public class UserFavoritePlaylist {
 
     @Column(nullable = false)
     private String playlistId;
+
+    @Column(nullable = false)
+    private String playlistName;
 }

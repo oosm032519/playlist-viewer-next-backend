@@ -33,8 +33,9 @@ public class PlaylistFavoriteController {
 
     @PostMapping("/favorite")
     public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
-                                                                @RequestParam String playlistId) {
-        logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}", playlistId);
+                                                                @RequestParam String playlistId,
+                                                                @RequestParam String playlistName) {
+        logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}", playlistId, playlistName);
 
         String userId = principal.getAttribute("id");
 
@@ -55,10 +56,11 @@ public class PlaylistFavoriteController {
         UserFavoritePlaylist userFavoritePlaylist = new UserFavoritePlaylist();
         userFavoritePlaylist.setUserId(hashedUserId);
         userFavoritePlaylist.setPlaylistId(playlistId);
+        userFavoritePlaylist.setPlaylistName(playlistName);
 
         try {
             userFavoritePlaylistRepository.save(userFavoritePlaylist);
-            logger.info("プレイリストをお気に入りに登録しました。ユーザーID: {}, プレイリストID: {}", userId, playlistId);
+            logger.info("プレイリストをお気に入りに登録しました。ユーザーID: {}, プレイリストID: {}, プレイリスト名: {}", userId, playlistId, playlistName);
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "success");
@@ -73,6 +75,7 @@ public class PlaylistFavoriteController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
 
     private String hashUserId(String userId) {
         try {
@@ -125,7 +128,7 @@ public class PlaylistFavoriteController {
     }
 
     @GetMapping("/favorite")
-    public ResponseEntity<List<String>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<List<Map<String, String>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
         String userId = principal.getAttribute("id");
@@ -135,12 +138,18 @@ public class PlaylistFavoriteController {
 
         try {
             // お気に入りプレイリストID一覧を取得
-            List<String> favoritePlaylistIds = userFavoritePlaylistRepository.findByUserId(hashedUserId)
-                    .stream()
-                    .map(UserFavoritePlaylist::getPlaylistId)
+            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
+
+            List<Map<String, String>> response = favoritePlaylists.stream()
+                    .map(favorite -> {
+                        Map<String, String> playlistData = new HashMap<>();
+                        playlistData.put("playlistId", favorite.getPlaylistId());
+                        playlistData.put("playlistName", favorite.getPlaylistName());
+                        return playlistData;
+                    })
                     .toList();
 
-            return ResponseEntity.ok(favoritePlaylistIds);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("お気に入りプレイリスト一覧の取得中にエラーが発生しました。", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
