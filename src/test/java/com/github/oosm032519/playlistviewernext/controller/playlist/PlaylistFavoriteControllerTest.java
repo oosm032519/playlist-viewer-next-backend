@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
-import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,9 +27,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistFavoriteControllerTest {
-
-    @Mock
-    private UserAuthenticationService userAuthenticationService;
 
     @Mock
     private UserFavoritePlaylistRepository userFavoritePlaylistRepository;
@@ -216,7 +212,7 @@ class PlaylistFavoriteControllerTest {
     @Test
     void hashUserId_ThrowsRuntimeException() {
         // Arrange
-        PlaylistFavoriteController controller = new PlaylistFavoriteController(userAuthenticationService, userFavoritePlaylistRepository);
+        PlaylistFavoriteController controller = new PlaylistFavoriteController(userFavoritePlaylistRepository);
 
         // Act & Assert
         assertThatThrownBy(() -> {

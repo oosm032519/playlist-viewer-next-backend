@@ -1,14 +1,24 @@
-name: Maven Test
-
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
+  - push
+  - pull_request
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: your_root_password
+          MYSQL_DATABASE: playlist_viewer_next
+          MYSQL_USER: oosm032519
+          MYSQL_PASSWORD: Ryo032519
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - uses: actions/checkout@v3
@@ -19,3 +29,5 @@ jobs:
           distribution: 'adopt'
       - name: Build with Maven
         run: mvn clean test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/playlist_viewer_next?serverTimezone=UTC

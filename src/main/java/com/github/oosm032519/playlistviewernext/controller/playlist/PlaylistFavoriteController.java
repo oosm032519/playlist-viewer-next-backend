@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
-import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,12 +21,9 @@ public class PlaylistFavoriteController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistFavoriteController.class);
 
-    private final UserAuthenticationService userAuthenticationService;
     private final UserFavoritePlaylistRepository userFavoritePlaylistRepository;
 
-    public PlaylistFavoriteController(UserAuthenticationService userAuthenticationService,
-                                      UserFavoritePlaylistRepository userFavoritePlaylistRepository) {
-        this.userAuthenticationService = userAuthenticationService;
+    public PlaylistFavoriteController(UserFavoritePlaylistRepository userFavoritePlaylistRepository) {
         this.userFavoritePlaylistRepository = userFavoritePlaylistRepository;
     }
 
