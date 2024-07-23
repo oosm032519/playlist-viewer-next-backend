@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -jar target/your-application-name.jar
+web: java $JAVA_OPTS -jar target/playlist-viewer-next-backend.jar
