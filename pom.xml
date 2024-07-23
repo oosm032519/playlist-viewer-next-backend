@@ -102,6 +102,7 @@
 	</dependencies>
 
 	<build>
+		<finalName>${project.artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -113,6 +114,11 @@
 				<configuration>
 					<argLine>-XX:+EnableDynamicAgentLoading</argLine>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.heroku.sdk</groupId>
+				<artifactId>heroku-maven-plugin</artifactId>
+				<version>3.0.7</version>
 			</plugin>
 		</plugins>
 	</build>

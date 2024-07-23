@@ -1,1 +1,1 @@
-web: java -jar target/playlist-viewer-next-backend.jar
+web: java -Dserver.port=$PORT $JAVA_OPTS -jar build/libs/*.jar
