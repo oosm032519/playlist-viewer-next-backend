@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -jar target/playlist-viewer-next-backend.jar
+web: java -jar target/playlist-viewer-next-backend.jar
