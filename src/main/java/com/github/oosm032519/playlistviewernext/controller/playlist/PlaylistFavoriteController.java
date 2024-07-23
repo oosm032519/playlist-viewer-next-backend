@@ -35,7 +35,9 @@ public class PlaylistFavoriteController {
     public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
                                                                 @RequestParam String playlistId,
                                                                 @RequestParam String playlistName,
-                                                                @RequestParam int totalTracks) { // totalTracks を追加
+                                                                @RequestParam int totalTracks,
+                                                                @RequestParam String playlistOwnerName
+    ) {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
         String userId = principal.getAttribute("id");
@@ -58,7 +60,8 @@ public class PlaylistFavoriteController {
         userFavoritePlaylist.setUserId(hashedUserId);
         userFavoritePlaylist.setPlaylistId(playlistId);
         userFavoritePlaylist.setPlaylistName(playlistName);
-        userFavoritePlaylist.setTotalTracks(totalTracks); // totalTracks を設定
+        userFavoritePlaylist.setTotalTracks(totalTracks);
+        userFavoritePlaylist.setPlaylistOwnerName(playlistOwnerName);
 
         try {
             userFavoritePlaylistRepository.save(userFavoritePlaylist);
@@ -147,8 +150,9 @@ public class PlaylistFavoriteController {
                         Map<String, Object> playlistData = new HashMap<>();
                         playlistData.put("playlistId", favorite.getPlaylistId());
                         playlistData.put("playlistName", favorite.getPlaylistName());
-                        playlistData.put("totalTracks", favorite.getTotalTracks()); // totalTracks を追加
-                        playlistData.put("addedAt", favorite.getAddedAt()); // addedAt を追加
+                        playlistData.put("totalTracks", favorite.getTotalTracks());
+                        playlistData.put("addedAt", favorite.getAddedAt());
+                        playlistData.put("playlistOwnerName", favorite.getPlaylistOwnerName());
                         return playlistData;
                     })
                     .toList();

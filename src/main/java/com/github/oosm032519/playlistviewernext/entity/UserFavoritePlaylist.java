@@ -30,4 +30,7 @@ public class UserFavoritePlaylist {
 
     @Column(nullable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime addedAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private String playlistOwnerName;
 }
