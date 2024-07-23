@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "user_favorite_playlists")
 @Getter
@@ -22,4 +24,10 @@ public class UserFavoritePlaylist {
 
     @Column(nullable = false)
     private String playlistName;
+
+    @Column(nullable = false)
+    private int totalTracks;
+
+    @Column(nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime addedAt = LocalDateTime.now();
 }

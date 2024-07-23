@@ -34,8 +34,9 @@ public class PlaylistFavoriteController {
     @PostMapping("/favorite")
     public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
                                                                 @RequestParam String playlistId,
-                                                                @RequestParam String playlistName) {
-        logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}", playlistId, playlistName);
+                                                                @RequestParam String playlistName,
+                                                                @RequestParam int totalTracks) { // totalTracks を追加
+        logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
         String userId = principal.getAttribute("id");
 
@@ -57,6 +58,7 @@ public class PlaylistFavoriteController {
         userFavoritePlaylist.setUserId(hashedUserId);
         userFavoritePlaylist.setPlaylistId(playlistId);
         userFavoritePlaylist.setPlaylistName(playlistName);
+        userFavoritePlaylist.setTotalTracks(totalTracks); // totalTracks を設定
 
         try {
             userFavoritePlaylistRepository.save(userFavoritePlaylist);
@@ -128,7 +130,7 @@ public class PlaylistFavoriteController {
     }
 
     @GetMapping("/favorite")
-    public ResponseEntity<List<Map<String, String>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
         String userId = principal.getAttribute("id");
@@ -140,11 +142,13 @@ public class PlaylistFavoriteController {
             // お気に入りプレイリストID一覧を取得
             List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
 
-            List<Map<String, String>> response = favoritePlaylists.stream()
+            List<Map<String, Object>> response = favoritePlaylists.stream()
                     .map(favorite -> {
-                        Map<String, String> playlistData = new HashMap<>();
+                        Map<String, Object> playlistData = new HashMap<>();
                         playlistData.put("playlistId", favorite.getPlaylistId());
                         playlistData.put("playlistName", favorite.getPlaylistName());
+                        playlistData.put("totalTracks", favorite.getTotalTracks()); // totalTracks を追加
+                        playlistData.put("addedAt", favorite.getAddedAt()); // addedAt を追加
                         return playlistData;
                     })
                     .toList();
