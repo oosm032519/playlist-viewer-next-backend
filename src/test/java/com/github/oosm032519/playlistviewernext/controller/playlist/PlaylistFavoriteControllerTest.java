@@ -8,16 +8,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -208,4 +212,25 @@ class PlaylistFavoriteControllerTest {
 
         verify(userFavoritePlaylistRepository).existsByUserIdAndPlaylistId(anyString(), anyString());
     }
+
+    @Test
+    void hashUserId_ThrowsRuntimeException() {
+        // Arrange
+        PlaylistFavoriteController controller = new PlaylistFavoriteController(userAuthenticationService, userFavoritePlaylistRepository);
+
+        // Act & Assert
+        assertThatThrownBy(() -> {
+            // MessageDigestをモックして例外をスローするように設定
+            try (MockedStatic<MessageDigest> mockedMessageDigest = mockStatic(MessageDigest.class)) {
+                mockedMessageDigest.when(() -> MessageDigest.getInstance("SHA-256"))
+                        .thenThrow(new NoSuchAlgorithmException("Test exception"));
+
+                controller.favoritePlaylist(principal, "playlistId", "playlistName", 10, "ownerName");
+            }
+        })
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("ハッシュアルゴリズムが見つかりません。")
+                .hasCauseInstanceOf(NoSuchAlgorithmException.class);
+    }
+
 }

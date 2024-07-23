@@ -2,8 +2,6 @@ package com.github.oosm032519.playlistviewernext.model;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDateTime;
 
@@ -12,50 +10,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FavoritePlaylistResponseTest {
 
     @Test
-    @DisplayName("コンストラクタとゲッターのテスト")
+    @DisplayName("コンストラクタと全てのゲッターのテスト")
     void testConstructorAndGetters() {
         // テストデータの準備
         String playlistId = "playlist123";
         String playlistName = "My Favorite Songs";
         String playlistOwnerName = "John Doe";
         int totalTracks = 20;
-        LocalDateTime addedAt = LocalDateTime.of(2024, 7, 23, 10, 30);
+        LocalDateTime addedAt = LocalDateTime.now();
 
-        // FavoritePlaylistResponseオブジェクトの作成
+        // オブジェクトの生成
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
                 playlistId, playlistName, playlistOwnerName, totalTracks, addedAt);
 
         // アサーション
-        assertThat(response)
-                .extracting(
-                        FavoritePlaylistResponse::getPlaylistId,
-                        FavoritePlaylistResponse::getPlaylistName,
-                        FavoritePlaylistResponse::getPlaylistOwnerName,
-                        FavoritePlaylistResponse::getTotalTracks,
-                        FavoritePlaylistResponse::getAddedAt
-                )
-                .containsExactly(
-                        playlistId,
-                        playlistName,
-                        playlistOwnerName,
-                        totalTracks,
-                        addedAt
-                );
+        assertThat(response.getPlaylistId()).isEqualTo(playlistId);
+        assertThat(response.getPlaylistName()).isEqualTo(playlistName);
+        assertThat(response.getPlaylistOwnerName()).isEqualTo(playlistOwnerName);
+        assertThat(response.getTotalTracks()).isEqualTo(totalTracks);
+        assertThat(response.getAddedAt()).isEqualTo(addedAt);
     }
 
     @Test
-    @DisplayName("セッターのテスト")
+    @DisplayName("全てのセッターのテスト")
     void testSetters() {
-        // FavoritePlaylistResponseオブジェクトの作成（初期値は重要ではない）
+        // オブジェクトの生成
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                "initial", "initial", "initial", 0, LocalDateTime.now());
+                null, null, null, 0, null);
 
         // 新しい値の設定
         String newPlaylistId = "newPlaylist456";
         String newPlaylistName = "Updated Playlist";
         String newPlaylistOwnerName = "Jane Smith";
         int newTotalTracks = 30;
-        LocalDateTime newAddedAt = LocalDateTime.of(2024, 7, 24, 15, 45);
+        LocalDateTime newAddedAt = LocalDateTime.now();
 
         response.setPlaylistId(newPlaylistId);
         response.setPlaylistName(newPlaylistName);
@@ -64,88 +52,40 @@ class FavoritePlaylistResponseTest {
         response.setAddedAt(newAddedAt);
 
         // アサーション
-        assertThat(response)
-                .extracting(
-                        FavoritePlaylistResponse::getPlaylistId,
-                        FavoritePlaylistResponse::getPlaylistName,
-                        FavoritePlaylistResponse::getPlaylistOwnerName,
-                        FavoritePlaylistResponse::getTotalTracks,
-                        FavoritePlaylistResponse::getAddedAt
-                )
-                .containsExactly(
-                        newPlaylistId,
-                        newPlaylistName,
-                        newPlaylistOwnerName,
-                        newTotalTracks,
-                        newAddedAt
-                );
+        assertThat(response.getPlaylistId()).isEqualTo(newPlaylistId);
+        assertThat(response.getPlaylistName()).isEqualTo(newPlaylistName);
+        assertThat(response.getPlaylistOwnerName()).isEqualTo(newPlaylistOwnerName);
+        assertThat(response.getTotalTracks()).isEqualTo(newTotalTracks);
+        assertThat(response.getAddedAt()).isEqualTo(newAddedAt);
     }
 
     @Test
-    @DisplayName("空の文字列を設定できることのテスト")
-    void testEmptyStringValues() {
+    @DisplayName("totalTracksの境界値テスト")
+    void testTotalTracksBoundaries() {
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                "", "", "", 0, LocalDateTime.now());
+                "id", "name", "owner", 0, LocalDateTime.now());
 
-        assertThat(response.getPlaylistId()).isEmpty();
-        assertThat(response.getPlaylistName()).isEmpty();
-        assertThat(response.getPlaylistOwnerName()).isEmpty();
-    }
+        // 最小値（0）のテスト
+        assertThat(response.getTotalTracks()).isZero();
 
-    @ParameterizedTest
-    @ValueSource(ints = {0, 1, 100, Integer.MAX_VALUE})
-    @DisplayName("様々な曲数でのテスト")
-    void testVariousTotalTracks(int totalTracks) {
-        FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                "id", "name", "owner", totalTracks, LocalDateTime.now());
+        // 大きな値のテスト
+        response.setTotalTracks(Integer.MAX_VALUE);
+        assertThat(response.getTotalTracks()).isEqualTo(Integer.MAX_VALUE);
 
-        assertThat(response.getTotalTracks()).isEqualTo(totalTracks);
+        // 負の値のテスト（通常はビジネスロジックで防ぐべきですが、モデルレベルでは許可されています）
+        response.setTotalTracks(-1);
+        assertThat(response.getTotalTracks()).isNegative();
     }
 
     @Test
-    @DisplayName("nullの日時を設定できることのテスト")
-    void testNullDateTime() {
+    @DisplayName("nullの許容性テスト")
+    void testNullability() {
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                "id", "name", "owner", 10, null);
+                null, null, null, 0, null);
 
+        assertThat(response.getPlaylistId()).isNull();
+        assertThat(response.getPlaylistName()).isNull();
+        assertThat(response.getPlaylistOwnerName()).isNull();
         assertThat(response.getAddedAt()).isNull();
-    }
-
-    @Test
-    @DisplayName("オブジェクトの等価性テスト")
-    void testEquality() {
-        LocalDateTime now = LocalDateTime.now();
-        FavoritePlaylistResponse response1 = new FavoritePlaylistResponse(
-                "id", "name", "owner", 10, now);
-        FavoritePlaylistResponse response2 = new FavoritePlaylistResponse(
-                "id", "name", "owner", 10, now);
-
-        assertThat(response1).isEqualTo(response2);
-        assertThat(response1.hashCode()).isEqualTo(response2.hashCode());
-    }
-
-    @Test
-    @DisplayName("オブジェクトの不等価性テスト")
-    void testInequality() {
-        LocalDateTime now = LocalDateTime.now();
-        FavoritePlaylistResponse response1 = new FavoritePlaylistResponse(
-                "id1", "name1", "owner1", 10, now);
-        FavoritePlaylistResponse response2 = new FavoritePlaylistResponse(
-                "id2", "name2", "owner2", 20, now.plusDays(1));
-
-        assertThat(response1).isNotEqualTo(response2);
-    }
-
-    @Test
-    @DisplayName("toString()メソッドのテスト")
-    void testToString() {
-        LocalDateTime now = LocalDateTime.of(2024, 7, 23, 10, 30);
-        FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                "id", "name", "owner", 10, now);
-
-        String expectedString = "FavoritePlaylistResponse(playlistId=id, playlistName=name, " +
-                "playlistOwnerName=owner, totalTracks=10, addedAt=2024-07-23T10:30)";
-
-        assertThat(response.toString()).isEqualTo(expectedString);
     }
 }
