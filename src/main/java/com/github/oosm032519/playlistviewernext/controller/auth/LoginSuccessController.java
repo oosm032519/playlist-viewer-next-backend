@@ -15,16 +15,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class LoginSuccessController {
 
-    /**
-     * このクラスのロガーインスタンス。
-     * ログイン処理に関する情報やエラーのログ出力に使用する。
-     */
     private static final Logger logger = LoggerFactory.getLogger(LoginSuccessController.class);
 
-    /**
-     * フロントエンドアプリケーションのURL。
-     * application.propertiesまたはapplication.ymlから注入される。
-     */
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -37,11 +29,15 @@ public class LoginSuccessController {
      */
     @GetMapping("/loginSuccess")
     public String loginSuccess(@AuthenticationPrincipal OAuth2User principal) {
+        logger.info("loginSuccessメソッドが呼び出されました。処理を開始します。");
+
         // 認証が失敗した場合（principalがnullの場合）のエラーハンドリング
         if (principal == null) {
-            logger.error("認証に失敗しました: OAuth2Userがnullです");
+            logger.error("認証に失敗しました: OAuth2Userがnullです。ログインページにリダイレクトします。");
             return "redirect:/login?error";
         }
+
+        logger.debug("OAuth2User情報: {}", principal);
 
         // ユーザーIDとアクセストークンの取得
         String userId = principal.getAttribute("id");
@@ -49,13 +45,18 @@ public class LoginSuccessController {
 
         // ユーザー情報の欠落チェックとログ出力
         if (userId == null || accessToken == null) {
-            logger.warn("ユーザー情報が不足しています。UserId: {}, AccessToken: {}", userId, accessToken);
+            logger.warn("ユーザー情報が不足しています。UserId: {}, AccessToken: {}",
+                    userId != null ? userId : "null",
+                    accessToken != null ? "取得済み（セキュリティのため非表示）" : "null");
         } else {
             logger.info("ユーザーが正常に認証されました。UserId: {}", userId);
-            logger.debug("アクセストークン: {}", accessToken);
+            logger.debug("アクセストークン: {}", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
         }
 
+        logger.info("フロントエンドURL: {}", frontendUrl);
+
         // フロントエンドアプリケーションへのリダイレクト
+        logger.info("フロントエンドアプリケーションへリダイレクトします。");
         return "redirect:" + frontendUrl;
     }
 }
