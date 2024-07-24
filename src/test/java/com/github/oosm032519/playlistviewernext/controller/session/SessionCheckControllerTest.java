@@ -1,170 +1,173 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
-@MockitoSettings(strictness = Strictness.LENIENT)
 @ExtendWith(MockitoExtension.class)
 class SessionCheckControllerTest {
-
-    @Mock
-    private OAuth2AuthorizedClientService authorizedClientService;
-
-    @Mock
-    private OAuth2User principal;
-
-    @Mock
-    private OAuth2AuthenticationToken authentication;
-
-    @Mock
-    private OAuth2AuthorizedClient authorizedClient;
-
-    @Mock
-    private OAuth2AccessToken accessToken;
 
     @InjectMocks
     private SessionCheckController sessionCheckController;
 
-    @Test
-    void checkSession_WhenUserAuthenticated_ReturnsSuccessResponse() {
-        // Arrange
-        String tokenValue = "testAccessToken";
-        String userId = "testUserId";
+    private MockHttpSession mockSession;
 
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn(tokenValue);
-        when(principal.getAttribute("id")).thenReturn(userId);
-
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
-
-        // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("success");
-        assertThat(response.getBody().get("message")).isEqualTo("Access token is present");
-        assertThat(response.getBody().get("userId")).isEqualTo(userId);
-        assertThat(response.getBody().get("tokenPreview")).isEqualTo("testAccess...");
+    @BeforeEach
+    void setUp() {
+        mockSession = new MockHttpSession();
     }
 
     @Test
-    void checkSession_WhenUserNotAuthenticated_ReturnsErrorResponse() {
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, null);
+    void checkSession_WithAuthenticatedUser_ReturnsSuccessResponse() {
+        // Given
+        String accessToken = "sampleAccessToken";
+        String userId = "sampleUserId";
+        mockSession.setAttribute("accessToken", accessToken);
+        mockSession.setAttribute("userId", userId);
 
-        // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "success")
+                .containsEntry("message", "Access token is present")
+                .containsEntry("userId", userId)
+                .containsEntry("tokenPreview", "sampleAcce...");
     }
 
     @Test
-    void checkSession_WhenNoAccessToken_ReturnsErrorResponse() {
-        // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(null);
+    void checkSession_WithUnauthenticatedUser_ReturnsErrorResponse() {
+        // Given
+        // セッション属性を設定しない
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
 
-        // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("No access token found");
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "error")
+                .containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenAccessTokenIsShort_ReturnsCorrectTokenPreview() {
-        // Arrange
-        String shortTokenValue = "short";
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn(shortTokenValue);
-        when(principal.getAttribute("id")).thenReturn("testUserId");
+    void checkSession_WithOnlyAccessToken_ReturnsErrorResponse() {
+        // Given
+        String accessToken = "sampleAccessToken";
+        mockSession.setAttribute("accessToken", accessToken);
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
 
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("tokenPreview")).isEqualTo("short...");
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "error")
+                .containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenUserIdIsNull_ReturnsResponseWithoutUserId() {
-        // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn("testAccessToken");
-        when(principal.getAttribute("id")).thenReturn(null);
+    void checkSession_WithOnlyUserId_ReturnsErrorResponse() {
+        // Given
+        String userId = "sampleUserId";
+        mockSession.setAttribute("userId", userId);
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
 
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("userId")).isNull();
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "error")
+                .containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenPrincipalIsNullButAuthenticationIsNot_ReturnsErrorResponse() {
-        // Arrange
-        when(authentication.getName()).thenReturn("testUser");
+    void checkSession_WithLongAccessToken_ReturnsCorrectTokenPreview() {
+        // Given
+        String longAccessToken = "thisIsAVeryLongAccessTokenThatShouldBeTruncated";
+        String userId = "sampleUserId";
+        mockSession.setAttribute("accessToken", longAccessToken);
+        mockSession.setAttribute("userId", userId);
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, authentication);
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
 
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "success")
+                .containsEntry("tokenPreview", "thisIsAVer...");
     }
 
     @Test
-    void checkSession_WhenAuthenticationIsNullButPrincipalIsNot_ReturnsErrorResponse() {
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, null);
+    void checkSession_WithShortAccessToken_ReturnsFullTokenPreview() {
+        // Given
+        String shortAccessToken = "short";
+        String userId = "sampleUserId";
+        mockSession.setAttribute("accessToken", shortAccessToken);
+        mockSession.setAttribute("userId", userId);
 
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "success")
+                .containsEntry("tokenPreview", "short...");
     }
 
     @Test
-    void checkSession_WhenAuthorizedClientServiceThrowsException_ReturnsErrorResponse() {
-        // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenThrow(new RuntimeException("Service error"));
+    void checkSession_WithNullAccessToken_ReturnsErrorResponse() {
+        // Given
+        String userId = "sampleUserId";
+        mockSession.setAttribute("accessToken", null);
+        mockSession.setAttribute("userId", userId);
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
 
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("Error loading authorized client: Service error");
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "error")
+                .containsEntry("message", "User not authenticated");
+    }
+
+    @Test
+    void checkSession_WithNullUserId_ReturnsErrorResponse() {
+        // Given
+        String accessToken = "sampleAccessToken";
+        mockSession.setAttribute("accessToken", accessToken);
+        mockSession.setAttribute("userId", null);
+
+        // When
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(mockSession);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .containsEntry("status", "error")
+                .containsEntry("message", "User not authenticated");
     }
 }

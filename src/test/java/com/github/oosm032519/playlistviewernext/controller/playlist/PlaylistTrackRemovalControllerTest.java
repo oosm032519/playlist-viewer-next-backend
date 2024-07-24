@@ -3,89 +3,81 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.mock.web.MockHttpSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class PlaylistTrackRemovalControllerTest {
 
     @Mock
     private SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
 
     @InjectMocks
-    private PlaylistTrackRemovalController playlistTrackRemovalController;
+    private PlaylistTrackRemovalController controller;
 
-    private PlaylistTrackRemovalRequest playlistTrackRemovalRequest;
+    private MockHttpSession session;
 
     @BeforeEach
     void setUp() {
-        playlistTrackRemovalRequest = new PlaylistTrackRemovalRequest();
-        playlistTrackRemovalRequest.setPlaylistId("playlistId");
-        playlistTrackRemovalRequest.setTrackId("trackId");
+        MockitoAnnotations.openMocks(this);
+        session = new MockHttpSession();
     }
 
-    @Nested
-    @DisplayName("removeTrackFromPlaylist method tests")
-    class RemoveTrackFromPlaylistTests {
+    @Test
+    void removeTrackFromPlaylist_WithValidAccessToken_ReturnsOk() {
+        // Arrange
+        session.setAttribute("accessToken", "validToken");
+        PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
+        request.setPlaylistId("playlistId");
+        request.setTrackId("trackId");
 
-        @Test
-        @DisplayName("Should return unauthorized when principal is null")
-        void shouldReturnUnauthorizedWhenPrincipalIsNull() {
-            // Arrange
-            OAuth2User principal = null;
+        when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(any(), eq("validToken")))
+                .thenReturn(ResponseEntity.ok("Success"));
 
-            // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+        // Act
+        ResponseEntity<String> response = controller.removeTrackFromPlaylist(request, session);
 
-            // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody()).isEqualTo("{\"error\": \"認証が必要です。\"}");
-        }
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("トラックが正常に削除されました");
+    }
 
-        @Test
-        @DisplayName("Should return OK when track removal is successful")
-        void shouldReturnOkWhenTrackRemovalIsSuccessful() {
-            // Arrange
-            OAuth2User principal = mock(OAuth2User.class);
-            ResponseEntity<String> serviceResponse = ResponseEntity.ok("Some content");  // 非空のボディを持つレスポンス
-            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
+    @Test
+    void removeTrackFromPlaylist_WithoutAccessToken_ReturnsUnauthorized() {
+        // Arrange
+        PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
 
-            // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+        // Act
+        ResponseEntity<String> response = controller.removeTrackFromPlaylist(request, session);
 
-            // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isEqualTo("{\"message\": \"トラックが正常に削除されました。\"}");
-            verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
-        }
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).contains("認証が必要です");
+    }
 
+    @Test
+    void removeTrackFromPlaylist_ServiceFails_ReturnsInternalServerError() {
+        // Arrange
+        session.setAttribute("accessToken", "validToken");
+        PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
 
-        @Test
-        @DisplayName("Should return INTERNAL_SERVER_ERROR when track removal fails")
-        void shouldReturnInternalServerErrorWhenTrackRemovalFails() {
-            // Arrange
-            OAuth2User principal = mock(OAuth2User.class);
-            ResponseEntity<String> serviceResponse = ResponseEntity.noContent().build();
-            when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
+        when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(any(), eq("validToken")))
+                .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
 
-            // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+        // Act
+        ResponseEntity<String> response = controller.removeTrackFromPlaylist(request, session);
 
-            // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(response.getBody()).isEqualTo("{\"error\": \"トラックの削除に失敗しました。\"}");
-            verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
-        }
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).contains("トラックの削除に失敗しました");
     }
 }

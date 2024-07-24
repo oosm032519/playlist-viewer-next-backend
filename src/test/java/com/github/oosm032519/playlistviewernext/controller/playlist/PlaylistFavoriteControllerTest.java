@@ -4,55 +4,50 @@ import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.mock.web.MockHttpSession;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class PlaylistFavoriteControllerTest {
-
-    @Mock
-    private UserFavoritePlaylistRepository userFavoritePlaylistRepository;
-
-    @Mock
-    private OAuth2User principal;
 
     @InjectMocks
     private PlaylistFavoriteController playlistFavoriteController;
 
+    @Mock
+    private UserFavoritePlaylistRepository userFavoritePlaylistRepository;
+
+    private MockHttpSession mockSession;
+
     @BeforeEach
     void setUp() {
-        when(principal.getAttribute("id")).thenReturn("testUserId");
+        MockitoAnnotations.openMocks(this);
+        mockSession = new MockHttpSession();
+        mockSession.setAttribute("userId", "testUserId");
     }
 
     @Test
     void favoritePlaylist_Success() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
-        when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenReturn(new UserFavoritePlaylist());
+        String playlistId = "testPlaylistId";
+        String playlistName = "Test Playlist";
+        int totalTracks = 10;
+        String playlistOwnerName = "Test Owner";
 
-        // Act
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(false);
+
         ResponseEntity<Map<String, Object>> response = playlistFavoriteController.favoritePlaylist(
-                principal, "playlistId", "playlistName", 10, "ownerName");
+                mockSession, playlistId, playlistName, totalTracks, playlistOwnerName);
 
-        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("status", "success");
         assertThat(response.getBody()).containsEntry("message", "プレイリストをお気に入りに登録しました。");
@@ -62,14 +57,16 @@ class PlaylistFavoriteControllerTest {
 
     @Test
     void favoritePlaylist_AlreadyFavorited() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(true);
+        String playlistId = "testPlaylistId";
+        String playlistName = "Test Playlist";
+        int totalTracks = 10;
+        String playlistOwnerName = "Test Owner";
 
-        // Act
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(true);
+
         ResponseEntity<Map<String, Object>> response = playlistFavoriteController.favoritePlaylist(
-                principal, "playlistId", "playlistName", 10, "ownerName");
+                mockSession, playlistId, playlistName, totalTracks, playlistOwnerName);
 
-        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("status", "warning");
         assertThat(response.getBody()).containsEntry("message", "このプレイリストは既にお気に入りに登録されています。");
@@ -78,68 +75,60 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void favoritePlaylist_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
-        when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenThrow(new RuntimeException("DB error"));
+    void favoritePlaylist_Unauthorized() {
+        MockHttpSession unauthorizedSession = new MockHttpSession();
 
-        // Act
         ResponseEntity<Map<String, Object>> response = playlistFavoriteController.favoritePlaylist(
-                principal, "playlistId", "playlistName", 10, "ownerName");
+                unauthorizedSession, "playlistId", "playlistName", 10, "ownerName");
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "プレイリストのお気に入り登録中にエラーが発生しました。");
+        assertThat(response.getBody()).containsEntry("message", "認証が必要です。");
     }
 
     @Test
     void unfavoritePlaylist_Success() {
-        // Arrange
-        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(1L);
+        String playlistId = "testPlaylistId";
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(principal, "playlistId");
+        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(1L);
 
-        // Assert
+        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(mockSession, playlistId);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("status", "success");
         assertThat(response.getBody()).containsEntry("message", "プレイリストをお気に入りから解除しました。");
 
-        verify(userFavoritePlaylistRepository).deleteByUserIdAndPlaylistId(anyString(), anyString());
+        verify(userFavoritePlaylistRepository).deleteByUserIdAndPlaylistId(anyString(), eq(playlistId));
     }
 
     @Test
     void unfavoritePlaylist_NotFavorited() {
-        // Arrange
-        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(0L);
+        String playlistId = "testPlaylistId";
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(principal, "playlistId");
+        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(0L);
 
-        // Assert
+        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(mockSession, playlistId);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsEntry("status", "warning");
         assertThat(response.getBody()).containsEntry("message", "このプレイリストはお気に入りに登録されていません。");
+
+        verify(userFavoritePlaylistRepository).deleteByUserIdAndPlaylistId(anyString(), eq(playlistId));
     }
 
     @Test
-    void unfavoritePlaylist_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
+    void unfavoritePlaylist_Unauthorized() {
+        MockHttpSession unauthorizedSession = new MockHttpSession();
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(principal, "playlistId");
+        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(unauthorizedSession, "playlistId");
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "プレイリストのお気に入り解除中にエラーが発生しました。");
+        assertThat(response.getBody()).containsEntry("message", "認証が必要です。");
     }
 
     @Test
     void getFavoritePlaylists_Success() {
-        // Arrange
         UserFavoritePlaylist playlist1 = new UserFavoritePlaylist();
         playlist1.setPlaylistId("id1");
         playlist1.setPlaylistName("name1");
@@ -152,12 +141,12 @@ class PlaylistFavoriteControllerTest {
         playlist2.setTotalTracks(20);
         playlist2.setPlaylistOwnerName("owner2");
 
-        when(userFavoritePlaylistRepository.findByUserId(anyString())).thenReturn(Arrays.asList(playlist1, playlist2));
+        List<UserFavoritePlaylist> favoritePlaylists = Arrays.asList(playlist1, playlist2);
 
-        // Act
-        ResponseEntity<List<Map<String, Object>>> response = playlistFavoriteController.getFavoritePlaylists(principal);
+        when(userFavoritePlaylistRepository.findByUserId(anyString())).thenReturn(favoritePlaylists);
 
-        // Assert
+        ResponseEntity<List<Map<String, Object>>> response = playlistFavoriteController.getFavoritePlaylists(mockSession);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).hasSize(2);
         assertThat(response.getBody().get(0)).containsEntry("playlistId", "id1");
@@ -167,66 +156,50 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void getFavoritePlaylists_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.findByUserId(anyString())).thenThrow(new RuntimeException("DB error"));
+    void getFavoritePlaylists_Unauthorized() {
+        MockHttpSession unauthorizedSession = new MockHttpSession();
 
-        // Act
-        ResponseEntity<List<Map<String, Object>>> response = playlistFavoriteController.getFavoritePlaylists(principal);
+        ResponseEntity<List<Map<String, Object>>> response = playlistFavoriteController.getFavoritePlaylists(unauthorizedSession);
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isEmpty();
     }
 
     @Test
-    void checkFavorite_Favorited() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(true);
+    void checkFavorite_IsFavorited() {
+        String playlistId = "testPlaylistId";
 
-        // Act
-        ResponseEntity<Boolean> response = playlistFavoriteController.checkFavorite(principal, "playlistId");
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(true);
 
-        // Assert
+        ResponseEntity<Boolean> response = playlistFavoriteController.checkFavorite(mockSession, playlistId);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isTrue();
 
-        verify(userFavoritePlaylistRepository).existsByUserIdAndPlaylistId(anyString(), anyString());
+        verify(userFavoritePlaylistRepository).existsByUserIdAndPlaylistId(anyString(), eq(playlistId));
     }
 
     @Test
     void checkFavorite_NotFavorited() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
+        String playlistId = "testPlaylistId";
 
-        // Act
-        ResponseEntity<Boolean> response = playlistFavoriteController.checkFavorite(principal, "playlistId");
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), eq(playlistId))).thenReturn(false);
 
-        // Assert
+        ResponseEntity<Boolean> response = playlistFavoriteController.checkFavorite(mockSession, playlistId);
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isFalse();
 
-        verify(userFavoritePlaylistRepository).existsByUserIdAndPlaylistId(anyString(), anyString());
+        verify(userFavoritePlaylistRepository).existsByUserIdAndPlaylistId(anyString(), eq(playlistId));
     }
 
     @Test
-    void hashUserId_ThrowsRuntimeException() {
-        // Arrange
-        PlaylistFavoriteController controller = new PlaylistFavoriteController(userFavoritePlaylistRepository);
+    void checkFavorite_Unauthorized() {
+        MockHttpSession unauthorizedSession = new MockHttpSession();
 
-        // Act & Assert
-        assertThatThrownBy(() -> {
-            // MessageDigestをモックして例外をスローするように設定
-            try (MockedStatic<MessageDigest> mockedMessageDigest = mockStatic(MessageDigest.class)) {
-                mockedMessageDigest.when(() -> MessageDigest.getInstance("SHA-256"))
-                        .thenThrow(new NoSuchAlgorithmException("Test exception"));
+        ResponseEntity<Boolean> response = playlistFavoriteController.checkFavorite(unauthorizedSession, "playlistId");
 
-                controller.favoritePlaylist(principal, "playlistId", "playlistName", 10, "ownerName");
-            }
-        })
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("ハッシュアルゴリズムが見つかりません。")
-                .hasCauseInstanceOf(NoSuchAlgorithmException.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody()).isFalse();
     }
-
 }

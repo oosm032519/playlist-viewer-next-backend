@@ -80,7 +80,7 @@ public class PlaylistFavoriteController {
         }
     }
 
-    private ResponseEntity<Map<String, Object>> handleAuthenticationError() {
+    public ResponseEntity<Map<String, Object>> handleAuthenticationError() {
         logger.error("ユーザーが認証されていないか、セッションが見つかりません。");
         Map<String, Object> response = new HashMap<>();
         response.put("status", "error");
@@ -88,7 +88,7 @@ public class PlaylistFavoriteController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    private String hashUserId(String userId) {
+    public String hashUserId(String userId) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashedBytes = md.digest(userId.getBytes());
