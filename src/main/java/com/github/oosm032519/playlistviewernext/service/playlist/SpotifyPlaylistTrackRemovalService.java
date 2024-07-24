@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -16,7 +15,6 @@ import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import se.michaelthelin.spotify.requests.data.playlists.RemoveItemsFromPlaylistRequest;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Service
 public class SpotifyPlaylistTrackRemovalService {
@@ -26,8 +24,7 @@ public class SpotifyPlaylistTrackRemovalService {
     @Autowired
     private SpotifyApi spotifyApi;
 
-    public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
-        String accessToken = getAccessToken(principal);
+    public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, String accessToken) {
         if (accessToken == null) {
             return unauthorizedResponse();
         }
@@ -51,17 +48,6 @@ public class SpotifyPlaylistTrackRemovalService {
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
             return errorResponse(e);
         }
-    }
-
-    private String getAccessToken(OAuth2User principal) {
-        Map<String, Object> attributes = principal.getAttributes();
-        String accessToken = (String) attributes.get("access_token");
-
-        if (accessToken == null || accessToken.isEmpty()) {
-            logger.warn("有効なアクセストークンがありません。ユーザー属性: {}", attributes);
-            return null;
-        }
-        return accessToken;
     }
 
     private JsonArray createTracksJsonArray(String trackId) {

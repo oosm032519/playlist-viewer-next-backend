@@ -2,12 +2,11 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +27,7 @@ public class PlaylistFavoriteController {
     }
 
     @PostMapping("/favorite")
-    public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
+    public ResponseEntity<Map<String, Object>> favoritePlaylist(HttpSession session,
                                                                 @RequestParam String playlistId,
                                                                 @RequestParam String playlistName,
                                                                 @RequestParam int totalTracks,
@@ -36,7 +35,11 @@ public class PlaylistFavoriteController {
     ) {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
-        String userId = principal.getAttribute("id");
+        // セッションからユーザーIDを取得
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return handleAuthenticationError();
+        }
 
         // ハッシュ値生成
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
@@ -77,6 +80,13 @@ public class PlaylistFavoriteController {
         }
     }
 
+    private ResponseEntity<Map<String, Object>> handleAuthenticationError() {
+        logger.error("ユーザーが認証されていないか、セッションが見つかりません。");
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "error");
+        response.put("message", "認証が必要です。");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
 
     private String hashUserId(String userId) {
         try {
@@ -90,11 +100,15 @@ public class PlaylistFavoriteController {
 
     @DeleteMapping("/favorite")
     @Transactional
-    public ResponseEntity<Map<String, Object>> unfavoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
+    public ResponseEntity<Map<String, Object>> unfavoritePlaylist(HttpSession session,
                                                                   @RequestParam String playlistId) {
         logger.info("プレイリストお気に入り解除リクエストを受信しました。プレイリストID: {}", playlistId);
 
-        String userId = principal.getAttribute("id");
+        // セッションからユーザーIDを取得
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return handleAuthenticationError();
+        }
 
         // ハッシュ値生成
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
@@ -129,10 +143,15 @@ public class PlaylistFavoriteController {
     }
 
     @GetMapping("/favorite")
-    public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(HttpSession session) {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
-        String userId = principal.getAttribute("id");
+        // セッションからユーザーIDを取得
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            logger.error("ユーザーが認証されていないか、セッションが見つかりません。");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
+        }
 
         // ハッシュ値生成
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
@@ -161,11 +180,15 @@ public class PlaylistFavoriteController {
     }
 
     @GetMapping("/favoriteCheck")
-    public ResponseEntity<Boolean> checkFavorite(@AuthenticationPrincipal OAuth2User principal,
+    public ResponseEntity<Boolean> checkFavorite(HttpSession session,
                                                  @RequestParam String playlistId) {
         logger.info("プレイリストお気に入り確認リクエストを受信しました。プレイリストID: {}", playlistId);
 
-        String userId = principal.getAttribute("id");
+        // セッションからユーザーIDを取得
+        String userId = (String) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+        }
 
         // ハッシュ値生成
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));

@@ -1,5 +1,3 @@
-// SecurityConfig.java
-
 package com.github.oosm032519.playlistviewernext.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +6,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,6 +26,12 @@ public class SecurityConfig {
             "/", "/error", "/webjars/**", "/api/session/check", "/api/playlists/search", "/api/playlists/{id}", "/api/logout", "/api/playlists/favoriteCheck"
     };
 
+    private final OAuth2AuthorizedClientService authorizedClientService;
+
+    public SecurityConfig(OAuth2AuthorizedClientService authorizedClientService) {
+        this.authorizedClientService = authorizedClientService;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -33,7 +42,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/loginSuccess", true)
+                        .successHandler(authenticationSuccessHandler())
                 );
 
         return http.build();
@@ -52,5 +61,26 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+            OAuth2AuthorizedClient client = authorizedClientService
+                    .loadAuthorizedClient("spotify", oauthToken.getName());
+
+            String accessToken = client.getAccessToken().getTokenValue();
+            String userId = oAuth2User.getAttribute("id");
+            String displayName = oAuth2User.getAttribute("display_name");
+
+            // セッションにアクセストークン、ユーザーID、表示名を保存
+            request.getSession().setAttribute("accessToken", accessToken);
+            request.getSession().setAttribute("userId", userId);
+            request.getSession().setAttribute("displayName", displayName);
+
+            response.sendRedirect(frontendUrl);
+        };
     }
 }
