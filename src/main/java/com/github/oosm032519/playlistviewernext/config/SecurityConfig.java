@@ -86,23 +86,28 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         logger.debug("認証成功ハンドラを設定します");
         return (request, response, authentication) -> {
-            logger.info("認証が成功しました。ユーザー: {}", authentication.getName());
-            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-            OAuth2AuthorizedClient client = authorizedClientService
-                    .loadAuthorizedClient("spotify", oauthToken.getName());
+            try {
+                logger.info("認証が成功しました。ユーザー: {}", authentication.getName());
+                OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+                OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
+                OAuth2AuthorizedClient client = authorizedClientService
+                        .loadAuthorizedClient("spotify", oauthToken.getName());
 
-            String accessToken = client.getAccessToken().getTokenValue();
-            String userId = oAuth2User.getAttribute("id");
-            String displayName = oAuth2User.getAttribute("display_name");
+                String accessToken = client.getAccessToken().getTokenValue();
+                String userId = oAuth2User.getAttribute("id");
+                String displayName = oAuth2User.getAttribute("display_name");
 
-            logger.debug("セッションにユーザー情報を保存します。userId: {}, displayName: {}", userId, displayName);
-            request.getSession().setAttribute("accessToken", accessToken);
-            request.getSession().setAttribute("userId", userId);
-            request.getSession().setAttribute("displayName", displayName);
+                logger.debug("セッションにユーザー情報を保存します。userId: {}, displayName: {}", userId, displayName);
+                request.getSession().setAttribute("accessToken", accessToken);
+                request.getSession().setAttribute("userId", userId);
+                request.getSession().setAttribute("displayName", displayName);
 
-            logger.info("認証成功後、フロントエンドにリダイレクトします。URL: {}", frontendUrl);
-            response.sendRedirect(frontendUrl);
+                logger.info("認証成功後、フロントエンドにリダイレクトします。URL: {}", frontendUrl);
+                response.sendRedirect(frontendUrl);
+            } catch (Exception e) {
+                logger.error("セッションにユーザー情報を保存中にエラーが発生しました", e);
+                response.sendRedirect("/error");
+            }
         };
     }
 }
