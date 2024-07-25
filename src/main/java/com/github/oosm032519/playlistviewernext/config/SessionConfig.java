@@ -19,7 +19,7 @@ public class SessionConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionConfig.class);
 
-    @Value("${REDIS_URL}")
+    @Value("${REDIS_TLS_URL}")
     private String redisUrl;
 
     @Bean
