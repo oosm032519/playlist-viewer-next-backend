@@ -1,35 +1,39 @@
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import com.github.oosm032519.playlistviewernext.model.SpotifySession;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 public class SessionService {
 
-    private final StringRedisTemplate redisTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
-    public SessionService(StringRedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
+    public SessionService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public void saveSpotifySession(String sessionId, SpotifySession spotifySession) {
-        HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
-        String sessionKey = "spring:session:sessions:" + sessionId;
-        hashOps.put(sessionKey, "accessToken", spotifySession.getAccessToken());
-        hashOps.put(sessionKey, "userId", spotifySession.getUserId());
+        String sql = "UPDATE SPRING_SESSION_ATTRIBUTES SET ATTRIBUTE_BYTES = ? WHERE SESSION_PRIMARY_ID = ? AND ATTRIBUTE_NAME = ?";
+        jdbcTemplate.update(sql, spotifySession.getAccessToken().getBytes(), sessionId, "accessToken");
+        jdbcTemplate.update(sql, spotifySession.getUserId().getBytes(), sessionId, "userId");
     }
 
     public SpotifySession getSpotifySession(String sessionId) {
-        HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
-        String sessionKey = "spring:session:sessions:" + sessionId;
-        Map<String, String> sessionData = hashOps.entries(sessionKey);
-        if (sessionData.isEmpty()) {
-            return null;
-        }
-        return new SpotifySession(sessionData.get("accessToken"), sessionData.get("userId"));
+        String sql = "SELECT ATTRIBUTE_NAME, ATTRIBUTE_BYTES FROM SPRING_SESSION_ATTRIBUTES WHERE SESSION_PRIMARY_ID = ?";
+        return jdbcTemplate.query(sql, new Object[]{sessionId}, rs -> {
+            String accessToken = null;
+            String userId = null;
+            while (rs.next()) {
+                String attributeName = rs.getString("ATTRIBUTE_NAME");
+                byte[] attributeBytes = rs.getBytes("ATTRIBUTE_BYTES");
+                if ("accessToken".equals(attributeName)) {
+                    accessToken = new String(attributeBytes);
+                } else if ("userId".equals(attributeName)) {
+                    userId = new String(attributeBytes);
+                }
+            }
+            return (accessToken != null && userId != null) ? new SpotifySession(accessToken, userId) : null;
+        });
     }
 }
