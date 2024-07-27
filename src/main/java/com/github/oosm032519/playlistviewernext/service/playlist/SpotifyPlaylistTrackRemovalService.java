@@ -55,7 +55,7 @@ public class SpotifyPlaylistTrackRemovalService {
 
     private String getAccessToken(OAuth2User principal) {
         Map<String, Object> attributes = principal.getAttributes();
-        String accessToken = (String) attributes.get("access_token");
+        String accessToken = (String) attributes.get("spotify_access_token");
 
         if (accessToken == null || accessToken.isEmpty()) {
             logger.warn("有効なアクセストークンがありません。ユーザー属性: {}", attributes);

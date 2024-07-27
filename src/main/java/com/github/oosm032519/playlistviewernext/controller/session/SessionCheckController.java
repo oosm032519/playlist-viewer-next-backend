@@ -1,20 +1,21 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
+import com.github.oosm032519.playlistviewernext.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/session")
@@ -22,63 +23,86 @@ public class SessionCheckController {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionCheckController.class);
 
-    private final OAuth2AuthorizedClientService authorizedClientService;
+    private final JwtUtil jwtUtil;
 
-    public SessionCheckController(OAuth2AuthorizedClientService authorizedClientService) {
-        this.authorizedClientService = authorizedClientService;
-        logger.info("SessionCheckControllerが初期化されました。");
+    public SessionCheckController(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+        logger.info("SessionCheckControllerが初期化されました。JwtUtil: {}", jwtUtil);
     }
 
     @GetMapping("/check")
-    public ResponseEntity<Map<String, Object>> checkSession(
-            @AuthenticationPrincipal OAuth2User principal,
-            OAuth2AuthenticationToken authentication) {
-        logger.info("セッションチェックが開始されました。Principal: {}, Authentication: {}",
-                principal != null ? principal.getName() : "null",
-                authentication != null ? authentication.getName() : "null");
+    public ResponseEntity<Map<String, Object>> checkSession(HttpServletRequest request) {
+        logger.info("セッションチェックが開始されました。リクエスト: {}", request);
 
-        return Optional.ofNullable(principal)
-                .filter(_ -> authentication != null)
-                .map(p -> {
-                    logger.debug("認証されたユーザーが見つかりました。ユーザー名: {}", p.getName());
-                    return getSessionResponse(p, authentication);
-                })
-                .orElseGet(() -> {
-                    logger.warn("認証されていないユーザーがセッションチェックを試みました。");
-                    return ResponseEntity.ok(Map.of("status", "error", "message", "User not authenticated"));
-                });
+        String userId = null;
+
+        // JWT からユーザー情報取得
+        String jwt = getJwtFromCookie(request);
+        logger.debug("JWTクッキーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
+
+        if (jwt != null) {
+            try {
+                logger.info("JWTトークンの検証を開始します。");
+                Map<String, Object> claims = jwtUtil.validateToken(jwt);
+                userId = (String) claims.get("sub");
+                logger.info("JWTトークンの検証が成功しました。ユーザーID: {}", userId);
+            } catch (JwtException e) {
+                logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
+            }
+        } else {
+            logger.warn("JWTトークンがクッキーに存在しません。");
+        }
+
+        // OAuth2 ログイン情報取得
+        if (userId == null) {
+            logger.info("JWTトークンからユーザー情報を取得できなかったため、OAuth2ログイン情報を確認します。");
+            if (SecurityContextHolder.getContext().getAuthentication() != null &&
+                    SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                logger.debug("認証済みプリンシパル: {}", principal);
+                if (principal instanceof CustomUserDetails userDetails) {
+                    userId = userDetails.getUsername();
+                    logger.info("OAuth2ログイン情報から取得したユーザーID: {}", userId);
+                } else {
+                    logger.warn("認証済みですが、CustomUserDetailsではありません。プリンシパルの型: {}", principal.getClass().getName());
+                }
+            } else {
+                logger.warn("SecurityContextHolderに認証情報が存在しません。");
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        if (userId != null) {
+            logger.info("認証成功。ユーザーID: {}", userId);
+            response.put("status", "success");
+            response.put("message", "User is authenticated");
+            response.put("userId", userId);
+        } else {
+            logger.warn("認証されていないユーザーがセッションチェックを試みました。");
+            response.put("status", "error");
+            response.put("message", "User not authenticated");
+        }
+        return ResponseEntity.ok(response);
     }
 
-    private ResponseEntity<Map<String, Object>> getSessionResponse(OAuth2User principal, OAuth2AuthenticationToken authentication) {
-        logger.debug("セッションレスポンスの生成を開始します。ユーザー名: {}", principal.getName());
-        try {
-            OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient("spotify", authentication.getName());
-            logger.info("OAuth2AuthorizedClientのロードが完了しました。クライアント: {}", client != null ? "取得成功" : "取得失敗");
-            return Optional.ofNullable(client)
-                    .map(c -> {
-                        logger.debug("アクセストークンが見つかりました。トークンの有効期限: {}", c.getAccessToken().getExpiresAt());
-                        return createSuccessResponse(c, principal);
+    private String getJwtFromCookie(HttpServletRequest request) {
+        logger.debug("クッキーからJWTトークンを取得します。");
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            logger.debug("クッキーの数: {}", cookies.length);
+            return Arrays.stream(cookies)
+                    .filter(cookie -> "JWT".equals(cookie.getName()))
+                    .findFirst()
+                    .map(cookie -> {
+                        logger.info("JWTクッキーが見つかりました。");
+                        return cookie.getValue();
                     })
                     .orElseGet(() -> {
-                        logger.warn("アクセストークンが見つかりませんでした。ユーザー名: {}", authentication.getName());
-                        return ResponseEntity.ok(Map.of("status", "error", "message", "No access token found"));
+                        logger.warn("JWTクッキーが見つかりませんでした。");
+                        return null;
                     });
-        } catch (RuntimeException e) {
-            logger.error("認可済みクライアントのロード中にエラーが発生しました。", e);
-            return ResponseEntity.ok(Map.of("status", "error", "message", "Error loading authorized client: " + e.getMessage()));
         }
-    }
-
-    private ResponseEntity<Map<String, Object>> createSuccessResponse(OAuth2AuthorizedClient client, OAuth2User principal) {
-        String accessToken = client.getAccessToken().getTokenValue();
-        String userId = principal.getAttribute("id");
-        logger.info("成功レスポンスを作成します。ユーザーID: {}", userId);
-        logger.debug("アクセストークンのプレビュー: {}", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "...");
-        return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Access token is present",
-                "userId", Objects.requireNonNull(userId),
-                "tokenPreview", accessToken.substring(0, Math.min(accessToken.length(), 10)) + "..."
-        ));
+        logger.warn("リクエストにクッキーが存在しません。");
+        return null;
     }
 }

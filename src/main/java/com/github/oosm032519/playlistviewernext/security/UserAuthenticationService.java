@@ -41,6 +41,6 @@ public class UserAuthenticationService {
      * @return アクセストークン
      */
     private String extractAccessToken(OAuth2User principal) {
-        return (String) principal.getAttributes().get("access_token");
+        return (String) principal.getAttributes().get("spotify_access_token"); // "spotify_access_token" 属性を取得
     }
 }

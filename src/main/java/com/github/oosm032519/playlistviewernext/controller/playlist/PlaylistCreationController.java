@@ -65,7 +65,7 @@ public class PlaylistCreationController {
 
         // ユーザー情報を取得
         String userId = principal.getAttribute("id");
-        String userName = principal.getAttribute("display_name");
+        String userName = principal.getAttribute("name");
         String playlistName = generatePlaylistName(userName);
 
         try {

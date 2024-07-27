@@ -4,7 +4,6 @@ import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlay
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,13 +31,12 @@ public class UserPlaylistsController {
     /**
      * フォロー中のプレイリストを取得するエンドポイント
      *
-     * @param authentication OAuth2認証トークン
      * @return フォロー中のプレイリストのリストを含むResponseEntity
      */
     @GetMapping
-    public ResponseEntity<?> getFollowedPlaylists(OAuth2AuthenticationToken authentication) {
+    public ResponseEntity<?> getFollowedPlaylists() {
         try {
-            return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists(authentication));
+            return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists()); // authentication を渡さない
         } catch (Exception e) {
             LOGGER.error("フォロー中のプレイリストの取得中にエラーが発生しました", e);
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());

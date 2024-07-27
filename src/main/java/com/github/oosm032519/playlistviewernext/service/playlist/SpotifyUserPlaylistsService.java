@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -19,31 +19,35 @@ import java.util.Optional;
 @Service
 public class SpotifyUserPlaylistsService {
     private final SpotifyApi spotifyApi;
-    private final SpotifyAuthService authService;
 
     /**
      * SpotifyUserPlaylistsServiceのコンストラクタ。
      *
-     * @param spotifyApi  Spotify API クライアント
-     * @param authService Spotify 認証サービス
+     * @param spotifyApi Spotify API クライアント
      */
     @Autowired
-    public SpotifyUserPlaylistsService(SpotifyApi spotifyApi, SpotifyAuthService authService) {
+    public SpotifyUserPlaylistsService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
-        this.authService = authService;
     }
 
     /**
      * 現在のユーザーのプレイリストを取得します。
      *
-     * @param authentication OAuth2 認証トークン
      * @return プレイリストのリスト
      * @throws IOException                             入出力例外
      * @throws SpotifyWebApiException                  Spotify API 例外
      * @throws org.apache.hc.core5.http.ParseException パース例外
      */
-    public List<PlaylistSimplified> getCurrentUsersPlaylists(OAuth2AuthenticationToken authentication) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        authService.setAccessToken(authentication);
+    public List<PlaylistSimplified> getCurrentUsersPlaylists() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+        // SecurityContextHolder から OAuth2User を取得
+        OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // OAuth2User から spotify_access_token を取得
+        String spotifyAccessToken = oauth2User.getAttribute("spotify_access_token");
+
+        // SpotifyApi にアクセストークンを設定
+        spotifyApi.setAccessToken(spotifyAccessToken);
+
         return getPlaylists();
     }
 
