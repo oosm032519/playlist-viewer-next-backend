@@ -97,6 +97,7 @@ public class SecurityConfig {
                             jwtCookie.setSecure(true);
                             jwtCookie.setPath("/");
                             jwtCookie.setMaxAge(3600); // 1時間
+                            jwtCookie.setAttribute("SameSite", "None");
 
                             response.addCookie(jwtCookie);
                             response.sendRedirect(frontendUrl);
