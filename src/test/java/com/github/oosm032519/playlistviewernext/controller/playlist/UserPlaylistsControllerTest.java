@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
-import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,18 +9,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-// UserPlaylistsControllerTestクラスは、UserPlaylistsControllerのユニットテストを行います。
 @ExtendWith(MockitoExtension.class)
 class UserPlaylistsControllerTest {
 
@@ -33,42 +28,37 @@ class UserPlaylistsControllerTest {
 
     @BeforeEach
     void setUp() {
-        // 各テストメソッドの前に実行される設定
+        // 各テストの前に実行される設定
     }
 
     @Test
-    void getFollowedPlaylists_ReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
-        // Arrange: モックされたOAuth2AuthenticationTokenと期待されるプレイリストのリストを設定
-        OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        List<PlaylistSimplified> expectedPlaylists = Arrays.asList(
-                new PlaylistSimplified.Builder().setName("Followed Playlist 1").build(),
-                new PlaylistSimplified.Builder().setName("Followed Playlist 2").build()
-        );
+    void getFollowedPlaylists_Success() throws Exception {
+        // テストデータの準備
+        PlaylistSimplified playlist1 = mock(PlaylistSimplified.class);
+        PlaylistSimplified playlist2 = mock(PlaylistSimplified.class);
+        List<PlaylistSimplified> mockPlaylists = Arrays.asList(playlist1, playlist2);
+        when(userPlaylistsService.getCurrentUsersPlaylists()).thenReturn(mockPlaylists);
 
-        // モックされたサービスが期待されるプレイリストを返すように設定
-        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenReturn(expectedPlaylists);
+        // メソッドの実行
+        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists();
 
-        // Act: コントローラのメソッドを呼び出す
-        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists(authToken);
-
-        // Assert: ステータスコードとボディが期待通りであることを検証
+        // 検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
+        assertThat(response.getBody()).isEqualTo(mockPlaylists);
+        verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }
 
     @Test
-    void getFollowedPlaylists_HandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
-        // Arrange: モックされたOAuth2AuthenticationTokenと例外をスローするサービスを設定
-        OAuth2AuthenticationToken authToken = mock(OAuth2AuthenticationToken.class);
-        when(userPlaylistsService.getCurrentUsersPlaylists(authToken)).thenThrow(new RuntimeException("Authentication error"));
+    void getFollowedPlaylists_Exception() throws Exception {
+        // 例外をスローするようにモックを設定
+        when(userPlaylistsService.getCurrentUsersPlaylists()).thenThrow(new RuntimeException("Test exception"));
 
-        // Act: コントローラのメソッドを呼び出す
-        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists(authToken);
+        // メソッドの実行
+        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists();
 
-        // Assert: ステータスコードとボディが期待通りであることを検証
+        // 検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("Error: Authentication error");
-        verify(userPlaylistsService).getCurrentUsersPlaylists(authToken);
+        assertThat(response.getBody()).isEqualTo("Error: Test exception");
+        verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }
 }

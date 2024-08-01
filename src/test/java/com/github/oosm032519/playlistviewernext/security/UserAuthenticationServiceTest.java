@@ -39,7 +39,7 @@ class UserAuthenticationServiceTest {
         void getAccessToken_WithValidToken_ReturnsToken() {
             // Arrange
             String expectedToken = "validAccessToken";
-            Map<String, Object> attributes = Collections.singletonMap("access_token", expectedToken);
+            Map<String, Object> attributes = Collections.singletonMap("spotify_access_token", expectedToken);
             when(principal.getAttributes()).thenReturn(attributes);
 
             // Act
@@ -77,7 +77,7 @@ class UserAuthenticationServiceTest {
         void getAccessToken_WithNullAccessToken_ReturnsNull() {
             // Arrange
             Map<String, Object> attributes = new HashMap<>();
-            attributes.put("access_token", null);
+            attributes.put("spotify_access_token", null);
             when(principal.getAttributes()).thenReturn(attributes);
 
             // Act

@@ -1,14 +1,15 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
-import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
@@ -19,66 +20,86 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SpotifyUserPlaylistsServiceTest {
+public class SpotifyUserPlaylistsServiceTest {
 
     @Mock
     private SpotifyApi spotifyApi;
 
     @Mock
-    private SpotifyAuthService authService;
+    private OAuth2User oauth2User;
+
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    @Mock
+    private GetListOfCurrentUsersPlaylistsRequest.Builder requestBuilder;
+
+    @Mock
+    private GetListOfCurrentUsersPlaylistsRequest request;
 
     @InjectMocks
-    private SpotifyUserPlaylistsService userPlaylistsService;
+    private SpotifyUserPlaylistsService spotifyUserPlaylistsService;
 
     @BeforeEach
-    void setUp() {
-        // 初期化メソッドは必要ないため削除
+    public void setup() {
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(oauth2User);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(spotifyApi.getListOfCurrentUsersPlaylists()).thenReturn(requestBuilder);
+        when(requestBuilder.build()).thenReturn(request);
     }
 
     @Test
-    void testGetCurrentUsersPlaylists_withPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+    public void getCurrentUsersPlaylists_success() throws Exception {
         // Arrange
-        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
-        GetListOfCurrentUsersPlaylistsRequest.Builder builder = mock(GetListOfCurrentUsersPlaylistsRequest.Builder.class);
-        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = mock(GetListOfCurrentUsersPlaylistsRequest.class);
-        Paging<PlaylistSimplified> playlistsPaging = mock(Paging.class);
-        PlaylistSimplified[] playlistSimplifieds = new PlaylistSimplified[]{mock(PlaylistSimplified.class)};
+        String accessToken = "mockAccessToken";
+        when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
 
-        doNothing().when(authService).setAccessToken(authentication);
-        when(spotifyApi.getListOfCurrentUsersPlaylists()).thenReturn(builder);
-        when(builder.build()).thenReturn(playlistsRequest);
-        when(playlistsRequest.execute()).thenReturn(playlistsPaging);
-        when(playlistsPaging.getItems()).thenReturn(playlistSimplifieds);
+        Paging<PlaylistSimplified> playlistsPaging = mock(Paging.class);
+        when(request.execute()).thenReturn(playlistsPaging);
+        when(playlistsPaging.getItems()).thenReturn(new PlaylistSimplified[0]);
 
         // Act
-        List<PlaylistSimplified> result = userPlaylistsService.getCurrentUsersPlaylists(authentication);
+        List<PlaylistSimplified> playlists = spotifyUserPlaylistsService.getCurrentUsersPlaylists();
 
         // Assert
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(playlistSimplifieds[0]);
+        assertThat(playlists).isEmpty();
+        verify(spotifyApi).setAccessToken(accessToken);
     }
 
     @Test
-    void testGetCurrentUsersPlaylists_noPlaylists() throws IOException, SpotifyWebApiException, ParseException {
+    public void getCurrentUsersPlaylists_spotifyApiException() throws Exception {
         // Arrange
-        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
-        GetListOfCurrentUsersPlaylistsRequest.Builder builder = mock(GetListOfCurrentUsersPlaylistsRequest.Builder.class);
-        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = mock(GetListOfCurrentUsersPlaylistsRequest.class);
-        Paging<PlaylistSimplified> playlistsPaging = mock(Paging.class);
+        String accessToken = "mockAccessToken";
+        when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
+        when(request.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
-        doNothing().when(authService).setAccessToken(authentication);
-        when(spotifyApi.getListOfCurrentUsersPlaylists()).thenReturn(builder);
-        when(builder.build()).thenReturn(playlistsRequest);
-        when(playlistsRequest.execute()).thenReturn(playlistsPaging);
-        when(playlistsPaging.getItems()).thenReturn(null);
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessageContaining("API error");
+        verify(spotifyApi).setAccessToken(accessToken);
+    }
 
-        // Act
-        List<PlaylistSimplified> result = userPlaylistsService.getCurrentUsersPlaylists(authentication);
+    @Test
+    public void getCurrentUsersPlaylists_ioException() throws Exception {
+        // Arrange
+        String accessToken = "mockAccessToken";
+        when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
+        when(request.execute()).thenThrow(new IOException("IO error"));
 
-        // Assert
-        assertThat(result).isEmpty();
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("IO error");
+        verify(spotifyApi).setAccessToken(accessToken);
     }
 }

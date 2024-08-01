@@ -1,170 +1,146 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
+import com.github.oosm032519.playlistviewernext.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@MockitoSettings(strictness = Strictness.LENIENT)
-@ExtendWith(MockitoExtension.class)
 class SessionCheckControllerTest {
 
-    @Mock
-    private OAuth2AuthorizedClientService authorizedClientService;
-
-    @Mock
-    private OAuth2User principal;
-
-    @Mock
-    private OAuth2AuthenticationToken authentication;
-
-    @Mock
-    private OAuth2AuthorizedClient authorizedClient;
-
-    @Mock
-    private OAuth2AccessToken accessToken;
-
-    @InjectMocks
     private SessionCheckController sessionCheckController;
 
+    @Mock
+    private JwtUtil jwtUtil;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        sessionCheckController = new SessionCheckController(jwtUtil);
+        SecurityContextHolder.setContext(securityContext);
+    }
+
     @Test
-    void checkSession_WhenUserAuthenticated_ReturnsSuccessResponse() {
+    void checkSession_WithValidJwt_ShouldReturnSuccessResponse() {
         // Arrange
-        String tokenValue = "testAccessToken";
-        String userId = "testUserId";
-
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn(tokenValue);
-        when(principal.getAttribute("id")).thenReturn(userId);
+        String jwt = "valid.jwt.token";
+        String userId = "testUser";
+        Cookie jwtCookie = new Cookie("JWT", jwt);
+        when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+        when(jwtUtil.validateToken(jwt)).thenReturn(Map.of("sub", userId));
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("success");
-        assertThat(response.getBody().get("message")).isEqualTo("Access token is present");
-        assertThat(response.getBody().get("userId")).isEqualTo(userId);
-        assertThat(response.getBody().get("tokenPreview")).isEqualTo("testAccess...");
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "success");
+        assertThat(response.getBody()).containsEntry("message", "User is authenticated");
+        assertThat(response.getBody()).containsEntry("userId", userId);
     }
 
     @Test
-    void checkSession_WhenUserNotAuthenticated_ReturnsErrorResponse() {
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, null);
-
-        // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
-    }
-
-    @Test
-    void checkSession_WhenNoAccessToken_ReturnsErrorResponse() {
+    void checkSession_WithInvalidJwt_ShouldReturnErrorResponse() {
         // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(null);
+        String jwt = "invalid.jwt.token";
+        Cookie jwtCookie = new Cookie("JWT", jwt);
+        when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+        when(jwtUtil.validateToken(jwt)).thenThrow(new JwtException("Invalid token"));
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("No access token found");
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "error");
+        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenAccessTokenIsShort_ReturnsCorrectTokenPreview() {
+    void checkSession_WithNoJwtButAuthenticatedUser_ShouldReturnSuccessResponse() {
         // Arrange
-        String shortTokenValue = "short";
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn(shortTokenValue);
-        when(principal.getAttribute("id")).thenReturn("testUserId");
+        when(request.getCookies()).thenReturn(null);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        CustomUserDetails userDetails = new CustomUserDetails("testUser", "password", Collections.emptyList(), "spotifyToken");
+        when(authentication.getPrincipal()).thenReturn(userDetails);
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("tokenPreview")).isEqualTo("short...");
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "success");
+        assertThat(response.getBody()).containsEntry("message", "User is authenticated");
+        assertThat(response.getBody()).containsEntry("userId", "testUser");
     }
 
     @Test
-    void checkSession_WhenUserIdIsNull_ReturnsResponseWithoutUserId() {
+    void checkSession_WithNoJwtAndNoAuthenticatedUser_ShouldReturnErrorResponse() {
         // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn("testAccessToken");
-        when(principal.getAttribute("id")).thenReturn(null);
+        when(request.getCookies()).thenReturn(null);
+        when(securityContext.getAuthentication()).thenReturn(null);
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("userId")).isNull();
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "error");
+        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenPrincipalIsNullButAuthenticationIsNot_ReturnsErrorResponse() {
+    void checkSession_WithEmptyCookies_ShouldReturnErrorResponse() {
         // Arrange
-        when(authentication.getName()).thenReturn("testUser");
+        when(request.getCookies()).thenReturn(new Cookie[]{});
+        when(securityContext.getAuthentication()).thenReturn(null);
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(null, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "error");
+        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
     }
 
     @Test
-    void checkSession_WhenAuthenticationIsNullButPrincipalIsNot_ReturnsErrorResponse() {
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, null);
-
-        // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("User not authenticated");
-    }
-
-    @Test
-    void checkSession_WhenAuthorizedClientServiceThrowsException_ReturnsErrorResponse() {
+    void checkSession_WithNonJwtCookie_ShouldReturnErrorResponse() {
         // Arrange
-        when(authentication.getName()).thenReturn("testUser");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "testUser")).thenThrow(new RuntimeException("Service error"));
+        Cookie nonJwtCookie = new Cookie("NonJWT", "some-value");
+        when(request.getCookies()).thenReturn(new Cookie[]{nonJwtCookie});
+        when(securityContext.getAuthentication()).thenReturn(null);
 
         // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(principal, authentication);
+        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
 
         // Assert
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("status")).isEqualTo("error");
-        assertThat(response.getBody().get("message")).isEqualTo("Error loading authorized client: Service error");
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("status", "error");
+        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
     }
 }

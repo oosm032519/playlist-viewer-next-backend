@@ -7,10 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
@@ -28,80 +24,65 @@ class SpotifyAuthServiceTest {
     private SpotifyApi spotifyApi;
 
     @Mock
-    private OAuth2AuthorizedClientService authorizedClientService;
+    private ClientCredentialsRequest.Builder clientCredentialsBuilder;
+
+    @Mock
+    private ClientCredentialsRequest clientCredentialsRequest;
 
     @InjectMocks
-    private SpotifyAuthService authService;
+    private SpotifyAuthService spotifyAuthService;
 
     @BeforeEach
     void setUp() {
-        // 必要なセットアップがあればここに記述
+        when(spotifyApi.clientCredentials()).thenReturn(clientCredentialsBuilder);
+        when(clientCredentialsBuilder.build()).thenReturn(clientCredentialsRequest);
     }
 
     @Test
-    void testGetClientCredentialsToken_Success() throws IOException, SpotifyWebApiException, ParseException {
+    void getClientCredentialsToken_Success() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
-        ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
-        ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
         ClientCredentials clientCredentials = mock(ClientCredentials.class);
-
-        when(spotifyApi.clientCredentials()).thenReturn(builder);
-        when(builder.build()).thenReturn(clientCredentialsRequest);
         when(clientCredentialsRequest.execute()).thenReturn(clientCredentials);
         when(clientCredentials.getAccessToken()).thenReturn("test-access-token");
 
         // Act
-        authService.getClientCredentialsToken();
+        spotifyAuthService.getClientCredentialsToken();
 
         // Assert
         verify(spotifyApi).setAccessToken("test-access-token");
+        verify(clientCredentialsRequest).execute();
     }
 
     @Test
-    void testGetClientCredentialsToken_ApiError() throws IOException, SpotifyWebApiException, ParseException {
+    void getClientCredentialsToken_IOExceptionThrown() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
-        ClientCredentialsRequest.Builder builder = mock(ClientCredentialsRequest.Builder.class);
-        ClientCredentialsRequest clientCredentialsRequest = mock(ClientCredentialsRequest.class);
-
-        when(spotifyApi.clientCredentials()).thenReturn(builder);
-        when(builder.build()).thenReturn(clientCredentialsRequest);
-        when(clientCredentialsRequest.execute()).thenThrow(new IOException("API error"));
+        when(clientCredentialsRequest.execute()).thenThrow(new IOException("Test IO Exception"));
 
         // Act & Assert
-        assertThatThrownBy(() -> authService.getClientCredentialsToken())
+        assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
                 .isInstanceOf(IOException.class)
-                .hasMessage("API error");
+                .hasMessage("Test IO Exception");
     }
 
     @Test
-    void testSetAccessToken_Success() {
+    void getClientCredentialsToken_SpotifyWebApiExceptionThrown() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
-        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
-        OAuth2AuthorizedClient authorizedClient = mock(OAuth2AuthorizedClient.class);
-        OAuth2AccessToken accessToken = mock(OAuth2AccessToken.class);
-
-        when(authentication.getName()).thenReturn("test-user");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(authorizedClient);
-        when(authorizedClient.getAccessToken()).thenReturn(accessToken);
-        when(accessToken.getTokenValue()).thenReturn("test-access-token");
-
-        // Act
-        authService.setAccessToken(authentication);
-
-        // Assert
-        verify(spotifyApi).setAccessToken("test-access-token");
-    }
-
-    @Test
-    void testSetAccessToken_NoAuthInfo() {
-        // Arrange
-        OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
-
-        when(authentication.getName()).thenReturn("test-user");
-        when(authorizedClientService.loadAuthorizedClient("spotify", "test-user")).thenReturn(null);
+        when(clientCredentialsRequest.execute()).thenThrow(new SpotifyWebApiException("Test Spotify Web API Exception"));
 
         // Act & Assert
-        assertThatThrownBy(() -> authService.setAccessToken(authentication))
-                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessage("Test Spotify Web API Exception");
+    }
+
+    @Test
+    void getClientCredentialsToken_ParseExceptionThrown() throws IOException, SpotifyWebApiException, ParseException {
+        // Arrange
+        when(clientCredentialsRequest.execute()).thenThrow(new ParseException("Test Parse Exception"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
+                .isInstanceOf(ParseException.class)
+                .hasMessage("Test Parse Exception");
     }
 }
