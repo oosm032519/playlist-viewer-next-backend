@@ -90,9 +90,8 @@ public class SecurityConfig {
 
                             String token = jwtUtil.generateToken(claims);
 
-                            // JWT トークンを Post Message でフロントエンドに送信
-                            response.setContentType("text/html");
-                            response.getWriter().write("<script>window.opener.postMessage({ token: '" + token + "' }, '" + frontendUrl + "'); window.close();</script>");
+                            // JWT トークンをフラグメント識別子に含めてリダイレクト
+                            response.sendRedirect(frontendUrl + "/#token=" + token);
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
