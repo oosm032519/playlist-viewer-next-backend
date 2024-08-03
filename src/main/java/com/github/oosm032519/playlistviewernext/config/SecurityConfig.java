@@ -90,8 +90,8 @@ public class SecurityConfig {
 
                             String token = jwtUtil.generateToken(claims);
 
-                            // JWT トークンをクエリパラメータに含めてリダイレクト
-                            response.sendRedirect(frontendUrl + "?token=" + token);
+                            // JWT トークンをハッシュに含めてリダイレクト
+                            response.sendRedirect(frontendUrl + "#token=" + token);
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
