@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.config;
 import com.github.oosm032519.playlistviewernext.filter.JwtAuthenticationFilter;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyOAuth2UserService;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import jakarta.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +65,7 @@ public class SecurityConfig {
                 .requestCache(RequestCacheConfigurer::disable)
                 .securityContext(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorite", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track").permitAll()
+                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorites", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -91,16 +90,9 @@ public class SecurityConfig {
 
                             String token = jwtUtil.generateToken(claims);
 
-                            // JWTをCookieに設定
-                            Cookie jwtCookie = new Cookie("JWT", token);
-                            jwtCookie.setHttpOnly(true);
-                            jwtCookie.setSecure(true);
-                            jwtCookie.setPath("/");
-                            jwtCookie.setMaxAge(3600); // 1時間
-                            jwtCookie.setAttribute("SameSite", "None");
-
-                            response.addCookie(jwtCookie);
-                            response.sendRedirect(frontendUrl);
+                            // JWT トークンを Post Message でフロントエンドに送信
+                            response.setContentType("text/html");
+                            response.getWriter().write("<script>window.opener.postMessage({ token: '" + token + "' }, '" + frontendUrl + "'); window.close();</script>");
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

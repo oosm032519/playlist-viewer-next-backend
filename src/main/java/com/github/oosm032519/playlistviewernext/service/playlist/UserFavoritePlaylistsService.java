@@ -36,13 +36,19 @@ public class UserFavoritePlaylistsService {
      * @return お気に入りプレイリストのリスト
      */
     public List<FavoritePlaylistResponse> getFavoritePlaylists(String userId) {
-        LOGGER.info("ユーザーID: {} のお気に入りプレイリストを取得します。", userId);
+        LOGGER.info("getFavoritePlaylists() 開始 - userId: {}", userId); // 関数開始ログ、引数情報を含める
 
         List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(userId);
 
-        return favoritePlaylists.stream()
+        LOGGER.debug("getFavoritePlaylists() - リポジトリから取得したプレイリスト数: {}", favoritePlaylists.size()); // 重要な変数の値の変化を追跡
+
+        List<FavoritePlaylistResponse> responseList = favoritePlaylists.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+
+        LOGGER.info("getFavoritePlaylists() 終了 - userId: {}, 返却するプレイリスト数: {}", userId, responseList.size()); // 関数終了ログ、戻り値情報を含める
+
+        return responseList;
     }
 
     /**
@@ -52,12 +58,18 @@ public class UserFavoritePlaylistsService {
      * @return FavoritePlaylistResponseモデル
      */
     private FavoritePlaylistResponse mapToResponse(UserFavoritePlaylist favoritePlaylist) {
-        return new FavoritePlaylistResponse(
+        LOGGER.debug("mapToResponse() 開始 - favoritePlaylist: {}", favoritePlaylist); // 関数開始ログ、引数情報を含める
+
+        FavoritePlaylistResponse response = new FavoritePlaylistResponse(
                 favoritePlaylist.getPlaylistId(),
                 favoritePlaylist.getPlaylistName(),
                 favoritePlaylist.getPlaylistOwnerName(),
                 favoritePlaylist.getTotalTracks(),
                 favoritePlaylist.getAddedAt()
         );
+
+        LOGGER.debug("mapToResponse() 終了 - response: {}", response); // 関数終了ログ、戻り値情報を含める
+
+        return response;
     }
 }

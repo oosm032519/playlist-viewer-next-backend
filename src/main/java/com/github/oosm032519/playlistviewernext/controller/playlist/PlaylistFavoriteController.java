@@ -77,17 +77,6 @@ public class PlaylistFavoriteController {
         }
     }
 
-
-    private String hashUserId(String userId) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = md.digest(userId.getBytes());
-            return Base64.getEncoder().encodeToString(hashedBytes);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("ハッシュアルゴリズムが見つかりません。", e);
-        }
-    }
-
     @DeleteMapping("/favorite")
     @Transactional
     public ResponseEntity<Map<String, Object>> unfavoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
@@ -139,7 +128,7 @@ public class PlaylistFavoriteController {
 
         try {
             // お気に入りプレイリストID一覧を取得
-            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
+            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId); // ハッシュ化されたIDを使用
 
             List<Map<String, Object>> response = favoritePlaylists.stream()
                     .map(favorite -> {
@@ -174,5 +163,15 @@ public class PlaylistFavoriteController {
         boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
 
         return ResponseEntity.ok(isFavorited);
+    }
+
+    private String hashUserId(String userId) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(userId.getBytes());
+            return Base64.getEncoder().encodeToString(hashedBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("ハッシュアルゴリズムが見つかりません。", e);
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -19,7 +18,10 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -98,22 +100,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
-        // まず、Authorization ヘッダーから JWT を探す
+        // Authorization ヘッダーから JWT を探す
         String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.substring(7);
-        }
-
-        // Authorization ヘッダーに JWT がない場合は、Cookie から JWT を探す
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            Optional<Cookie> jwtCookie = Arrays.stream(cookies)
-                    .filter(cookie -> "JWT".equals(cookie.getName()))
-                    .findFirst();
-
-            if (jwtCookie.isPresent()) {
-                return jwtCookie.get().getValue();
-            }
         }
 
         // JWT が見つからない場合は null を返す

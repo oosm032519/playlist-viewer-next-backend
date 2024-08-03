@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,8 +35,8 @@ public class SessionCheckController {
         String userId = null;
 
         // JWT からユーザー情報取得
-        String jwt = getJwtFromCookie(request);
-        logger.debug("JWTクッキーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
+        String jwt = getJwtFromAuthorizationHeader(request);
+        logger.debug("Authorizationヘッダーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
 
         if (jwt != null) {
             try {
@@ -50,7 +48,7 @@ public class SessionCheckController {
                 logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
             }
         } else {
-            logger.warn("JWTトークンがクッキーに存在しません。");
+            logger.warn("JWTトークンがAuthorizationヘッダーに存在しません。");
         }
 
         // OAuth2 ログイン情報取得
@@ -85,24 +83,14 @@ public class SessionCheckController {
         return ResponseEntity.ok(response);
     }
 
-    private String getJwtFromCookie(HttpServletRequest request) {
-        logger.debug("クッキーからJWTトークンを取得します。");
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            logger.debug("クッキーの数: {}", cookies.length);
-            return Arrays.stream(cookies)
-                    .filter(cookie -> "JWT".equals(cookie.getName()))
-                    .findFirst()
-                    .map(cookie -> {
-                        logger.info("JWTクッキーが見つかりました。");
-                        return cookie.getValue();
-                    })
-                    .orElseGet(() -> {
-                        logger.warn("JWTクッキーが見つかりませんでした。");
-                        return null;
-                    });
+    private String getJwtFromAuthorizationHeader(HttpServletRequest request) {
+        logger.debug("AuthorizationヘッダーからJWTトークンを取得します。");
+        String authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            logger.info("JWTトークンが見つかりました。");
+            return authorizationHeader.substring(7);
         }
-        logger.warn("リクエストにクッキーが存在しません。");
+        logger.warn("JWTトークンが見つかりませんでした。");
         return null;
     }
 }
