@@ -5,6 +5,7 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
+import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,9 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
-import org.apache.hc.core5.http.ParseException;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -59,11 +60,11 @@ class PlaylistTrackAdditionControllerTest {
         when(spotifyService.addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID)).thenReturn(snapshotResult);
 
         // Act
-        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
+        ResponseEntity<Map<String, String>> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo("トラックが正常に追加されました。Snapshot ID: " + SNAPSHOT_ID);
+        assertThat(response.getBody()).isEqualTo(Map.of("message", "トラックが正常に追加されました。", "snapshot_id", SNAPSHOT_ID));
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
@@ -82,11 +83,11 @@ class PlaylistTrackAdditionControllerTest {
         when(userAuthenticationService.getAccessToken(null)).thenReturn(null);
 
         // Act
-        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, null);
+        ResponseEntity<Map<String, String>> response = playlistTrackAdditionController.addTrackToPlaylist(request, null);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isEqualTo("認証が必要です。");
+        assertThat(response.getBody()).isEqualTo(Map.of("error", "認証が必要です。"));
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(null);
@@ -105,11 +106,11 @@ class PlaylistTrackAdditionControllerTest {
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
         // Act
-        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
+        ResponseEntity<Map<String, String>> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isEqualTo("認証が必要です。");
+        assertThat(response.getBody()).isEqualTo(Map.of("error", "認証が必要です。"));
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);
@@ -131,11 +132,11 @@ class PlaylistTrackAdditionControllerTest {
         when(spotifyService.addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID)).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act
-        ResponseEntity<String> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
+        ResponseEntity<Map<String, String>> response = playlistTrackAdditionController.addTrackToPlaylist(request, principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("エラー: Spotify API error");
+        assertThat(response.getBody()).isEqualTo(Map.of("error", "エラー: Spotify API error"));
 
         // メソッド呼び出しの検証
         verify(userAuthenticationService).getAccessToken(principal);

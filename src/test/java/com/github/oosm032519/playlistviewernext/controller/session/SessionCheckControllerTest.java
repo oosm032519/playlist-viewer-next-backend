@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,8 +47,8 @@ class SessionCheckControllerTest {
         // Arrange
         String jwt = "valid.jwt.token";
         String userId = "testUser";
-        Cookie jwtCookie = new Cookie("JWT", jwt);
-        when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+        String authorizationHeader = "Bearer " + jwt;
+        when(request.getHeader("Authorization")).thenReturn(authorizationHeader);
         when(jwtUtil.validateToken(jwt)).thenReturn(Map.of("sub", userId));
 
         // Act
@@ -66,8 +65,8 @@ class SessionCheckControllerTest {
     void checkSession_WithInvalidJwt_ShouldReturnErrorResponse() {
         // Arrange
         String jwt = "invalid.jwt.token";
-        Cookie jwtCookie = new Cookie("JWT", jwt);
-        when(request.getCookies()).thenReturn(new Cookie[]{jwtCookie});
+        String authorizationHeader = "Bearer " + jwt;
+        when(request.getHeader("Authorization")).thenReturn(authorizationHeader);
         when(jwtUtil.validateToken(jwt)).thenThrow(new JwtException("Invalid token"));
 
         // Act
@@ -82,7 +81,7 @@ class SessionCheckControllerTest {
     @Test
     void checkSession_WithNoJwtButAuthenticatedUser_ShouldReturnSuccessResponse() {
         // Arrange
-        when(request.getCookies()).thenReturn(null);
+        when(request.getHeader("Authorization")).thenReturn(null);
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(authentication.isAuthenticated()).thenReturn(true);
         CustomUserDetails userDetails = new CustomUserDetails("testUser", "password", Collections.emptyList(), "spotifyToken");
@@ -101,38 +100,7 @@ class SessionCheckControllerTest {
     @Test
     void checkSession_WithNoJwtAndNoAuthenticatedUser_ShouldReturnErrorResponse() {
         // Arrange
-        when(request.getCookies()).thenReturn(null);
-        when(securityContext.getAuthentication()).thenReturn(null);
-
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
-
-        // Assert
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
-    }
-
-    @Test
-    void checkSession_WithEmptyCookies_ShouldReturnErrorResponse() {
-        // Arrange
-        when(request.getCookies()).thenReturn(new Cookie[]{});
-        when(securityContext.getAuthentication()).thenReturn(null);
-
-        // Act
-        ResponseEntity<Map<String, Object>> response = sessionCheckController.checkSession(request);
-
-        // Assert
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
-        assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "User not authenticated");
-    }
-
-    @Test
-    void checkSession_WithNonJwtCookie_ShouldReturnErrorResponse() {
-        // Arrange
-        Cookie nonJwtCookie = new Cookie("NonJWT", "some-value");
-        when(request.getCookies()).thenReturn(new Cookie[]{nonJwtCookie});
+        when(request.getHeader("Authorization")).thenReturn(null);
         when(securityContext.getAuthentication()).thenReturn(null);
 
         // Act

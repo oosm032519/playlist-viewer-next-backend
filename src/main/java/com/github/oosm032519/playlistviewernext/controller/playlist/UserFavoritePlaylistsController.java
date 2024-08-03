@@ -63,7 +63,7 @@ public class UserFavoritePlaylistsController {
     }
 
     // hashUserIdメソッドを追加
-    private String hashUserId(String userId) {
+    public String hashUserId(String userId) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashedBytes = md.digest(userId.getBytes());

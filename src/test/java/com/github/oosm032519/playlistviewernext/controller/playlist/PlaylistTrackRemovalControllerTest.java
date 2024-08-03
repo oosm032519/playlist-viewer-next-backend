@@ -1,3 +1,5 @@
+// PlaylistTrackRemovalControllerTest.java
+
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
@@ -13,6 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -46,11 +50,11 @@ class PlaylistTrackRemovalControllerTest {
             OAuth2User principal = null;
 
             // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+            ResponseEntity<Map<String, String>> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             // Assert
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody()).isEqualTo("{\"error\": \"認証が必要です。\"}");
+            assertThat(response.getBody()).isEqualTo(Map.of("error", "認証が必要です。"));
         }
 
         @Test
@@ -62,11 +66,11 @@ class PlaylistTrackRemovalControllerTest {
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
             // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+            ResponseEntity<Map<String, String>> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             // Assert
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isEqualTo("{\"message\": \"トラックが正常に削除されました。\"}");
+            assertThat(response.getBody()).isEqualTo(Map.of("message", "トラックが正常に削除されました。"));
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
 
@@ -80,11 +84,11 @@ class PlaylistTrackRemovalControllerTest {
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
             // Act
-            ResponseEntity<String> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+            ResponseEntity<Map<String, String>> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             // Assert
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(response.getBody()).isEqualTo("{\"error\": \"トラックの削除に失敗しました。\"}");
+            assertThat(response.getBody()).isEqualTo(Map.of("error", "トラックの削除に失敗しました。"));
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
     }

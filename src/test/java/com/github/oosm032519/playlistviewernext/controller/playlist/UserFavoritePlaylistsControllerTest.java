@@ -40,11 +40,14 @@ class UserFavoritePlaylistsControllerTest {
         String userId = "testUser";
         when(principal.getAttribute("id")).thenReturn(userId);
 
+        // userIdをハッシュ化
+        String hashedUserId = controller.hashUserId(userId);
+
         List<FavoritePlaylistResponse> expectedPlaylists = Arrays.asList(
                 new FavoritePlaylistResponse("1", "Playlist 1", "Owner 1", 10, LocalDateTime.now()),
                 new FavoritePlaylistResponse("2", "Playlist 2", "Owner 2", 15, LocalDateTime.now())
         );
-        when(userFavoritePlaylistsService.getFavoritePlaylists(userId)).thenReturn(expectedPlaylists);
+        when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId)).thenReturn(expectedPlaylists);
 
         // Act
         ResponseEntity<List<FavoritePlaylistResponse>> response = controller.getFavoritePlaylists(principal);
@@ -52,7 +55,7 @@ class UserFavoritePlaylistsControllerTest {
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(userFavoritePlaylistsService).getFavoritePlaylists(userId);
+        verify(userFavoritePlaylistsService).getFavoritePlaylists(hashedUserId); // ハッシュ化されたIDで検証
     }
 
     @Test
@@ -60,7 +63,11 @@ class UserFavoritePlaylistsControllerTest {
         // Arrange
         String userId = "testUser";
         when(principal.getAttribute("id")).thenReturn(userId);
-        when(userFavoritePlaylistsService.getFavoritePlaylists(userId)).thenThrow(new RuntimeException("Test exception"));
+
+        // userIdをハッシュ化
+        String hashedUserId = controller.hashUserId(userId);
+
+        when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId)).thenThrow(new RuntimeException("Test exception"));
 
         // Act
         ResponseEntity<List<FavoritePlaylistResponse>> response = controller.getFavoritePlaylists(principal);
