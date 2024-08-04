@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         logger.debug("doFilterInternalメソッドが開始されました - リクエストURI: {}", request.getRequestURI());
 
-        String token = extractJwtFromRequest(request);
+        String token = extractJwtFromCookie(request);
         if (token != null) {
             try {
                 Map<String, Object> claims = jwtUtil.validateToken(token);
@@ -99,11 +100,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.debug("doFilterInternalメソッドが完了しました");
     }
 
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        // Authorization ヘッダーから JWT を探す
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            return authorizationHeader.substring(7);
+    private String extractJwtFromCookie(HttpServletRequest request) {
+        // Cookie から JWT を探す
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
 
         // JWT が見つからない場合は null を返す

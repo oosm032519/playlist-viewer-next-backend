@@ -3,6 +3,7 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +35,9 @@ public class SessionCheckController {
 
         String userId = null;
 
-        // JWT からユーザー情報取得
-        String jwt = getJwtFromAuthorizationHeader(request);
-        logger.debug("Authorizationヘッダーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
+        // Cookie から JWT を取得
+        String jwt = getJwtFromCookie(request);
+        logger.debug("Cookie から取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
 
         if (jwt != null) {
             try {
@@ -48,10 +49,10 @@ public class SessionCheckController {
                 logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
             }
         } else {
-            logger.warn("JWTトークンがAuthorizationヘッダーに存在しません。");
+            logger.warn("JWTトークンが Cookie に存在しません。");
         }
 
-        // OAuth2 ログイン情報取得
+        // OAuth2 ログイン情報取得 (JWT から取得できなかった場合)
         if (userId == null) {
             logger.info("JWTトークンからユーザー情報を取得できなかったため、OAuth2ログイン情報を確認します。");
             if (SecurityContextHolder.getContext().getAuthentication() != null &&
@@ -83,12 +84,16 @@ public class SessionCheckController {
         return ResponseEntity.ok(response);
     }
 
-    private String getJwtFromAuthorizationHeader(HttpServletRequest request) {
-        logger.debug("AuthorizationヘッダーからJWTトークンを取得します。");
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            logger.info("JWTトークンが見つかりました。");
-            return authorizationHeader.substring(7);
+    private String getJwtFromCookie(HttpServletRequest request) {
+        logger.debug("Cookie から JWTトークンを取得します。");
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt_token".equals(cookie.getName())) {
+                    logger.info("JWTトークンが見つかりました。");
+                    return cookie.getValue();
+                }
+            }
         }
         logger.warn("JWTトークンが見つかりませんでした。");
         return null;
