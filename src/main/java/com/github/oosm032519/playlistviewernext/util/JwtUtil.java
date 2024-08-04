@@ -1,13 +1,12 @@
 package com.github.oosm032519.playlistviewernext.util;
 
 import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.AESDecrypter;
-import com.nimbusds.jose.crypto.AESEncrypter;
+import com.nimbusds.jose.crypto.ECDHDecrypter;
+import com.nimbusds.jose.crypto.ECDHEncrypter;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +14,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
@@ -28,8 +33,11 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.encryption.secret}")
-    private String encryptionSecret;
+    @Value("${jwt.public.key}")
+    private String publicKey;
+
+    @Value("${jwt.private.key}")
+    private String privateKey;
 
     @Getter
     @Value("${backend.url}")
@@ -51,16 +59,24 @@ public class JwtUtil {
             this.signer = new MACSigner(secret);
             this.verifier = new MACVerifier(secret);
 
-            // 16進数の文字列をバイト列に変換
-            byte[] encryptionKeyBytes = DatatypeConverter.parseHexBinary(encryptionSecret);
-            SecretKey encryptionKey = new SecretKeySpec(encryptionKeyBytes, "AES");
+            // EC キーペアの生成
+            ECPublicKey ecPublicKey = (ECPublicKey) KeyFactory.getInstance("EC")
+                    .generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
 
-            this.encrypter = new AESEncrypter(encryptionKey);
-            this.decrypter = new AESDecrypter(encryptionKey);
+            ECPrivateKey ecPrivateKey = (ECPrivateKey) KeyFactory.getInstance("EC")
+                    .generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
 
+            this.encrypter = new ECDHEncrypter(ecPublicKey);
+            this.decrypter = new ECDHDecrypter(ecPrivateKey);
+
+            logger.debug("Public Key Length: {}", publicKey.length());
+            logger.debug("Private Key Length: {}", privateKey.length());
             logger.debug("署名者、検証者、暗号化器、復号器の生成に成功しました。");
-        } catch (JOSEException e) {
+        } catch (JOSEException | NoSuchAlgorithmException | InvalidKeySpecException e) {
             logger.error("初期化中にエラーが発生しました", e);
+            if (e.getCause() != null) {
+                logger.error("原因: ", e.getCause());
+            }
             throw new RuntimeException("JwtUtilの初期化に失敗しました", e);
         }
         logger.info("JwtUtil初期化完了");
@@ -84,7 +100,7 @@ public class JwtUtil {
             signedJWT.sign(signer);
 
             JWEObject jweObject = new JWEObject(
-                    new JWEHeader.Builder(JWEAlgorithm.A256GCMKW, EncryptionMethod.A128CBC_HS256)
+                    new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.A256GCM)
                             .contentType("JWT")
                             .build(),
                     new Payload(signedJWT)
