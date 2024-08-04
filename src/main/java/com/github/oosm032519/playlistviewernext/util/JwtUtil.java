@@ -3,8 +3,13 @@ package com.github.oosm032519.playlistviewernext.util;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDHDecrypter;
 import com.nimbusds.jose.crypto.ECDHEncrypter;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.crypto.Ed25519Signer;
+import com.nimbusds.jose.crypto.Ed25519Verifier;
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.OctetKeyPair;
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.Getter;
@@ -14,15 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
@@ -30,11 +29,8 @@ import java.util.Map;
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${jwt.public.key}")
-    private String publicKey;
-
-    @Value("${jwt.private.key}")
-    private String privateKey;
+    @Value("${jwt.secret}")
+    private String secret;
 
     @Getter
     @Value("${backend.url}")
@@ -53,25 +49,28 @@ public class JwtUtil {
     public void init() {
         logger.info("JwtUtil初期化開始");
         try {
-            // EC キーペアの生成 (P-521曲線を使用)
-            KeyFactory keyFactory = KeyFactory.getInstance("EC");
-            ECPublicKey ecPublicKey = (ECPublicKey) keyFactory.generatePublic(
-                    new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
-            ECPrivateKey ecPrivateKey = (ECPrivateKey) keyFactory.generatePrivate(
-                    new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
+            // Ed25519キーペアの生成 (署名用)
+            OctetKeyPair octetKeyPair = new OctetKeyPairGenerator(Curve.Ed25519)
+                    .keyID(secret)
+                    .generate();
 
-            // ECDSA署名用のsignerとverifierを初期化
-            this.signer = new ECDSASigner(ecPrivateKey);
-            this.verifier = new ECDSAVerifier(ecPublicKey);
+            // EdDSA署名用のsignerとverifierを初期化
+            this.signer = new Ed25519Signer(octetKeyPair);
+            this.verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
+
+            // ECキーペアの生成 (暗号化用、P-521曲線を使用)
+            ECKey ecKey = new ECKeyGenerator(Curve.P_521)
+                    .keyID(secret)
+                    .generate();
+            ECPublicKey ecPublicKey = ecKey.toECPublicKey();
+            ECPrivateKey ecPrivateKey = ecKey.toECPrivateKey();
 
             // ECDH暗号化用のencrypterとdecrypterを初期化
             this.encrypter = new ECDHEncrypter(ecPublicKey);
             this.decrypter = new ECDHDecrypter(ecPrivateKey);
 
-            logger.debug("Public Key Length: {}", publicKey.length());
-            logger.debug("Private Key Length: {}", privateKey.length());
             logger.debug("署名者、検証者、暗号化器、復号器の生成に成功しました。");
-        } catch (JOSEException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (JOSEException e) {
             logger.error("初期化中にエラーが発生しました", e);
             if (e.getCause() != null) {
                 logger.error("原因: ", e.getCause());
@@ -97,7 +96,7 @@ public class JwtUtil {
             claims.forEach(claimsSetBuilder::claim);
 
             // 署名付きJWTの作成
-            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSetBuilder.build());
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.EdDSA), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
             // JWEヘッダーの作成
