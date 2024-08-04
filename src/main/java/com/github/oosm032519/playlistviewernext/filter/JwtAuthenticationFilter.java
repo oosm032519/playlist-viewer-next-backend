@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.filter;
 
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import io.jsonwebtoken.JwtException;
+import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +18,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.ParseException;
+import java.util.*;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -56,15 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         // OAuth2AuthenticationToken を作成
                         Map<String, Object> attributes = new HashMap<>();
                         attributes.put("id", userId);
-                        attributes.put("name", userName); // name 属性を設定
+                        attributes.put("name", userName);
                         attributes.put("spotify_access_token", spotifyAccessToken);
                         OAuth2User oauth2User = new DefaultOAuth2User(
-                                Collections.singletonList(new GrantedAuthority() {
-                                    @Override
-                                    public String getAuthority() {
-                                        return "ROLE_USER";
-                                    }
-                                }),
+                                Collections.singletonList((GrantedAuthority) () -> "ROLE_USER"),
                                 attributes,
                                 "id"
                         );
@@ -81,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         throw new BadCredentialsException("無効なJWTクレーム");
                     }
                 }
-            } catch (JwtException e) {
+            } catch (JOSEException | ParseException e) {
                 logger.error("JWTトークンの検証エラー", e);
                 handleAuthenticationError(response, "JWTトークンの検証エラー: " + e.getMessage());
                 return;
@@ -100,20 +93,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {
-        // Authorization ヘッダーから JWT を探す
         String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.substring(7);
         }
-
-        // JWT が見つからない場合は null を返す
         return null;
     }
 
     private boolean validateClaims(Map<String, Object> claims) {
         logger.debug("クレームの検証を開始します: {}", claims);
         try {
-            // 発行者（iss）の検証
             String issuer = (String) claims.get("iss");
             logger.debug("発行者の検証: {}", issuer);
             if (!jwtUtil.getIssuer().equals(issuer)) {
@@ -121,23 +110,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new BadCredentialsException("無効な発行者");
             }
 
-            // 対象者（aud）の検証
-            String audience = (String) claims.get("aud");
+            String audience = claims.get("aud") instanceof List ?
+                    ((List<?>) claims.get("aud")).get(0).toString() :
+                    (String) claims.get("aud");
             logger.debug("対象者の検証: {}", audience);
             if (!jwtUtil.getAudience().equals(audience)) {
                 logger.warn("無効な対象者: {}", audience);
                 throw new BadCredentialsException("無効な対象者");
             }
 
-            // 有効期限（exp）の検証
-            Date expiration = new Date(((Number) claims.get("exp")).longValue() * 1000);
+            Date expiration = (Date) claims.get("exp");
             logger.debug("有効期限の検証: {}", expiration);
             if (expiration.before(new Date())) {
                 logger.warn("トークンの有効期限切れ: {}", expiration);
                 throw new BadCredentialsException("トークンの有効期限が切れています");
             }
 
-            // 必須クレームの存在確認
             logger.debug("必須クレームの確認");
             if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
                 logger.warn("必須クレームが不足しています");

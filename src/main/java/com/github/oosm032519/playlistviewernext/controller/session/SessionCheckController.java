@@ -2,7 +2,7 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import io.jsonwebtoken.JwtException;
+import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +35,6 @@ public class SessionCheckController {
 
         String userId = null;
 
-        // JWT からユーザー情報取得
         String jwt = getJwtFromAuthorizationHeader(request);
         logger.debug("Authorizationヘッダーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
 
@@ -44,14 +44,13 @@ public class SessionCheckController {
                 Map<String, Object> claims = jwtUtil.validateToken(jwt);
                 userId = (String) claims.get("sub");
                 logger.info("JWTトークンの検証が成功しました。ユーザーID: {}", userId);
-            } catch (JwtException e) {
+            } catch (JOSEException | ParseException e) {
                 logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
             }
         } else {
             logger.warn("JWTトークンがAuthorizationヘッダーに存在しません。");
         }
 
-        // OAuth2 ログイン情報取得
         if (userId == null) {
             logger.info("JWTトークンからユーザー情報を取得できなかったため、OAuth2ログイン情報を確認します。");
             if (SecurityContextHolder.getContext().getAuthentication() != null &&
