@@ -1,10 +1,13 @@
 package com.github.oosm032519.playlistviewernext.util;
 
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.AESDecrypter;
+import com.nimbusds.jose.crypto.AESEncrypter;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.xml.bind.DatatypeConverter;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
@@ -23,6 +28,9 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
+    @Value("${jwt.encryption.secret}")
+    private String encryptionSecret;
+
     @Getter
     @Value("${backend.url}")
     private String issuer;
@@ -33,6 +41,8 @@ public class JwtUtil {
 
     private JWSSigner signer;
     private JWSVerifier verifier;
+    private JWEEncrypter encrypter;
+    private JWEDecrypter decrypter;
 
     @PostConstruct
     public void init() {
@@ -40,10 +50,18 @@ public class JwtUtil {
         try {
             this.signer = new MACSigner(secret);
             this.verifier = new MACVerifier(secret);
-            logger.debug("署名者と検証者の生成に成功しました。");
+
+            // 16進数の文字列をバイト列に変換
+            byte[] encryptionKeyBytes = DatatypeConverter.parseHexBinary(encryptionSecret);
+            SecretKey encryptionKey = new SecretKeySpec(encryptionKeyBytes, "AES");
+
+            this.encrypter = new AESEncrypter(encryptionKey);
+            this.decrypter = new AESDecrypter(encryptionKey);
+
+            logger.debug("署名者、検証者、暗号化器、復号器の生成に成功しました。");
         } catch (JOSEException e) {
-            logger.error("署名者と検証者の生成中にエラーが発生しました", e);
-            throw new RuntimeException("署名者と検証者の初期化に失敗しました", e);
+            logger.error("初期化中にエラーが発生しました", e);
+            throw new RuntimeException("JwtUtilの初期化に失敗しました", e);
         }
         logger.info("JwtUtil初期化完了");
     }
@@ -65,7 +83,15 @@ public class JwtUtil {
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
-            String token = signedJWT.serialize();
+            JWEObject jweObject = new JWEObject(
+                    new JWEHeader.Builder(JWEAlgorithm.A256GCMKW, EncryptionMethod.A128CBC_HS256)
+                            .contentType("JWT")
+                            .build(),
+                    new Payload(signedJWT)
+            );
+            jweObject.encrypt(encrypter);
+
+            String token = jweObject.serialize();
             logger.info("トークン生成成功");
             logger.debug("生成されたトークン: {}", token);
             return token;
@@ -79,7 +105,10 @@ public class JwtUtil {
         logger.info("トークン検証開始");
         logger.debug("検証対象トークン: {}", token);
         try {
-            SignedJWT signedJWT = SignedJWT.parse(token);
+            JWEObject jweObject = JWEObject.parse(token);
+            jweObject.decrypt(decrypter);
+
+            SignedJWT signedJWT = jweObject.getPayload().toSignedJWT();
             if (!signedJWT.verify(verifier)) {
                 logger.warn("トークンの署名が無効です");
                 throw new JOSEException("トークンの署名が無効です");
