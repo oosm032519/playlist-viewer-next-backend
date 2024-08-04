@@ -56,6 +56,7 @@ public class JwtUtil {
     public void init() {
         logger.info("JwtUtil初期化開始");
         try {
+            // HMAC署名用のsignerとverifierを初期化
             this.signer = new MACSigner(secret);
             this.verifier = new MACVerifier(secret);
 
@@ -66,6 +67,7 @@ public class JwtUtil {
             ECPrivateKey ecPrivateKey = (ECPrivateKey) KeyFactory.getInstance("EC")
                     .generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
 
+            // ECDH暗号化用のencrypterとdecrypterを初期化
             this.encrypter = new ECDHEncrypter(ecPublicKey);
             this.decrypter = new ECDHDecrypter(ecPrivateKey);
 
@@ -88,6 +90,7 @@ public class JwtUtil {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + 3600000); // 1時間
         try {
+            // JWTクレームセットの構築
             JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
                     .issuer(issuer)
                     .audience(audience)
@@ -96,11 +99,13 @@ public class JwtUtil {
 
             claims.forEach(claimsSetBuilder::claim);
 
+            // 署名付きJWTの作成
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
+            // JWEオブジェクトの作成と暗号化
             JWEObject jweObject = new JWEObject(
-                    new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.A256GCM)
+                    new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.XC20P)
                             .contentType("JWT")
                             .build(),
                     new Payload(signedJWT)
@@ -121,15 +126,18 @@ public class JwtUtil {
         logger.info("トークン検証開始");
         logger.debug("検証対象トークン: {}", token);
         try {
+            // JWEオブジェクトの解析と復号
             JWEObject jweObject = JWEObject.parse(token);
             jweObject.decrypt(decrypter);
 
+            // 署名付きJWTの取得と検証
             SignedJWT signedJWT = jweObject.getPayload().toSignedJWT();
             if (!signedJWT.verify(verifier)) {
                 logger.warn("トークンの署名が無効です");
                 throw new JOSEException("トークンの署名が無効です");
             }
 
+            // クレームセットの取得と有効期限の確認
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
             Date expirationTime = claimsSet.getExpirationTime();
             if (expirationTime != null && expirationTime.before(new Date())) {
