@@ -60,12 +60,12 @@ public class JwtUtil {
             this.signer = new MACSigner(secret);
             this.verifier = new MACVerifier(secret);
 
-            // EC キーペアの生成
-            ECPublicKey ecPublicKey = (ECPublicKey) KeyFactory.getInstance("EC")
-                    .generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
-
-            ECPrivateKey ecPrivateKey = (ECPrivateKey) KeyFactory.getInstance("EC")
-                    .generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
+            // EC キーペアの生成 (P-384曲線を使用)
+            KeyFactory keyFactory = KeyFactory.getInstance("EC");
+            ECPublicKey ecPublicKey = (ECPublicKey) keyFactory.generatePublic(
+                    new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
+            ECPrivateKey ecPrivateKey = (ECPrivateKey) keyFactory.generatePrivate(
+                    new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
 
             // ECDH暗号化用のencrypterとdecrypterを初期化
             this.encrypter = new ECDHEncrypter(ecPublicKey);
@@ -103,13 +103,13 @@ public class JwtUtil {
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
+            // JWEヘッダーの作成
+            JWEHeader header = new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.A256GCM)
+                    .contentType("JWT")
+                    .build();
+
             // JWEオブジェクトの作成と暗号化
-            JWEObject jweObject = new JWEObject(
-                    new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.XC20P)
-                            .contentType("JWT")
-                            .build(),
-                    new Payload(signedJWT)
-            );
+            JWEObject jweObject = new JWEObject(header, new Payload(signedJWT));
             jweObject.encrypt(encrypter);
 
             String token = jweObject.serialize();
