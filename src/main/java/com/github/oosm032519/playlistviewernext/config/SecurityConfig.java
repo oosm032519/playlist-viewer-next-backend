@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -89,6 +91,16 @@ public class SecurityConfig {
                             claims.put("spotify_access_token", spotifyAccessToken);
 
                             String token = jwtUtil.generateToken(claims);
+
+                            // JWT トークンを HttpOnly Cookie として設定
+                            ResponseCookie cookie = ResponseCookie.from("jwt_token", token)
+                                    .path("/")
+                                    .httpOnly(true)
+                                    .secure(true) // HTTPS環境の場合はtrueにする
+                                    .maxAge(3600) // 有効期限（秒）
+                                    .sameSite("None")
+                                    .build();
+                            response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
                             // JWT トークンをハッシュに含めてリダイレクト
                             response.sendRedirect(frontendUrl + "#token=" + token);
