@@ -3,8 +3,8 @@ package com.github.oosm032519.playlistviewernext.util;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.ECDHDecrypter;
 import com.nimbusds.jose.crypto.ECDHEncrypter;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.Getter;
@@ -30,9 +30,6 @@ import java.util.Map;
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
-    @Value("${jwt.secret}")
-    private String secret;
-
     @Value("${jwt.public.key}")
     private String publicKey;
 
@@ -56,16 +53,16 @@ public class JwtUtil {
     public void init() {
         logger.info("JwtUtil初期化開始");
         try {
-            // HMAC署名用のsignerとverifierを初期化
-            this.signer = new MACSigner(secret);
-            this.verifier = new MACVerifier(secret);
-
-            // EC キーペアの生成 (P-384曲線を使用)
+            // EC キーペアの生成 (P-521曲線を使用)
             KeyFactory keyFactory = KeyFactory.getInstance("EC");
             ECPublicKey ecPublicKey = (ECPublicKey) keyFactory.generatePublic(
                     new X509EncodedKeySpec(Base64.getDecoder().decode(publicKey)));
             ECPrivateKey ecPrivateKey = (ECPrivateKey) keyFactory.generatePrivate(
                     new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKey)));
+
+            // ECDSA署名用のsignerとverifierを初期化
+            this.signer = new ECDSASigner(ecPrivateKey);
+            this.verifier = new ECDSAVerifier(ecPublicKey);
 
             // ECDH暗号化用のencrypterとdecrypterを初期化
             this.encrypter = new ECDHEncrypter(ecPublicKey);
@@ -100,7 +97,7 @@ public class JwtUtil {
             claims.forEach(claimsSetBuilder::claim);
 
             // 署名付きJWTの作成
-            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSetBuilder.build());
+            SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.ES256), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
             // JWEヘッダーの作成
