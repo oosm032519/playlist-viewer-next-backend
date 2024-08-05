@@ -1,14 +1,15 @@
 package com.github.oosm032519.playlistviewernext.util;
 
+import com.google.crypto.tink.Aead;
+import com.google.crypto.tink.KeyTemplates;
+import com.google.crypto.tink.KeysetHandle;
+import com.google.crypto.tink.aead.AeadConfig;
+import com.google.crypto.tink.subtle.Hex;
 import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.ECDHDecrypter;
-import com.nimbusds.jose.crypto.ECDHEncrypter;
 import com.nimbusds.jose.crypto.Ed25519Signer;
 import com.nimbusds.jose.crypto.Ed25519Verifier;
 import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.OctetKeyPair;
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -19,8 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
@@ -42,8 +42,7 @@ public class JwtUtil {
 
     private JWSSigner signer;
     private JWSVerifier verifier;
-    private JWEEncrypter encrypter;
-    private JWEDecrypter decrypter;
+    private Aead aead;
 
     @PostConstruct
     public void init() {
@@ -58,19 +57,14 @@ public class JwtUtil {
             this.signer = new Ed25519Signer(octetKeyPair);
             this.verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
 
-            // ECキーペアの生成 (暗号化用、P-521曲線を使用)
-            ECKey ecKey = new ECKeyGenerator(Curve.P_521)
-                    .keyID(secret)
-                    .generate();
-            ECPublicKey ecPublicKey = ecKey.toECPublicKey();
-            ECPrivateKey ecPrivateKey = ecKey.toECPrivateKey();
+            // Tinkの初期化
+            AeadConfig.register();
+            KeysetHandle keysetHandle = KeysetHandle.generateNew(
+                    KeyTemplates.get("XCHACHA20_POLY1305"));
+            this.aead = keysetHandle.getPrimitive(Aead.class);
 
-            // ECDH暗号化用のencrypterとdecrypterを初期化
-            this.encrypter = new ECDHEncrypter(ecPublicKey);
-            this.decrypter = new ECDHDecrypter(ecPrivateKey);
-
-            logger.debug("署名者、検証者、暗号化器、復号器の生成に成功しました。");
-        } catch (JOSEException e) {
+            logger.debug("署名者、検証者、暗号化器の生成に成功しました。");
+        } catch (JOSEException | GeneralSecurityException e) {
             logger.error("初期化中にエラーが発生しました", e);
             if (e.getCause() != null) {
                 logger.error("原因: ", e.getCause());
@@ -99,20 +93,15 @@ public class JwtUtil {
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.EdDSA), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
-            // JWEヘッダーの作成
-            JWEHeader header = new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.A256GCM)
-                    .contentType("JWT")
-                    .build();
-
             // JWEオブジェクトの作成と暗号化
-            JWEObject jweObject = new JWEObject(header, new Payload(signedJWT));
-            jweObject.encrypt(encrypter);
+            byte[] associatedData = "JWT".getBytes();
+            byte[] ciphertext = aead.encrypt(signedJWT.serialize().getBytes(), associatedData);
 
-            String token = jweObject.serialize();
+            String token = Hex.encode(ciphertext);
             logger.info("トークン生成成功");
             logger.debug("生成されたトークン: {}", token);
             return token;
-        } catch (JOSEException e) {
+        } catch (JOSEException | GeneralSecurityException e) {
             logger.error("トークン生成中にエラーが発生しました", e);
             throw new RuntimeException("トークンの生成に失敗しました", e);
         }
@@ -123,11 +112,12 @@ public class JwtUtil {
         logger.debug("検証対象トークン: {}", token);
         try {
             // JWEオブジェクトの解析と復号
-            JWEObject jweObject = JWEObject.parse(token);
-            jweObject.decrypt(decrypter);
+            byte[] ciphertext = Hex.decode(token);
+            byte[] associatedData = "JWT".getBytes();
+            byte[] plaintext = aead.decrypt(ciphertext, associatedData);
 
             // 署名付きJWTの取得と検証
-            SignedJWT signedJWT = jweObject.getPayload().toSignedJWT();
+            SignedJWT signedJWT = SignedJWT.parse(new String(plaintext));
             if (!signedJWT.verify(verifier)) {
                 logger.warn("トークンの署名が無効です");
                 throw new JOSEException("トークンの署名が無効です");
@@ -148,9 +138,9 @@ public class JwtUtil {
         } catch (ParseException e) {
             logger.warn("トークンの形式が不正です", e);
             throw new JOSEException("トークンの形式が不正です", e);
-        } catch (JOSEException e) {
+        } catch (GeneralSecurityException e) {
             logger.error("トークン検証中に予期せぬエラーが発生しました", e);
-            throw e;
+            throw new JOSEException("トークン検証中にエラーが発生しました", e);
         }
     }
 }
