@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -20,6 +21,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -74,27 +76,50 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(spotifyOAuth2UserService)
                         )
-                        .successHandler((request, response, authentication) -> {
+                        .successHandler((_, response, authentication) -> {
                             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
                             String userId = oauth2User.getAttribute("id");
                             String spotifyAccessToken = oauth2User.getAttribute("access_token");
 
-                            // Spotify API を使用してユーザー名を取得
                             String userName = getSpotifyUserName(userId, spotifyAccessToken);
 
-                            // JWTトークンの生成
                             Map<String, Object> claims = new HashMap<>();
                             claims.put("sub", userId);
-                            claims.put("name", userName); // Spotify 上のユーザー名を設定
+                            claims.put("name", userName);
                             claims.put("spotify_access_token", spotifyAccessToken);
 
                             String token = jwtUtil.generateToken(claims);
 
-                            // JWT トークンをハッシュに含めてリダイレクト
                             response.sendRedirect(frontendUrl + "#token=" + token);
                         })
                 )
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .headers(headers -> headers
+                        .xssProtection(HeadersConfigurer.XXssConfig::disable)
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " +
+                                        "script-src 'self' https://accounts.spotify.com; " +
+                                        "style-src 'self' https://accounts.spotify.com; " +
+                                        "img-src 'self' data: https://*.scdn.co https://accounts.spotify.com; " +
+                                        "font-src 'self' data:; " +
+                                        "connect-src 'self' https://api.spotify.com https://accounts.spotify.com; " +
+                                        "object-src 'none'; " +
+                                        "upgrade-insecure-requests; " +
+                                        "base-uri 'self'; " +
+                                        "form-action 'self' https://accounts.spotify.com; " +
+                                        "frame-ancestors 'none'; " +
+                                        "worker-src 'self'; " +
+                                        "manifest-src 'self'; " +
+                                        "frame-src https://accounts.spotify.com; " +
+                                        "media-src 'self' https://*.scdn.co; " +
+                                        "report-uri /csp-violation-report-endpoint;")
+                        )
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .permissionsPolicy(permissions -> permissions
+                                .policy("camera=(), microphone=(), geolocation=()")
+                        )
+                );
         return http.build();
     }
 
@@ -125,7 +150,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
