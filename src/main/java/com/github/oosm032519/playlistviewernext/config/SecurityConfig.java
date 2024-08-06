@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,11 +31,11 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebSecurity
@@ -61,6 +62,20 @@ public class SecurityConfig {
 
     @Value("${frontend.url}")
     private String frontendUrl;
+
+    @Value("${spring.data.redis.url}")
+    private String redisUrl;
+
+    @PostConstruct
+    public void checkRedisConnection() {
+        logger.info("Redis URL: {}", redisUrl);
+        try {
+            String result = redisTemplate.opsForValue().get("test");
+            logger.info("Redis connection test result: {}", result);
+        } catch (Exception e) {
+            logger.error("Redis connection failed", e);
+        }
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -97,7 +112,16 @@ public class SecurityConfig {
                             String token = jwtUtil.generateToken(claims);
 
                             // Redisにトークンを保存
-                            redisTemplate.opsForValue().set("jwt:" + userId, token, 1, TimeUnit.HOURS);
+                            try {
+                                redisTemplate.execute((RedisCallback<Object>) connection -> {
+                                    connection.set(("jwt:" + userId).getBytes(), token.getBytes());
+                                    connection.expire(("jwt:" + userId).getBytes(), 3600);
+                                    return null;
+                                });
+                                logger.info("JWT token stored in Redis for user: {}", userId);
+                            } catch (Exception e) {
+                                logger.error("Failed to store JWT token in Redis", e);
+                            }
 
                             response.sendRedirect(frontendUrl + "#token=" + token);
                         })
