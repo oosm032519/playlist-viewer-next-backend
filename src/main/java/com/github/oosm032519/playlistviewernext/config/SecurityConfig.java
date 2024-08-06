@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Configuration
 @EnableWebSecurity
@@ -53,6 +55,10 @@ public class SecurityConfig {
 
     @Autowired
     private SpotifyApi spotifyApi;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     @Value("${frontend.url}")
     private String frontendUrl;
 
@@ -89,6 +95,9 @@ public class SecurityConfig {
                             claims.put("spotify_access_token", spotifyAccessToken);
 
                             String token = jwtUtil.generateToken(claims);
+
+                            // Redisにトークンを保存
+                            redisTemplate.opsForValue().set("jwt:" + userId, token, 1, TimeUnit.HOURS);
 
                             response.sendRedirect(frontendUrl + "#token=" + token);
                         })
