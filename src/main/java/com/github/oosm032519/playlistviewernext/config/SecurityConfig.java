@@ -79,7 +79,7 @@ public class SecurityConfig {
                 .requestCache(RequestCacheConfigurer::disable)
                 .securityContext(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorites", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track").permitAll()
+                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorites", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track", "api/test-cookie").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

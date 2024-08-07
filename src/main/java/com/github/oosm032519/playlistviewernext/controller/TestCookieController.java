@@ -19,6 +19,7 @@ public class TestCookieController {
     public ResponseEntity<Map<String, String>> setTestCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("testCookie", "testValue");
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
