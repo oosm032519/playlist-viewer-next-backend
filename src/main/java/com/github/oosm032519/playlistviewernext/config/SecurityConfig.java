@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -119,8 +120,19 @@ public class SecurityConfig {
                                 logger.error("Failed to store session information in Redis", e);
                             }
 
-                            // セッションIDトークンをURLフラグメントとしてフロントエンドに送信
-                            response.sendRedirect(frontendUrl + "#token=" + sessionIdToken);
+                            // セッションIDトークンをHTTP Only Cookieとして設定
+                            ResponseCookie cookie = ResponseCookie.from("session_id", sessionIdToken)
+                                    .httpOnly(true)
+                                    .secure(true)
+                                    .path("/")
+                                    .maxAge(3600)
+                                    .sameSite("None")
+                                    .secure(true)
+                                    .build();
+                            response.addHeader("Set-Cookie", cookie.toString());
+
+                            // フロントエンドにリダイレクト
+                            response.sendRedirect(frontendUrl);
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -180,7 +192,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
