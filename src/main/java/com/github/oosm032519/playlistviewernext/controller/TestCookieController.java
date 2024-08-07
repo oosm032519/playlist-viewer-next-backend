@@ -20,6 +20,7 @@ public class TestCookieController {
         Cookie cookie = new Cookie("testCookie", "testValue");
         cookie.setHttpOnly(true);
         cookie.setPath("/");
+        cookie.setAttribute("SameSite", "None");
         response.addCookie(cookie);
 
         Map<String, String> responseBody = new HashMap<>();
