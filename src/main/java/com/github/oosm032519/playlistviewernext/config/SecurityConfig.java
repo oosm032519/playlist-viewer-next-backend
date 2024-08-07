@@ -11,7 +11,6 @@ import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurat
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -37,6 +36,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
@@ -106,26 +106,32 @@ public class SecurityConfig {
 
                             String userName = getSpotifyUserName(userId, spotifyAccessToken);
 
-                            Map<String, Object> claims = new HashMap<>();
-                            claims.put("sub", userId);
-                            claims.put("name", userName);
-                            claims.put("spotify_access_token", spotifyAccessToken);
+                            // セッションID生成
+                            String sessionId = UUID.randomUUID().toString();
 
-                            String token = jwtUtil.generateToken(claims);
+                            // セッションIDのみを含むトークン生成
+                            Map<String, Object> sessionIdClaims = new HashMap<>();
+                            sessionIdClaims.put("session_id", sessionId);
+                            String sessionIdToken = jwtUtil.generateToken(sessionIdClaims);
 
-                            // Redisにトークンを保存
+                            // セッション情報全体を含むトークン生成
+                            Map<String, Object> fullSessionClaims = new HashMap<>();
+                            fullSessionClaims.put("sub", userId);
+                            fullSessionClaims.put("name", userName);
+                            fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
+                            String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
+
+                            // Redisにセッション情報を保存
                             try {
-                                redisTemplate.execute((RedisCallback<Object>) connection -> {
-                                    connection.set(("jwt:" + userId).getBytes(), token.getBytes());
-                                    connection.expire(("jwt:" + userId).getBytes(), 3600);
-                                    return null;
-                                });
-                                logger.info("JWT token stored in Redis for user: {}", userId);
+                                redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
+                                redisTemplate.expire("session:" + sessionId, 3600, java.util.concurrent.TimeUnit.SECONDS);
+                                logger.info("Session information stored in Redis for session ID: {}", sessionId);
                             } catch (Exception e) {
-                                logger.error("Failed to store JWT token in Redis", e);
+                                logger.error("Failed to store session information in Redis", e);
                             }
 
-                            response.sendRedirect(frontendUrl + "#token=" + token);
+                            // セッションIDトークンをURLフラグメントとしてフロントエンドに送信
+                            response.sendRedirect(frontendUrl + "#token=" + sessionIdToken);
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
