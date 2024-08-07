@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,6 +30,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    @Lazy
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
         logger.info("JwtAuthenticationFilterが初期化されました");
@@ -45,9 +52,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Map<String, Object> claims = jwtUtil.validateToken(token);
                 if (claims != null) {
                     if (validateClaims(claims)) {
-                        String userId = (String) claims.get("sub");
-                        String userName = (String) claims.get("name");
-                        String spotifyAccessToken = (String) claims.get("spotify_access_token");
+                        String sessionId = (String) claims.get("session_id");
+                        logger.debug("セッションID: {}", sessionId);
+
+                        // Redisからセッション情報を取得
+                        String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
+                        if (fullSessionToken == null) {
+                            logger.warn("セッション情報がRedisに見つかりません - セッションID: {}", sessionId);
+                            throw new BadCredentialsException("セッション情報が見つかりません");
+                        }
+
+                        // フルセッショントークンを検証
+                        Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
+                        if (fullSessionClaims == null) {
+                            logger.warn("フルセッショントークンの検証に失敗しました - セッションID: {}", sessionId);
+                            throw new BadCredentialsException("無効なセッション");
+                        }
+
+                        String userId = (String) fullSessionClaims.get("sub");
+                        String userName = (String) fullSessionClaims.get("name");
+                        String spotifyAccessToken = (String) fullSessionClaims.get("spotify_access_token");
 
                         logger.info("ユーザー認証成功 - ユーザーID: {}, ユーザー名: {}", userId, userName);
 
@@ -127,9 +151,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             logger.debug("必須クレームの確認");
-            if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
-                logger.warn("必須クレームが不足しています");
-                throw new BadCredentialsException("必須クレームが不足しています");
+            if (!claims.containsKey("session_id")) {
+                logger.warn("セッションIDが不足しています");
+                throw new BadCredentialsException("セッションIDが不足しています");
             }
 
             logger.info("クレームの検証が成功しました");

@@ -31,7 +31,6 @@ import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +51,7 @@ public class SecurityConfig {
     @Autowired
     private SpotifyOAuth2UserService spotifyOAuth2UserService;
 
+    @Lazy
     @Autowired
     private OAuth2AuthorizedClientService authorizedClientService;
 
@@ -67,17 +67,6 @@ public class SecurityConfig {
 
     @Value("${spring.data.redis.url}")
     private String redisUrl;
-
-    @PostConstruct
-    public void checkRedisConnection() {
-        logger.info("Redis URL: {}", redisUrl);
-        try {
-            String result = redisTemplate.opsForValue().get("test");
-            logger.info("Redis connection test result: {}", result);
-        } catch (Exception e) {
-            logger.error("Redis connection failed", e);
-        }
-    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

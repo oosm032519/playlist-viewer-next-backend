@@ -1,13 +1,14 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.model.CustomUserDetails;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,10 @@ public class SessionCheckController {
 
     private final JwtUtil jwtUtil;
 
+    @Lazy
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
     public SessionCheckController(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
         logger.info("SessionCheckControllerが初期化されました。JwtUtil: {}", jwtUtil);
@@ -33,7 +38,10 @@ public class SessionCheckController {
     public ResponseEntity<Map<String, Object>> checkSession(HttpServletRequest request) {
         logger.info("セッションチェックが開始されました。リクエスト: {}", request);
 
+        String sessionId = null;
         String userId = null;
+        String userName = null;
+        String spotifyAccessToken = null;
 
         String jwt = getJwtFromAuthorizationHeader(request);
         logger.debug("Authorizationヘッダーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
@@ -42,30 +50,25 @@ public class SessionCheckController {
             try {
                 logger.info("JWTトークンの検証を開始します。");
                 Map<String, Object> claims = jwtUtil.validateToken(jwt);
-                userId = (String) claims.get("sub");
-                logger.info("JWTトークンの検証が成功しました。ユーザーID: {}", userId);
+                sessionId = (String) claims.get("session_id");
+                logger.info("JWTトークンの検証が成功しました。セッションID: {}", sessionId);
+
+                // Redisからフルセッション情報を取得
+                String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
+                if (fullSessionToken != null) {
+                    Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
+                    userId = (String) fullSessionClaims.get("sub");
+                    userName = (String) fullSessionClaims.get("name");
+                    spotifyAccessToken = (String) fullSessionClaims.get("spotify_access_token");
+                    logger.info("Redisから取得したセッション情報 - ユーザーID: {}, ユーザー名: {}", userId, userName);
+                } else {
+                    logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
+                }
             } catch (JOSEException | ParseException e) {
                 logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
             }
         } else {
             logger.warn("JWTトークンがAuthorizationヘッダーに存在しません。");
-        }
-
-        if (userId == null) {
-            logger.info("JWTトークンからユーザー情報を取得できなかったため、OAuth2ログイン情報を確認します。");
-            if (SecurityContextHolder.getContext().getAuthentication() != null &&
-                    SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
-                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-                logger.debug("認証済みプリンシパル: {}", principal);
-                if (principal instanceof CustomUserDetails userDetails) {
-                    userId = userDetails.getUsername();
-                    logger.info("OAuth2ログイン情報から取得したユーザーID: {}", userId);
-                } else {
-                    logger.warn("認証済みですが、CustomUserDetailsではありません。プリンシパルの型: {}", principal.getClass().getName());
-                }
-            } else {
-                logger.warn("SecurityContextHolderに認証情報が存在しません。");
-            }
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -74,6 +77,8 @@ public class SessionCheckController {
             response.put("status", "success");
             response.put("message", "User is authenticated");
             response.put("userId", userId);
+            response.put("userName", userName);
+            response.put("spotifyAccessToken", spotifyAccessToken);
         } else {
             logger.warn("認証されていないユーザーがセッションチェックを試みました。");
             response.put("status", "error");
