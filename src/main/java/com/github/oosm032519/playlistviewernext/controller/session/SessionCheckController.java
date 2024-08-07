@@ -8,14 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/session")
@@ -32,6 +32,33 @@ public class SessionCheckController {
     public SessionCheckController(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
         logger.info("SessionCheckControllerが初期化されました。JwtUtil: {}", jwtUtil);
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<String> createSession(@RequestBody Map<String, String> payload) {
+        String temporaryToken = payload.get("token");
+        logger.info("セッション作成リクエストを受信。一時的なトークン: {}", temporaryToken);
+
+        if (temporaryToken == null || temporaryToken.isEmpty()) {
+            logger.warn("無効な一時的トークン");
+            return ResponseEntity.badRequest().body("Invalid token");
+        }
+
+        String sessionId = redisTemplate.opsForValue().get("temp:" + temporaryToken);
+        if (sessionId == null) {
+            logger.warn("一時的トークンに対応するセッションIDが見つかりません: {}", temporaryToken);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
+        }
+
+        // 一時的なトークンを削除
+        redisTemplate.delete("temp:" + temporaryToken);
+        logger.info("一時的トークンを削除しました: {}", temporaryToken);
+
+        // セッションの有効期限を更新（必要に応じて）
+        redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
+        logger.info("セッションの有効期限を更新しました: {}", sessionId);
+
+        return ResponseEntity.ok(sessionId);
     }
 
     @GetMapping("/check")
