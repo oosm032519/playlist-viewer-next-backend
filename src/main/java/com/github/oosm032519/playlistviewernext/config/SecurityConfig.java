@@ -58,6 +58,7 @@ public class SecurityConfig {
     @Autowired
     private SpotifyApi spotifyApi;
 
+    @Lazy
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
