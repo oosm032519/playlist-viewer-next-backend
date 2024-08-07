@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -46,57 +47,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         logger.debug("doFilterInternalメソッドが開始されました - リクエストURI: {}", request.getRequestURI());
 
-        String token = extractJwtFromRequest(request);
-        if (token != null) {
+        String sessionId = extractSessionIdFromCookie(request);
+        if (sessionId != null) {
             try {
-                Map<String, Object> claims = jwtUtil.validateToken(token);
-                if (claims != null) {
-                    if (validateClaims(claims)) {
-                        String sessionId = (String) claims.get("session_id");
-                        logger.debug("セッションID: {}", sessionId);
+                // Redisからセッション情報（JWTトークン）を取得
+                String jwtToken = redisTemplate.opsForValue().get("session:" + sessionId);
+                if (jwtToken == null) {
+                    logger.warn("セッション情報がRedisに見つかりません - セッションID: {}", sessionId);
+                    throw new BadCredentialsException("セッション情報が見つかりません");
+                }
 
-                        // Redisからセッション情報を取得
-                        String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
-                        if (fullSessionToken == null) {
-                            logger.warn("セッション情報がRedisに見つかりません - セッションID: {}", sessionId);
-                            throw new BadCredentialsException("セッション情報が見つかりません");
-                        }
+                // JWTトークンを検証
+                Map<String, Object> claims = jwtUtil.validateToken(jwtToken);
+                if (claims == null) {
+                    logger.warn("JWTトークンの検証に失敗しました - セッションID: {}", sessionId);
+                    throw new BadCredentialsException("無効なセッション");
+                }
 
-                        // フルセッショントークンを検証
-                        Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
-                        if (fullSessionClaims == null) {
-                            logger.warn("フルセッショントークンの検証に失敗しました - セッションID: {}", sessionId);
-                            throw new BadCredentialsException("無効なセッション");
-                        }
+                if (validateClaims(claims)) {
+                    String userId = (String) claims.get("sub");
+                    String userName = (String) claims.get("name");
+                    String spotifyAccessToken = (String) claims.get("spotify_access_token");
 
-                        String userId = (String) fullSessionClaims.get("sub");
-                        String userName = (String) fullSessionClaims.get("name");
-                        String spotifyAccessToken = (String) fullSessionClaims.get("spotify_access_token");
+                    logger.info("ユーザー認証成功 - ユーザーID: {}, ユーザー名: {}", userId, userName);
 
-                        logger.info("ユーザー認証成功 - ユーザーID: {}, ユーザー名: {}", userId, userName);
+                    // OAuth2AuthenticationToken を作成
+                    Map<String, Object> attributes = new HashMap<>();
+                    attributes.put("id", userId);
+                    attributes.put("name", userName);
+                    attributes.put("spotify_access_token", spotifyAccessToken);
+                    OAuth2User oauth2User = new DefaultOAuth2User(
+                            Collections.singletonList((GrantedAuthority) () -> "ROLE_USER"),
+                            attributes,
+                            "id"
+                    );
+                    OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
+                            oauth2User,
+                            oauth2User.getAuthorities(),
+                            "spotify"
+                    );
 
-                        // OAuth2AuthenticationToken を作成
-                        Map<String, Object> attributes = new HashMap<>();
-                        attributes.put("id", userId);
-                        attributes.put("name", userName);
-                        attributes.put("spotify_access_token", spotifyAccessToken);
-                        OAuth2User oauth2User = new DefaultOAuth2User(
-                                Collections.singletonList((GrantedAuthority) () -> "ROLE_USER"),
-                                attributes,
-                                "id"
-                        );
-                        OAuth2AuthenticationToken authentication = new OAuth2AuthenticationToken(
-                                oauth2User,
-                                oauth2User.getAuthorities(),
-                                "spotify"
-                        );
-
-                        // SecurityContextHolder に設定
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    } else {
-                        logger.warn("無効なJWTクレーム");
-                        throw new BadCredentialsException("無効なJWTクレーム");
-                    }
+                    // SecurityContextHolder に設定
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    logger.warn("無効なJWTクレーム");
+                    throw new BadCredentialsException("無効なJWTクレーム");
                 }
             } catch (JOSEException | ParseException e) {
                 logger.error("JWTトークンの検証エラー", e);
@@ -108,7 +103,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
         } else {
-            logger.warn("JWTが見つかりません");
+            logger.warn("セッションIDが見つかりません");
         }
 
         logger.debug("フィルターチェーンを続行します");
@@ -116,10 +111,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.debug("doFilterInternalメソッドが完了しました");
     }
 
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            return authorizationHeader.substring(7);
+    private String extractSessionIdFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("session_id".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }
@@ -151,9 +150,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             logger.debug("必須クレームの確認");
-            if (!claims.containsKey("session_id")) {
-                logger.warn("セッションIDが不足しています");
-                throw new BadCredentialsException("セッションIDが不足しています");
+            if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
+                logger.warn("必須クレームが不足しています");
+                throw new BadCredentialsException("必須クレームが不足しています");
             }
 
             logger.info("クレームの検証が成功しました");
