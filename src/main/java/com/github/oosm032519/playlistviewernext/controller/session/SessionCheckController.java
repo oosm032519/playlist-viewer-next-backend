@@ -3,19 +3,20 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/session")
@@ -34,54 +35,20 @@ public class SessionCheckController {
         logger.info("SessionCheckControllerが初期化されました。JwtUtil: {}", jwtUtil);
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<String> createSession(@RequestBody Map<String, String> payload) {
-        String temporaryToken = payload.get("token");
-        logger.info("セッション作成リクエストを受信。一時的なトークン: {}", temporaryToken);
-
-        if (temporaryToken == null || temporaryToken.isEmpty()) {
-            logger.warn("無効な一時的トークン");
-            return ResponseEntity.badRequest().body("Invalid token");
-        }
-
-        String sessionId = redisTemplate.opsForValue().get("temp:" + temporaryToken);
-        if (sessionId == null) {
-            logger.warn("一時的トークンに対応するセッションIDが見つかりません: {}", temporaryToken);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
-        }
-
-        // 一時的なトークンを削除
-        redisTemplate.delete("temp:" + temporaryToken);
-        logger.info("一時的トークンを削除しました: {}", temporaryToken);
-
-        // セッションの有効期限を更新（必要に応じて）
-        redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
-        logger.info("セッションの有効期限を更新しました: {}", sessionId);
-
-        return ResponseEntity.ok(sessionId);
-    }
-
     @GetMapping("/check")
     public ResponseEntity<Map<String, Object>> checkSession(HttpServletRequest request) {
         logger.info("セッションチェックが開始されました。リクエスト: {}", request);
 
-        String sessionId = null;
+        HttpSession session = request.getSession(false);
+        String jsessionId = session != null ? session.getId() : null;
         String userId = null;
         String userName = null;
         String spotifyAccessToken = null;
 
-        String jwt = getJwtFromAuthorizationHeader(request);
-        logger.debug("Authorizationヘッダーから取得したトークン: {}", jwt != null ? jwt.substring(0, Math.min(jwt.length(), 10)) + "..." : "null");
-
-        if (jwt != null) {
+        if (jsessionId != null) {
             try {
-                logger.info("JWTトークンの検証を開始します。");
-                Map<String, Object> claims = jwtUtil.validateToken(jwt);
-                sessionId = (String) claims.get("session_id");
-                logger.info("JWTトークンの検証が成功しました。セッションID: {}", sessionId);
-
-                // Redisからフルセッション情報を取得
-                String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
+                logger.info("JSESSIONIDを使用してセッション情報を取得します。JSESSIONID: {}", jsessionId);
+                String fullSessionToken = redisTemplate.opsForValue().get("session:" + jsessionId);
                 if (fullSessionToken != null) {
                     Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                     userId = (String) fullSessionClaims.get("sub");
@@ -89,13 +56,13 @@ public class SessionCheckController {
                     spotifyAccessToken = (String) fullSessionClaims.get("spotify_access_token");
                     logger.info("Redisから取得したセッション情報 - ユーザーID: {}, ユーザー名: {}", userId, userName);
                 } else {
-                    logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
+                    logger.warn("Redisにセッション情報が見つかりません。JSESSIONID: {}", jsessionId);
                 }
             } catch (JOSEException | ParseException e) {
-                logger.warn("JWTトークンの検証エラー: {}", e.getMessage(), e);
+                logger.warn("セッション情報の検証エラー: {}", e.getMessage(), e);
             }
         } else {
-            logger.warn("JWTトークンがAuthorizationヘッダーに存在しません。");
+            logger.warn("JSESSIONIDが存在しません。");
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -112,16 +79,5 @@ public class SessionCheckController {
             response.put("message", "User not authenticated");
         }
         return ResponseEntity.ok(response);
-    }
-
-    private String getJwtFromAuthorizationHeader(HttpServletRequest request) {
-        logger.debug("AuthorizationヘッダーからJWTトークンを取得します。");
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            logger.info("JWTトークンが見つかりました。");
-            return authorizationHeader.substring(7);
-        }
-        logger.warn("JWTトークンが見つかりませんでした。");
-        return null;
     }
 }

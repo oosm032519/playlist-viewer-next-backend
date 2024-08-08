@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
@@ -75,12 +74,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                        .disable())
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .requestCache(RequestCacheConfigurer::disable)
-                .securityContext(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorites", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track", "api/test-cookie", "/api/session/create").permitAll()
+                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search", "/api/playlists/{id}", "/loginSuccess", "/api/session/check", "/api/playlists/favorites", "api/playlists/followed", "api/playlist/add-track", "api/playlist/remove-track", "api/test-cookie").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -89,18 +86,12 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(spotifyOAuth2UserService)
                         )
-                        .successHandler((_, response, authentication) -> {
+                        .successHandler((request, response, authentication) -> {
                             OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
                             String userId = oauth2User.getAttribute("id");
                             String spotifyAccessToken = oauth2User.getAttribute("access_token");
 
                             String userName = getSpotifyUserName(userId, spotifyAccessToken);
-
-                            // セッションID生成
-                            String sessionId = UUID.randomUUID().toString();
-
-                            // 一時的なトークン生成
-                            String temporaryToken = UUID.randomUUID().toString();
 
                             // セッション情報全体を含むトークン生成
                             Map<String, Object> fullSessionClaims = new HashMap<>();
@@ -109,20 +100,20 @@ public class SecurityConfig {
                             fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
                             String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
 
-                            // Redisに一時的なトークンとセッション情報を保存
-                            try {
-                                redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId);
-                                redisTemplate.expire("temp:" + temporaryToken, 300, TimeUnit.SECONDS); // 5分間有効
+                            // JSESSIONIDを取得
+                            String jsessionId = request.getSession().getId();
 
-                                redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
-                                redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
-                                logger.info("Temporary token and session information stored in Redis");
+                            // Redisにセッション情報を保存
+                            try {
+                                redisTemplate.opsForValue().set("session:" + jsessionId, fullSessionToken);
+                                redisTemplate.expire("session:" + jsessionId, 3600, TimeUnit.SECONDS);
+                                logger.info("Session information stored in Redis");
                             } catch (Exception e) {
-                                logger.error("Failed to store temporary token and session information in Redis", e);
+                                logger.error("Failed to store session information in Redis", e);
                             }
 
-                            // フロントエンドにリダイレクト（一時的なトークンをフラグメントに含める）
-                            response.sendRedirect(frontendUrl + "#token=" + temporaryToken);
+                            // フロントエンドにリダイレクト
+                            response.sendRedirect(frontendUrl);
                         })
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
