@@ -34,20 +34,30 @@ public class TestCookieController {
     public ResponseEntity<Map<String, String>> receiveTestCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         String testCookieValue = null;
+        String jsessionId = null;
+
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("testCookie".equals(cookie.getName())) {
                     testCookieValue = cookie.getValue();
+                } else if ("JSESSIONID".equals(cookie.getName())) {
+                    jsessionId = cookie.getValue();
+                }
+                if (testCookieValue != null && jsessionId != null) {
                     break;
                 }
             }
         }
 
         Map<String, String> responseBody = new HashMap<>();
-        if (testCookieValue != null) {
-            responseBody.put("message", "Received testCookie with value: " + testCookieValue);
+        if (testCookieValue != null && jsessionId != null) {
+            responseBody.put("message", "Received testCookie with value: " + testCookieValue + " and JSESSIONID: " + jsessionId);
+        } else if (testCookieValue != null) {
+            responseBody.put("message", "Received testCookie with value: " + testCookieValue + ", but no JSESSIONID");
+        } else if (jsessionId != null) {
+            responseBody.put("message", "Received JSESSIONID: " + jsessionId + ", but no testCookie");
         } else {
-            responseBody.put("message", "No testCookie received");
+            responseBody.put("message", "No testCookie or JSESSIONID received");
         }
         return ResponseEntity.ok(responseBody);
     }
