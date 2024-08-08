@@ -15,6 +15,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtUtilTest {
@@ -48,7 +49,6 @@ class JwtUtilTest {
                 .containsKey("iat")
                 .containsEntry("iss", "testIssuer");
 
-        // audienceの検証を修正
         assertThat(validatedClaims).containsKey("aud");
         assertThat(validatedClaims.get("aud")).isInstanceOf(List.class);
         List<?> audList = (List<?>) validatedClaims.get("aud");
@@ -67,5 +67,64 @@ class JwtUtilTest {
     void testGetIssuerAndAudience() {
         assertThat(jwtUtil.getIssuer()).isEqualTo("testIssuer");
         assertThat(jwtUtil.getAudience()).isEqualTo("testAudience");
+    }
+
+    @Test
+    void testInitializationFailure() {
+        JwtUtil spyJwtUtil = spy(new JwtUtil());
+        ReflectionTestUtils.setField(spyJwtUtil, "secret", "testSecret");
+        ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
+        ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
+
+        doThrow(new RuntimeException("Initialization failed")).when(spyJwtUtil).init();
+
+        assertThatThrownBy(() -> spyJwtUtil.init())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Initialization failed");
+    }
+
+    @Test
+    void testGenerateTokenFailure() {
+        JwtUtil spyJwtUtil = spy(jwtUtil);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", "123");
+
+        doThrow(new RuntimeException("Token generation failed")).when(spyJwtUtil).generateToken(any());
+
+        assertThatThrownBy(() -> spyJwtUtil.generateToken(claims))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Token generation failed");
+    }
+
+    @Test
+    void testValidateTokenWithExpiredToken() throws JOSEException, ParseException {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", "123");
+
+        String token = jwtUtil.generateToken(claims);
+
+        // Mockを使用して有効期限切れのトークンをシミュレート
+        JwtUtil spyJwtUtil = spy(jwtUtil);
+        doThrow(new JOSEException("Token has expired")).when(spyJwtUtil).validateToken(token);
+
+        assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
+                .isInstanceOf(JOSEException.class)
+                .hasMessage("Token has expired");
+    }
+
+    @Test
+    void testValidateTokenWithInvalidSignature() throws JOSEException, ParseException {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", "123");
+
+        String token = jwtUtil.generateToken(claims);
+
+        // Mockを使用して無効な署名をシミュレート
+        JwtUtil spyJwtUtil = spy(jwtUtil);
+        doThrow(new JOSEException("Invalid token signature")).when(spyJwtUtil).validateToken(token);
+
+        assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
+                .isInstanceOf(JOSEException.class)
+                .hasMessage("Invalid token signature");
     }
 }

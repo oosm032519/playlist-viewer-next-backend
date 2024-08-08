@@ -61,4 +61,19 @@ class UserPlaylistsControllerTest {
         assertThat(response.getBody()).isEqualTo("Error: Test exception");
         verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }
+
+    // 追加のテストケース: 空のプレイリストリストを返す場合
+    @Test
+    void getFollowedPlaylists_EmptyList() throws Exception {
+        // 空のリストを返すようにモックを設定
+        when(userPlaylistsService.getCurrentUsersPlaylists()).thenReturn(List.of());
+
+        // メソッドの実行
+        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists();
+
+        // 検証
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(List.of());
+        verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
+    }
 }

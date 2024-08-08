@@ -146,7 +146,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private String getSpotifyUserName(String userId, String spotifyAccessToken) {
+    public String getSpotifyUserName(String userId, String spotifyAccessToken) {
         try {
             OAuth2AuthorizedClient authorizedClient = authorizedClientService.loadAuthorizedClient(SPOTIFY_CLIENT_ID, userId);
             if (authorizedClient != null) {
