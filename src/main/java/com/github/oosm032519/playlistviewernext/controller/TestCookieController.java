@@ -34,30 +34,30 @@ public class TestCookieController {
     public ResponseEntity<Map<String, String>> receiveTestCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         String testCookieValue = null;
-        String jsessionId = null;
+        String sessionId = null;
 
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("testCookie".equals(cookie.getName())) {
                     testCookieValue = cookie.getValue();
-                } else if ("JSESSIONID".equals(cookie.getName())) {
-                    jsessionId = cookie.getValue();
+                } else if ("sessionId".equals(cookie.getName())) {
+                    sessionId = cookie.getValue();
                 }
-                if (testCookieValue != null && jsessionId != null) {
+                if (testCookieValue != null && sessionId != null) {
                     break;
                 }
             }
         }
 
         Map<String, String> responseBody = new HashMap<>();
-        if (testCookieValue != null && jsessionId != null) {
-            responseBody.put("message", "Received testCookie with value: " + testCookieValue + " and JSESSIONID: " + jsessionId);
+        if (testCookieValue != null && sessionId != null) {
+            responseBody.put("message", "Received testCookie with value: " + testCookieValue + " and sessionId: " + sessionId);
         } else if (testCookieValue != null) {
-            responseBody.put("message", "Received testCookie with value: " + testCookieValue + ", but no JSESSIONID");
-        } else if (jsessionId != null) {
-            responseBody.put("message", "Received JSESSIONID: " + jsessionId + ", but no testCookie");
+            responseBody.put("message", "Received testCookie with value: " + testCookieValue + ", but no sessionId");
+        } else if (sessionId != null) {
+            responseBody.put("message", "Received sessionId: " + sessionId + ", but no testCookie");
         } else {
-            responseBody.put("message", "No testCookie or JSESSIONID received");
+            responseBody.put("message", "No testCookie or sessionId received");
         }
         return ResponseEntity.ok(responseBody);
     }

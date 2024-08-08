@@ -2,8 +2,8 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import com.nimbusds.jose.JOSEException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,47 +37,70 @@ public class SessionCheckController {
 
     @GetMapping("/check")
     public ResponseEntity<Map<String, Object>> checkSession(HttpServletRequest request) {
-        logger.info("セッションチェックが開始されました。リクエスト: {}", request);
+        logger.info("セッションチェック開始 - リクエスト情報: メソッド={}, URI={}, リモートアドレス={}",
+                request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
 
-        HttpSession session = request.getSession(false);
-        String jsessionId = session != null ? session.getId() : null;
+        String sessionId = extractSessionIdFromRequest(request);
+        logger.debug("取得されたセッションID: {}", sessionId);
+
         String userId = null;
         String userName = null;
         String spotifyAccessToken = null;
 
-        if (jsessionId != null) {
+        if (sessionId != null) {
+            logger.info("セッションIDが存在します。Redisからセッション情報を取得します。");
             try {
-                logger.info("JSESSIONIDを使用してセッション情報を取得します。JSESSIONID: {}", jsessionId);
-                String fullSessionToken = redisTemplate.opsForValue().get("session:" + jsessionId);
+                String redisKey = "session:" + sessionId;
+                String fullSessionToken = redisTemplate.opsForValue().get(redisKey);
+                logger.debug("Redisキー: {}, 取得されたトークン: {}", redisKey, fullSessionToken != null ? "存在" : "なし");
+
                 if (fullSessionToken != null) {
+                    logger.info("Redisからセッショントークンを取得しました。トークンの検証を開始します。");
                     Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                     userId = (String) fullSessionClaims.get("sub");
                     userName = (String) fullSessionClaims.get("name");
                     spotifyAccessToken = (String) fullSessionClaims.get("spotify_access_token");
-                    logger.info("Redisから取得したセッション情報 - ユーザーID: {}, ユーザー名: {}", userId, userName);
+                    logger.info("トークン検証成功 - ユーザーID: {}, ユーザー名: {}, Spotifyトークン: {}",
+                            userId, userName, spotifyAccessToken != null ? "取得済み" : "なし");
                 } else {
-                    logger.warn("Redisにセッション情報が見つかりません。JSESSIONID: {}", jsessionId);
+                    logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
                 }
             } catch (JOSEException | ParseException e) {
-                logger.warn("セッション情報の検証エラー: {}", e.getMessage(), e);
+                logger.error("セッション情報の検証中にエラーが発生しました。エラー詳細: ", e);
             }
         } else {
-            logger.warn("JSESSIONIDが存在しません。");
+            logger.warn("有効なセッションIDが存在しません。未認証の可能性があります。");
         }
 
         Map<String, Object> response = new HashMap<>();
         if (userId != null) {
-            logger.info("認証成功。ユーザーID: {}", userId);
+            logger.info("認証成功。レスポンスの作成を開始します。");
             response.put("status", "success");
             response.put("message", "User is authenticated");
             response.put("userId", userId);
             response.put("userName", userName);
             response.put("spotifyAccessToken", spotifyAccessToken);
+            logger.debug("作成されたレスポンス: {}", response);
         } else {
-            logger.warn("認証されていないユーザーがセッションチェックを試みました。");
+            logger.warn("認証失敗。エラーレスポンスを作成します。");
             response.put("status", "error");
             response.put("message", "User not authenticated");
+            logger.debug("作成されたエラーレスポンス: {}", response);
         }
+
+        logger.info("セッションチェック完了。レスポンスステータス: {}", response.get("status"));
         return ResponseEntity.ok(response);
+    }
+
+    private String extractSessionIdFromRequest(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("sessionId".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }
