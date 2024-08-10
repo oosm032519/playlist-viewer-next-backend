@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import org.slf4j.Logger;
@@ -60,7 +61,11 @@ public class PlaylistCreationController {
         // ユーザーのアクセストークンを取得
         String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
-            return handleAuthenticationError();
+            throw new PlaylistViewerNextException(
+                    HttpStatus.UNAUTHORIZED,
+                    "UNAUTHORIZED_ACCESS",
+                    "ユーザーが認証されていないか、アクセストークンが見つかりません。"
+            );
         }
 
         // ユーザー情報を取得
@@ -74,18 +79,15 @@ public class PlaylistCreationController {
             logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
             return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
         } catch (Exception e) {
-            return handlePlaylistCreationError(e);
+            // プレイリスト作成中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("プレイリストの作成中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PLAYLIST_CREATION_ERROR",
+                    "プレイリストの作成中にエラーが発生しました。",
+                    e
+            );
         }
-    }
-
-    /**
-     * 認証エラーを処理するプライベートメソッド。
-     *
-     * @return 認証エラーを示すResponseEntity
-     */
-    private ResponseEntity<String> handleAuthenticationError() {
-        logger.error("ユーザーが認証されていないか、アクセストークンが見つかりません。");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"error\": \"認証が必要です。\"}");
     }
 
     /**
@@ -96,17 +98,5 @@ public class PlaylistCreationController {
      */
     private String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
-    }
-
-    /**
-     * プレイリスト作成エラーを処理するプライベートメソッド。
-     *
-     * @param e 発生した例外
-     * @return エラー情報を含むResponseEntity
-     */
-    private ResponseEntity<String> handlePlaylistCreationError(Exception e) {
-        logger.error("プレイリストの作成中にエラーが発生しました。", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(String.format("{\"error\": \"エラー: %s\"}", e.getMessage()));
     }
 }

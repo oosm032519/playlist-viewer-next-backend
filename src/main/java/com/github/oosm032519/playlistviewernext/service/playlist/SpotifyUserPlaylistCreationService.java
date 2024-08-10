@@ -1,15 +1,15 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
-import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 import se.michaelthelin.spotify.requests.data.playlists.AddItemsToPlaylistRequest;
+import se.michaelthelin.spotify.requests.data.playlists.CreatePlaylistRequest;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,21 +36,29 @@ public class SpotifyUserPlaylistCreationService {
      * @param playlistName 作成するプレイリストの名前
      * @param trackIds     プレイリストに追加するトラックのIDリスト
      * @return 作成されたプレイリストのID
-     * @throws IOException                             入出力例外が発生した場合
-     * @throws SpotifyWebApiException                  Spotify APIの例外が発生した場合
-     * @throws org.apache.hc.core5.http.ParseException HTTPレスポンスの解析例外が発生した場合
+     * @throws PlaylistViewerNextException プレイリストの作成中にエラーが発生した場合
      */
-    public String createPlaylist(String accessToken, String userId, String playlistName, List<String> trackIds)
-            throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    public String createPlaylist(String accessToken, String userId, String playlistName, List<String> trackIds) {
         logMethodCall(accessToken, userId, playlistName, trackIds);
 
         spotifyApi.setAccessToken(accessToken);
 
-        String playlistId = createSpotifyPlaylist(userId, playlistName);
-        addTracksToPlaylist(playlistId, trackIds);
+        try {
+            String playlistId = createSpotifyPlaylist(userId, playlistName);
+            addTracksToPlaylist(playlistId, trackIds);
 
-        logger.info("プレイリストの作成が完了しました。");
-        return playlistId;
+            logger.info("プレイリストの作成が完了しました。");
+            return playlistId;
+        } catch (Exception e) {
+            // プレイリストの作成中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("プレイリストの作成中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PLAYLIST_CREATION_ERROR",
+                    "プレイリストの作成中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     private void logMethodCall(String accessToken, String userId, String playlistName, List<String> trackIds) {
@@ -61,8 +69,7 @@ public class SpotifyUserPlaylistCreationService {
         logger.info("trackIds: {}", trackIds);
     }
 
-    private String createSpotifyPlaylist(String userId, String playlistName)
-            throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    private String createSpotifyPlaylist(String userId, String playlistName) throws Exception {
         CreatePlaylistRequest createPlaylistRequest = spotifyApi.createPlaylist(userId, playlistName)
                 .public_(false)
                 .build();
@@ -73,8 +80,7 @@ public class SpotifyUserPlaylistCreationService {
         return playlistId;
     }
 
-    private void addTracksToPlaylist(String playlistId, List<String> trackIds)
-            throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    private void addTracksToPlaylist(String playlistId, List<String> trackIds) throws Exception {
         if (trackIds.isEmpty()) {
             return;
         }

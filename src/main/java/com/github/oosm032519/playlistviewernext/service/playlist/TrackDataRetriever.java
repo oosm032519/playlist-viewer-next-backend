@@ -1,7 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
@@ -29,16 +31,28 @@ public class TrackDataRetriever {
      *
      * @param tracks プレイリストのトラック配列
      * @return トラック情報のリスト
+     * @throws PlaylistViewerNextException トラックデータの取得中にエラーが発生した場合
      */
     public List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) {
         logger.info("getTrackListData: トラック数: {}", tracks.length);
 
-        List<Map<String, Object>> trackList = Arrays.stream(tracks)
-                .map(this::getTrackData)
-                .collect(Collectors.toList());
+        try {
+            List<Map<String, Object>> trackList = Arrays.stream(tracks)
+                    .map(this::getTrackData)
+                    .collect(Collectors.toList());
 
-        logger.info("getTrackListData: トラックデータリスト作成完了");
-        return trackList;
+            logger.info("getTrackListData: トラックデータリスト作成完了");
+            return trackList;
+        } catch (Exception e) {
+            // トラックデータの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("トラックデータの取得中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TRACK_DATA_RETRIEVAL_ERROR",
+                    "トラックデータの取得中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     private Map<String, Object> getTrackData(PlaylistTrack playlistTrack) {

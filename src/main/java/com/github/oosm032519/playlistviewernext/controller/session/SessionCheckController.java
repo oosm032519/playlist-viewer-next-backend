@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,13 +10,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,8 +63,13 @@ public class SessionCheckController {
         if (sessionId != null) {
             return handleSessionValidation(sessionId, response);
         } else {
+            // セッションIDがない場合は PlaylistViewerNextException をスロー
             logger.warn("有効なセッションIDが存在しません。未認証の可能性があります。");
-            return createErrorResponse(response, "User not authenticated");
+            throw new PlaylistViewerNextException(
+                    HttpStatus.UNAUTHORIZED,
+                    "SESSION_NOT_FOUND",
+                    "有効なセッションIDが存在しません。"
+            );
         }
     }
 
@@ -105,27 +110,24 @@ public class SessionCheckController {
                 Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                 return createSuccessResponse(response, fullSessionClaims);
             } else {
+                // Redisにセッション情報がない場合は PlaylistViewerNextException をスロー
                 logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                return createErrorResponse(response, "User not authenticated");
+                throw new PlaylistViewerNextException(
+                        HttpStatus.UNAUTHORIZED,
+                        "SESSION_NOT_FOUND",
+                        "Redisにセッション情報が見つかりません。"
+                );
             }
-        } catch (JOSEException | ParseException e) {
+        } catch (Exception e) {
+            // セッション情報の検証中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("セッション情報の検証中にエラーが発生しました。エラー詳細: ", e);
-            return createErrorResponse(response, "User not authenticated");
+            throw new PlaylistViewerNextException(
+                    HttpStatus.UNAUTHORIZED,
+                    "SESSION_VALIDATION_ERROR",
+                    "セッション情報の検証中にエラーが発生しました。",
+                    e
+            );
         }
-    }
-
-    /**
-     * エラーレスポンスを作成する。
-     *
-     * @param response レスポンスマップ
-     * @param message  エラーメッセージ
-     * @return レスポンスエンティティ
-     */
-    private ResponseEntity<Map<String, Object>> createErrorResponse(Map<String, Object> response, String message) {
-        response.put("status", "error");
-        response.put("message", message);
-        logger.warn("認証失敗。エラーレスポンスを作成します。");
-        return ResponseEntity.badRequest().body(response);
     }
 
     /**
@@ -169,8 +171,13 @@ public class SessionCheckController {
         if (sessionId != null) {
             return handleLogout(sessionId, response, responseBody);
         } else {
+            // セッションIDがない場合は PlaylistViewerNextException をスロー
             logger.warn("有効なセッションIDが存在しません。");
-            return createErrorResponse(responseBody, "有効なセッションIDが存在しません。");
+            throw new PlaylistViewerNextException(
+                    HttpStatus.UNAUTHORIZED,
+                    "SESSION_NOT_FOUND",
+                    "有効なセッションIDが存在しません。"
+            );
         }
     }
 
@@ -195,12 +202,23 @@ public class SessionCheckController {
                 responseBody.put("message", "ログアウトしました。");
                 return ResponseEntity.ok(responseBody);
             } else {
+                // Redisにセッション情報がない場合は PlaylistViewerNextException をスロー
                 logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                return createErrorResponse(responseBody, "セッション情報が見つかりません。");
+                throw new PlaylistViewerNextException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "SESSION_NOT_FOUND",
+                        "Redisにセッション情報が見つかりません。"
+                );
             }
         } catch (Exception e) {
+            // ログアウト処理中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("ログアウト処理中にエラーが発生しました。エラー詳細: ", e);
-            return createErrorResponse(responseBody, "ログアウト処理中にエラーが発生しました。");
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "LOGOUT_ERROR",
+                    "ログアウト処理中にエラーが発生しました。",
+                    e
+            );
         }
     }
 

@@ -1,11 +1,10 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import org.apache.hc.core5.http.ParseException;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -32,13 +31,18 @@ public class PlaylistAnalyticsService {
      *
      * @param id プレイリストのID
      * @return ジャンルごとの曲数を表すMap
-     * @throws PlaylistAnalyticsException プレイリストの分析中にエラーが発生した場合
+     * @throws PlaylistViewerNextException プレイリストの分析中にエラーが発生した場合
      */
-    public Map<String, Integer> getGenreCountsForPlaylist(String id) throws PlaylistAnalyticsException {
+    public Map<String, Integer> getGenreCountsForPlaylist(String id) {
         try {
             return analyticsService.getGenreCountsForPlaylist(id);
-        } catch (IOException | ParseException | SpotifyWebApiException e) {
-            throw new PlaylistAnalyticsException("Failed to get genre counts for playlist: " + id, e);
+        } catch (Exception e) {
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "GENRE_COUNTS_RETRIEVAL_ERROR",
+                    "プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 
@@ -47,13 +51,18 @@ public class PlaylistAnalyticsService {
      *
      * @param id プレイリストのID
      * @return トップ5ジャンルのリスト
-     * @throws PlaylistAnalyticsException プレイリストの分析中にエラーが発生した場合
+     * @throws PlaylistViewerNextException プレイリストの分析中にエラーが発生した場合
      */
-    public List<String> getTop5GenresForPlaylist(String id) throws PlaylistAnalyticsException {
+    public List<String> getTop5GenresForPlaylist(String id) {
         try {
             return analyticsService.getTop5GenresForPlaylist(id);
-        } catch (IOException | ParseException | SpotifyWebApiException e) {
-            throw new PlaylistAnalyticsException("Failed to get top 5 genres for playlist: " + id, e);
+        } catch (Exception e) {
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TOP_GENRES_RETRIEVAL_ERROR",
+                    "プレイリストのトップ5ジャンルの取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 }

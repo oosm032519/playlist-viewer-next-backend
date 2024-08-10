@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
@@ -62,9 +63,14 @@ public class PlaylistDetailsController {
             Map<String, Object> response = fetchPlaylistDetails(id);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            // エラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストの取得中にエラーが発生しました", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PLAYLIST_DETAILS_ERROR",
+                    "プレイリストの詳細情報の取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 

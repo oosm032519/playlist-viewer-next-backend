@@ -1,10 +1,12 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,21 +36,33 @@ public class UserFavoritePlaylistsService {
      *
      * @param userId ユーザーID
      * @return お気に入りプレイリストのリスト
+     * @throws PlaylistViewerNextException お気に入りプレイリストの取得中にエラーが発生した場合
      */
     public List<FavoritePlaylistResponse> getFavoritePlaylists(String userId) {
         LOGGER.info("getFavoritePlaylists() 開始 - userId: {}", userId); // 関数開始ログ、引数情報を含める
 
-        List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(userId);
+        try {
+            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(userId);
 
-        LOGGER.debug("getFavoritePlaylists() - リポジトリから取得したプレイリスト数: {}", favoritePlaylists.size()); // 重要な変数の値の変化を追跡
+            LOGGER.debug("getFavoritePlaylists() - リポジトリから取得したプレイリスト数: {}", favoritePlaylists.size()); // 重要な変数の値の変化を追跡
 
-        List<FavoritePlaylistResponse> responseList = favoritePlaylists.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+            List<FavoritePlaylistResponse> responseList = favoritePlaylists.stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
 
-        LOGGER.info("getFavoritePlaylists() 終了 - userId: {}, 返却するプレイリスト数: {}", userId, responseList.size()); // 関数終了ログ、戻り値情報を含める
+            LOGGER.info("getFavoritePlaylists() 終了 - userId: {}, 返却するプレイリスト数: {}", userId, responseList.size()); // 関数終了ログ、戻り値情報を含める
 
-        return responseList;
+            return responseList;
+        } catch (Exception e) {
+            // お気に入りプレイリストの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            LOGGER.error("お気に入りプレイリストの取得中にエラーが発生しました。 userId: {}", userId, e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
+                    "お気に入りプレイリストの取得中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     /**

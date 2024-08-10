@@ -1,9 +1,11 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -57,8 +59,14 @@ public class UserFavoritePlaylistsController {
             LOGGER.info("ユーザーID: {} のお気に入りプレイリストを {} 件取得しました。", hashedUserId, favoritePlaylists.size());
             return ResponseEntity.ok(favoritePlaylists);
         } catch (Exception e) {
+            // エラーが発生した場合は PlaylistViewerNextException をスロー
             LOGGER.error("ユーザーID: {} のお気に入りプレイリスト一覧の取得中にエラーが発生しました。", principal.getAttribute("id"), e);
-            return ResponseEntity.internalServerError().build();
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
+                    "お気に入りプレイリスト一覧の取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 
@@ -69,7 +77,13 @@ public class UserFavoritePlaylistsController {
             byte[] hashedBytes = md.digest(userId.getBytes());
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("ハッシュアルゴリズムが見つかりません。", e);
+            // ハッシュアルゴリズムが見つからない場合は PlaylistViewerNextException をスロー
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "HASHING_ALGORITHM_ERROR",
+                    "ハッシュアルゴリズムが見つかりません。",
+                    e
+            );
         }
     }
 }

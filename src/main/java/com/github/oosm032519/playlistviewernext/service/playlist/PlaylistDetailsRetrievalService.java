@@ -1,10 +1,12 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.User;
@@ -53,29 +55,40 @@ public class PlaylistDetailsRetrievalService {
      *
      * @param id プレイリストのID
      * @return プレイリストの詳細情報を含むマップ
-     * @throws Exception 認証やデータ取得に失敗した場合にスローされる例外
+     * @throws PlaylistViewerNextException 認証やデータ取得に失敗した場合にスローされる例外
      */
-    public Map<String, Object> getPlaylistDetails(String id) throws Exception {
+    public Map<String, Object> getPlaylistDetails(String id) {
         logger.info("getPlaylistDetails: プレイリストID: {}", id);
 
-        authController.authenticate();
+        try {
+            authController.authenticate();
 
-        PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
-        List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
-        String playlistName = playlistDetailsService.getPlaylistName(id);
-        User owner = playlistDetailsService.getPlaylistOwner(id);
+            PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
+            List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
+            String playlistName = playlistDetailsService.getPlaylistName(id);
+            User owner = playlistDetailsService.getPlaylistOwner(id);
 
-        Map<String, Float> maxAudioFeatures = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
-        Map<String, Float> minAudioFeatures = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
-        Map<String, Float> medianAudioFeatures = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
-        Map<String, Float> averageAudioFeatures = averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
-        Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
+            Map<String, Float> maxAudioFeatures = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
+            Map<String, Float> minAudioFeatures = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
+            Map<String, Float> medianAudioFeatures = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
+            Map<String, Float> averageAudioFeatures = averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
+            Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
 
-        logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
+            logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
 
-        long totalDuration = calculateTotalDuration(tracks);
+            long totalDuration = calculateTotalDuration(tracks);
 
-        return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+        } catch (Exception e) {
+            // 認証やデータ取得に失敗した場合は PlaylistViewerNextException をスロー
+            logger.error("プレイリストの詳細情報の取得中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PLAYLIST_DETAILS_RETRIEVAL_ERROR",
+                    "プレイリストの詳細情報の取得中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     /**

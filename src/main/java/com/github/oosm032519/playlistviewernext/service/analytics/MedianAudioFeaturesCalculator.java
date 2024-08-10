@@ -1,7 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
@@ -22,23 +24,35 @@ public class MedianAudioFeaturesCalculator {
      *
      * @param trackList 各トラックのオーディオフィーチャーを含むリスト
      * @return 各オーディオフィーチャーの中央値を含むマップ
+     * @throws PlaylistViewerNextException 中央オーディオフィーチャーの計算中にエラーが発生した場合
      */
     public Map<String, Float> calculateMedianAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMedianAudioFeatures: 計算開始");
 
-        Map<String, List<Float>> featureValues = initializeFeatureValues();
+        try {
+            Map<String, List<Float>> featureValues = initializeFeatureValues();
 
-        for (Map<String, Object> trackData : trackList) {
-            AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
-            if (audioFeatures != null) {
-                addFeatureValues(featureValues, audioFeatures);
+            for (Map<String, Object> trackData : trackList) {
+                AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+                if (audioFeatures != null) {
+                    addFeatureValues(featureValues, audioFeatures);
+                }
             }
+
+            Map<String, Float> medianAudioFeatures = calculateMedians(featureValues);
+
+            logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
+            return medianAudioFeatures;
+        } catch (Exception e) {
+            // 中央オーディオフィーチャーの計算中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("中央オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MEDIAN_AUDIO_FEATURES_CALCULATION_ERROR",
+                    "中央オーディオフィーチャーの計算中にエラーが発生しました。",
+                    e
+            );
         }
-
-        Map<String, Float> medianAudioFeatures = calculateMedians(featureValues);
-
-        logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
-        return medianAudioFeatures;
     }
 
     private Map<String, List<Float>> initializeFeatureValues() {

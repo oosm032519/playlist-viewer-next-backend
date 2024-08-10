@@ -1,12 +1,12 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
 import se.michaelthelin.spotify.requests.data.artists.GetArtistRequest;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,18 +29,26 @@ public class SpotifyArtistService {
      *
      * @param artistId アーティストのID
      * @return アーティストのジャンルのリスト
-     * @throws IOException                             入出力例外が発生した場合
-     * @throws SpotifyWebApiException                  Spotify APIの例外が発生した場合
-     * @throws org.apache.hc.core5.http.ParseException パース例外が発生した場合
+     * @throws PlaylistViewerNextException アーティスト情報の取得中にエラーが発生した場合
      */
-    public List<String> getArtistGenres(String artistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        return Optional.ofNullable(getArtist(artistId))
-                .map(Artist::getGenres)
-                .map(List::of)
-                .orElse(Collections.emptyList());
+    public List<String> getArtistGenres(String artistId) {
+        try {
+            return Optional.ofNullable(getArtist(artistId))
+                    .map(Artist::getGenres)
+                    .map(List::of)
+                    .orElse(Collections.emptyList());
+        } catch (Exception e) {
+            // アーティスト情報の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "ARTIST_INFO_RETRIEVAL_ERROR",
+                    "アーティスト情報の取得中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
-    private Artist getArtist(String artistId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    private Artist getArtist(String artistId) throws Exception {
         GetArtistRequest getArtistRequest = spotifyApi.getArtist(artistId).build();
         return getArtistRequest.execute();
     }

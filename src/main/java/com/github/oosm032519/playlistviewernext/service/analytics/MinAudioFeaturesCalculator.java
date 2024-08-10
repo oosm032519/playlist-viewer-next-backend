@@ -1,7 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
@@ -19,22 +21,33 @@ public class MinAudioFeaturesCalculator {
     public Map<String, Float> calculateMinAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMinAudioFeatures: 計算開始");
 
-        Map<AudioFeatureType, List<Float>> audioFeatureValues = new EnumMap<>(AudioFeatureType.class);
-        for (AudioFeatureType featureType : AudioFeatureType.values()) {
-            audioFeatureValues.put(featureType, new ArrayList<>());
-        }
-
-        for (Map<String, Object> trackData : trackList) {
-            AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
-            if (audioFeatures != null) {
-                collectAudioFeatureValues(audioFeatureValues, audioFeatures);
+        try {
+            Map<AudioFeatureType, List<Float>> audioFeatureValues = new EnumMap<>(AudioFeatureType.class);
+            for (AudioFeatureType featureType : AudioFeatureType.values()) {
+                audioFeatureValues.put(featureType, new ArrayList<>());
             }
+
+            for (Map<String, Object> trackData : trackList) {
+                AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+                if (audioFeatures != null) {
+                    collectAudioFeatureValues(audioFeatureValues, audioFeatures);
+                }
+            }
+
+            Map<String, Float> result = calculateLowerBounds(audioFeatureValues);
+
+            logger.info("calculateMinAudioFeatures: 下限オーディオフィーチャー計算完了: {}", result);
+            return result;
+        } catch (Exception e) {
+            // 最小オーディオフィーチャーの計算中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("最小オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MIN_AUDIO_FEATURES_CALCULATION_ERROR",
+                    "最小オーディオフィーチャーの計算中にエラーが発生しました。",
+                    e
+            );
         }
-
-        Map<String, Float> result = calculateLowerBounds(audioFeatureValues);
-
-        logger.info("calculateMinAudioFeatures: 下限オーディオフィーチャー計算完了: {}", result);
-        return result;
     }
 
     private void collectAudioFeatureValues(Map<AudioFeatureType, List<Float>> audioFeatureValues, AudioFeatures audioFeatures) {

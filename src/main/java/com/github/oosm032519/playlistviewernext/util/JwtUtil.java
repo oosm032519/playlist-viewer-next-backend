@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.util;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.KeyTemplates;
 import com.google.crypto.tink.KeysetHandle;
@@ -17,11 +18,11 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.security.GeneralSecurityException;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 
@@ -65,11 +66,17 @@ public class JwtUtil {
 
             logger.debug("署名者、検証者、暗号化器の生成に成功しました。");
         } catch (JOSEException | GeneralSecurityException e) {
+            // 初期化中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("初期化中にエラーが発生しました", e);
             if (e.getCause() != null) {
                 logger.error("原因: ", e.getCause());
             }
-            throw new RuntimeException("JwtUtilの初期化に失敗しました", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "JWT_UTIL_INIT_ERROR",
+                    "JwtUtilの初期化に失敗しました。",
+                    e
+            );
         }
         logger.info("JwtUtil初期化完了");
     }
@@ -102,12 +109,18 @@ public class JwtUtil {
             logger.debug("生成されたトークン: {}", token);
             return token;
         } catch (JOSEException | GeneralSecurityException e) {
+            // トークン生成中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("トークン生成中にエラーが発生しました", e);
-            throw new RuntimeException("トークンの生成に失敗しました", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TOKEN_GENERATION_ERROR",
+                    "トークンの生成に失敗しました。",
+                    e
+            );
         }
     }
 
-    public Map<String, Object> validateToken(String token) throws JOSEException, ParseException {
+    public Map<String, Object> validateToken(String token) {
         logger.info("トークン検証開始");
         logger.debug("検証対象トークン: {}", token);
         try {
@@ -119,28 +132,41 @@ public class JwtUtil {
             // 署名付きJWTの取得と検証
             SignedJWT signedJWT = SignedJWT.parse(new String(plaintext));
             if (!signedJWT.verify(verifier)) {
+                // トークン署名検証に失敗した場合は PlaylistViewerNextException をスロー
                 logger.warn("トークンの署名が無効です");
-                throw new JOSEException("トークンの署名が無効です");
+                throw new PlaylistViewerNextException(
+                        HttpStatus.UNAUTHORIZED,
+                        "INVALID_TOKEN_SIGNATURE",
+                        "トークンの署名が無効です。"
+                );
             }
 
             // クレームセットの取得と有効期限の確認
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
             Date expirationTime = claimsSet.getExpirationTime();
             if (expirationTime != null && expirationTime.before(new Date())) {
+                // トークン有効期限切れの場合は PlaylistViewerNextException をスロー
                 logger.warn("トークンの有効期限が切れています");
-                throw new JOSEException("トークンの有効期限が切れています");
+                throw new PlaylistViewerNextException(
+                        HttpStatus.UNAUTHORIZED,
+                        "TOKEN_EXPIRED",
+                        "トークンの有効期限が切れています。"
+                );
             }
 
             Map<String, Object> claims = claimsSet.getClaims();
             logger.info("トークン検証成功");
             logger.debug("検証されたクレーム: {}", claims);
             return claims;
-        } catch (ParseException e) {
-            logger.warn("トークンの形式が不正です", e);
-            throw new JOSEException("トークンの形式が不正です", e);
-        } catch (GeneralSecurityException e) {
-            logger.error("トークン検証中に予期せぬエラーが発生しました", e);
-            throw new JOSEException("トークン検証中にエラーが発生しました", e);
+        } catch (Exception e) {
+            // トークン検証中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("トークン検証中にエラーが発生しました", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TOKEN_VALIDATION_ERROR",
+                    "トークン検証中にエラーが発生しました。",
+                    e
+            );
         }
     }
 }

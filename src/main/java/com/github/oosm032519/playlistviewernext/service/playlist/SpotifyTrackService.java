@@ -1,15 +1,14 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
-
-import java.io.IOException;
 
 @Service
 public class SpotifyTrackService {
@@ -32,20 +31,24 @@ public class SpotifyTrackService {
      *
      * @param trackId トラックのID
      * @return AudioFeatures オーディオ特徴オブジェクト
-     * @throws IOException                             入出力例外
-     * @throws SpotifyWebApiException                  Spotify API例外
-     * @throws org.apache.hc.core5.http.ParseException パース例外
+     * @throws PlaylistViewerNextException オーディオ特徴の取得中にエラーが発生した場合
      */
-    public AudioFeatures getAudioFeaturesForTrack(String trackId) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    public AudioFeatures getAudioFeaturesForTrack(String trackId) {
         try {
             // トラックIDに基づいてオーディオ特徴を取得するリクエストを作成
             GetAudioFeaturesForTrackRequest audioFeaturesRequest = spotifyApi.getAudioFeaturesForTrack(trackId).build();
 
             // リクエストを実行してオーディオ特徴を取得
             return audioFeaturesRequest.execute();
-        } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
+        } catch (Exception e) {
+            // オーディオ特徴の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("Error retrieving audio features for track ID: " + trackId, e);
-            throw e;
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "AUDIO_FEATURES_RETRIEVAL_ERROR",
+                    "オーディオ特徴の取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 }

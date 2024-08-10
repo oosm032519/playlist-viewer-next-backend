@@ -1,18 +1,17 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
-import org.apache.hc.core5.http.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Recommendations;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -32,25 +31,36 @@ public class SpotifyRecommendationService {
         this.audioFeatureSetter = audioFeatureSetter;
     }
 
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) throws IOException, SpotifyWebApiException, ParseException {
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {
         logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}, modeValues: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
         }
 
-        GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        try {
+            GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-        Recommendations recommendations = recommendationsRequest.execute();
+            Recommendations recommendations = recommendationsRequest.execute();
 
-        if (recommendations == null || recommendations.getTracks() == null) {
-            logger.info("getRecommendations: 推奨トラックが見つかりませんでした");
-            return Collections.emptyList();
+            if (recommendations == null || recommendations.getTracks() == null) {
+                logger.info("getRecommendations: 推奨トラックが見つかりませんでした");
+                return Collections.emptyList();
+            }
+
+            logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
+
+            return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
+        } catch (Exception e) {
+            // 推奨トラックの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("推奨トラックの取得中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "RECOMMENDATIONS_RETRIEVAL_ERROR",
+                    "推奨トラックの取得中にエラーが発生しました。",
+                    e
+            );
         }
-
-        logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
-
-        return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
     }
 
     private GetRecommendationsRequest createRecommendationsRequest(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {

@@ -1,13 +1,13 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -29,14 +29,22 @@ public class SpotifyPlaylistSearchService {
      * @param offset 検索結果のオフセット
      * @param limit  検索結果の最大数
      * @return 検索結果のプレイリストのリスト
-     * @throws IOException                             入出力例外
-     * @throws SpotifyWebApiException                  Spotify API例外
-     * @throws org.apache.hc.core5.http.ParseException パース例外
+     * @throws PlaylistViewerNextException プレイリストの検索中にエラーが発生した場合
      */
-    public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
-        Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
-        return getPlaylistsFromResult(searchResult);
+    public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) {
+        try {
+            SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
+            Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
+            return getPlaylistsFromResult(searchResult);
+        } catch (Exception e) {
+            // プレイリストの検索中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "PLAYLIST_SEARCH_ERROR",
+                    "プレイリストの検索中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     private SearchPlaylistsRequest buildSearchRequest(String query, int offset, int limit) {
@@ -46,7 +54,7 @@ public class SpotifyPlaylistSearchService {
                 .build();
     }
 
-    private Paging<PlaylistSimplified> executeSearch(SearchPlaylistsRequest request) throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    private Paging<PlaylistSimplified> executeSearch(SearchPlaylistsRequest request) throws Exception {
         return request.execute();
     }
 

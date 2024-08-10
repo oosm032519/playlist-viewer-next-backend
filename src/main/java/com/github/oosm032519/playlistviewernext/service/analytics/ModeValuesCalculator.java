@@ -1,7 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 
@@ -19,23 +21,34 @@ public class ModeValuesCalculator {
     public Map<String, Object> calculateModeValues(List<Map<String, Object>> trackList) {
         logger.info("calculateModeValues: 計算開始");
 
-        Map<String, List<Integer>> numericFeatureValues = initializeNumericFeatureValues();
-        Map<String, List<String>> stringFeatureValues = initializeStringFeatureValues();
+        try {
+            Map<String, List<Integer>> numericFeatureValues = initializeNumericFeatureValues();
+            Map<String, List<String>> stringFeatureValues = initializeStringFeatureValues();
 
-        trackList.forEach(trackData -> {
-            AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
-            if (audioFeatures != null) {
-                collectNumericFeatures(numericFeatureValues, audioFeatures);
-                collectStringFeatures(stringFeatureValues, audioFeatures);
-            }
-        });
+            trackList.forEach(trackData -> {
+                AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+                if (audioFeatures != null) {
+                    collectNumericFeatures(numericFeatureValues, audioFeatures);
+                    collectStringFeatures(stringFeatureValues, audioFeatures);
+                }
+            });
 
-        Map<String, Object> modeValues = new HashMap<>();
-        calculateModeValues(numericFeatureValues, modeValues, this::calculateNumericMode);
-        calculateModeValues(stringFeatureValues, modeValues, this::calculateStringMode);
+            Map<String, Object> modeValues = new HashMap<>();
+            calculateModeValues(numericFeatureValues, modeValues, this::calculateNumericMode);
+            calculateModeValues(stringFeatureValues, modeValues, this::calculateStringMode);
 
-        logger.info("calculateModeValues: 最頻値計算完了: {}", modeValues);
-        return modeValues;
+            logger.info("calculateModeValues: 最頻値計算完了: {}", modeValues);
+            return modeValues;
+        } catch (Exception e) {
+            // 最頻値の計算中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            logger.error("最頻値の計算中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MODE_VALUES_CALCULATION_ERROR",
+                    "最頻値の計算中にエラーが発生しました。",
+                    e
+            );
+        }
     }
 
     private Map<String, List<Integer>> initializeNumericFeatureValues() {

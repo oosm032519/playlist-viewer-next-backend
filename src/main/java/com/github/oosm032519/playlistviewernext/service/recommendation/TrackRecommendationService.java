@@ -1,7 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
@@ -29,6 +31,7 @@ public class TrackRecommendationService {
      * @param medianAudioFeatures オーディオ特徴量の中央値を含むマップ
      * @param modeValues          オーディオ特徴量の最頻値を含むマップ
      * @return 推薦されたトラックのリスト
+     * @throws PlaylistViewerNextException トラックの推薦中にエラーが発生した場合
      */
     public List<Track> getRecommendations(List<String> genres,
                                           Map<String, Float> maxAudioFeatures,
@@ -43,8 +46,14 @@ public class TrackRecommendationService {
         try {
             return recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
         } catch (Exception e) {
+            // トラックの推薦中にエラーが発生した場合は PlaylistViewerNextException をスロー
             LOGGER.error("Spotify APIの呼び出し中にエラーが発生しました。", e);
-            return Collections.emptyList();
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TRACK_RECOMMENDATION_ERROR",
+                    "トラックの推薦中にエラーが発生しました。",
+                    e
+            );
         }
     }
 }
