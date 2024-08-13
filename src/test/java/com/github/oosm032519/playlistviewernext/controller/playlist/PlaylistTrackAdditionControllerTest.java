@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
@@ -75,7 +76,7 @@ class PlaylistTrackAdditionControllerTest {
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
         // Act & Assert
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
                 () -> playlistTrackAdditionController.addTrackToPlaylist(request, principal));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -98,7 +99,7 @@ class PlaylistTrackAdditionControllerTest {
                 .thenThrow(new RuntimeException("Spotify API error"));
 
         // Act & Assert
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        SpotifyApiException exception = assertThrows(SpotifyApiException.class,
                 () -> playlistTrackAdditionController.addTrackToPlaylist(request, principal));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,9 +69,9 @@ public class PlaylistFavoriteController {
             response.put("message", "プレイリストをお気に入りに登録しました。");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り登録中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_FAVORITE_ERROR",
                     "プレイリストのお気に入り登録中にエラーが発生しました。",
@@ -86,13 +86,8 @@ public class PlaylistFavoriteController {
             byte[] hashedBytes = md.digest(userId.getBytes());
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
-            // ハッシュアルゴリズムが見つからない場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "HASHING_ALGORITHM_ERROR",
-                    "ハッシュアルゴリズムが見つかりません。",
-                    e
-            );
+            // ハッシュアルゴリズムが見つからない場合は IllegalStateException をスロー
+            throw new IllegalStateException("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
         }
     }
 
@@ -127,9 +122,9 @@ public class PlaylistFavoriteController {
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り解除中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_UNFAVORITE_ERROR",
                     "プレイリストのお気に入り解除中にエラーが発生しました。",
@@ -165,9 +160,9 @@ public class PlaylistFavoriteController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("お気に入りプレイリスト一覧の取得中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
                     "お気に入りプレイリスト一覧の取得中にエラーが発生しました。",
@@ -191,9 +186,9 @@ public class PlaylistFavoriteController {
             boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
             return ResponseEntity.ok(isFavorited);
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り確認中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_FAVORITE_CHECK_ERROR",
                     "プレイリストのお気に入り確認中にエラーが発生しました。",

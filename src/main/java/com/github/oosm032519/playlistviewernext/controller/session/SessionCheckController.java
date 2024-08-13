@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,9 +64,9 @@ public class SessionCheckController {
         if (sessionId != null) {
             return handleSessionValidation(sessionId, response);
         } else {
-            // セッションIDがない場合は PlaylistViewerNextException をスロー
+            // セッションIDがない場合は AuthenticationException をスロー
             logger.warn("有効なセッションIDが存在しません。未認証の可能性があります。");
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "SESSION_NOT_FOUND",
                     "有効なセッションIDが存在しません。"
@@ -110,18 +111,18 @@ public class SessionCheckController {
                 Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                 return createSuccessResponse(response, fullSessionClaims);
             } else {
-                // Redisにセッション情報がない場合は PlaylistViewerNextException をスロー
+                // Redisにセッション情報がない場合は AuthenticationException をスロー
                 logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                throw new PlaylistViewerNextException(
+                throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "SESSION_NOT_FOUND",
                         "Redisにセッション情報が見つかりません。"
                 );
             }
         } catch (Exception e) {
-            // セッション情報の検証中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // セッション情報の検証中にエラーが発生した場合は AuthenticationException をスロー
             logger.error("セッション情報の検証中にエラーが発生しました。エラー詳細: ", e);
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "SESSION_VALIDATION_ERROR",
                     "セッション情報の検証中にエラーが発生しました。",
@@ -171,9 +172,9 @@ public class SessionCheckController {
         if (sessionId != null) {
             return handleLogout(sessionId, response, responseBody);
         } else {
-            // セッションIDがない場合は PlaylistViewerNextException をスロー
+            // セッションIDがない場合は AuthenticationException をスロー
             logger.warn("有効なセッションIDが存在しません。");
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "SESSION_NOT_FOUND",
                     "有効なセッションIDが存在しません。"
@@ -202,18 +203,19 @@ public class SessionCheckController {
                 responseBody.put("message", "ログアウトしました。");
                 return ResponseEntity.ok(responseBody);
             } else {
-                // Redisにセッション情報がない場合は PlaylistViewerNextException をスロー
+                // Redisにセッション情報がない場合は DatabaseAccessException をスロー
                 logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                throw new PlaylistViewerNextException(
+                throw new DatabaseAccessException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "SESSION_NOT_FOUND",
-                        "Redisにセッション情報が見つかりません。"
+                        "Redisにセッション情報が見つかりません。",
+                        null // DatabaseAccessException の原因はここでは特定できないため null を設定
                 );
             }
         } catch (Exception e) {
-            // ログアウト処理中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // ログアウト処理中にエラーが発生した場合は DatabaseAccessException をスロー
             logger.error("ログアウト処理中にエラーが発生しました。エラー詳細: ", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "LOGOUT_ERROR",
                     "ログアウト処理中にエラーが発生しました。",

@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
@@ -62,8 +64,14 @@ public class PlaylistDetailsController {
         try {
             Map<String, Object> response = fetchPlaylistDetails(id);
             return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            logger.error("プレイリストが見つかりませんでした", e);
+            throw e; // リソースが見つからない場合はそのまま例外をスロー
+        } catch (SpotifyApiException e) {
+            logger.error("Spotify APIとの通信中にエラーが発生しました", e);
+            throw e; // Spotify APIのエラーはそのまま例外をスロー
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // 予期しないエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストの取得中にエラーが発生しました", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,

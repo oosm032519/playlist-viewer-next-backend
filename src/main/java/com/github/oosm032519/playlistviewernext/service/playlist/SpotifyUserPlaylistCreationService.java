@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -36,7 +36,7 @@ public class SpotifyUserPlaylistCreationService {
      * @param playlistName 作成するプレイリストの名前
      * @param trackIds     プレイリストに追加するトラックのIDリスト
      * @return 作成されたプレイリストのID
-     * @throws PlaylistViewerNextException プレイリストの作成中にエラーが発生した場合
+     * @throws SpotifyApiException プレイリストの作成中にエラーが発生した場合
      */
     public String createPlaylist(String accessToken, String userId, String playlistName, List<String> trackIds) {
         logMethodCall(accessToken, userId, playlistName, trackIds);
@@ -50,9 +50,8 @@ public class SpotifyUserPlaylistCreationService {
             logger.info("プレイリストの作成が完了しました。");
             return playlistId;
         } catch (Exception e) {
-            // プレイリストの作成中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストの作成中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_CREATION_ERROR",
                     "プレイリストの作成中にエラーが発生しました。",

@@ -1,8 +1,8 @@
 // PlaylistDetailsRetrievalServiceTest.java
-
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -121,5 +122,17 @@ class PlaylistDetailsRetrievalServiceTest {
         verify(medianAudioFeaturesCalculator).calculateMedianAudioFeatures(trackList);
         verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
         verify(modeValuesCalculator).calculateModeValues(trackList);
+    }
+
+    @Test
+    void getPlaylistDetails_ThrowsPlaylistViewerNextException_WhenOtherExceptionOccurs() throws Exception {
+        // Arrange
+        String playlistId = "testPlaylistId";
+        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("Other Error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistDetailsRetrievalService.getPlaylistDetails(playlistId))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストの詳細情報の取得中にエラーが発生しました。");
     }
 }

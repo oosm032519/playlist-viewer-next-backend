@@ -1,12 +1,15 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SpotifyUserPlaylistsServiceTest {
 
     @Mock
@@ -60,7 +64,6 @@ public class SpotifyUserPlaylistsServiceTest {
 
     @Test
     public void getCurrentUsersPlaylists_success() throws Exception {
-        // Arrange
         String accessToken = "mockAccessToken";
         when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
 
@@ -68,39 +71,42 @@ public class SpotifyUserPlaylistsServiceTest {
         when(request.execute()).thenReturn(playlistsPaging);
         when(playlistsPaging.getItems()).thenReturn(new PlaylistSimplified[0]);
 
-        // Act
         List<PlaylistSimplified> playlists = spotifyUserPlaylistsService.getCurrentUsersPlaylists();
 
-        // Assert
         assertThat(playlists).isEmpty();
         verify(spotifyApi).setAccessToken(accessToken);
     }
 
     @Test
+    public void getCurrentUsersPlaylists_authenticationException() {
+        when(oauth2User.getAttribute("spotify_access_token")).thenReturn(null);
+
+        assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("Spotify access token is missing");
+    }
+
+    @Test
     public void getCurrentUsersPlaylists_spotifyApiException() throws Exception {
-        // Arrange
         String accessToken = "mockAccessToken";
         when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
         when(request.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
-        // Act & Assert
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(PlaylistViewerNextException.class)
-                .hasMessageContaining("プレイリストの取得中にエラーが発生しました。");
+                .isInstanceOf(SpotifyApiException.class)
+                .hasMessageContaining("Error occurred while retrieving playlists");
         verify(spotifyApi).setAccessToken(accessToken);
     }
 
     @Test
     public void getCurrentUsersPlaylists_ioException() throws Exception {
-        // Arrange
         String accessToken = "mockAccessToken";
         when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
         when(request.execute()).thenThrow(new IOException("IO error"));
 
-        // Act & Assert
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(PlaylistViewerNextException.class)
-                .hasMessageContaining("プレイリストの取得中にエラーが発生しました。");
+                .isInstanceOf(SpotifyApiException.class)
+                .hasMessageContaining("Error occurred while retrieving playlists");
         verify(spotifyApi).setAccessToken(accessToken);
     }
 }

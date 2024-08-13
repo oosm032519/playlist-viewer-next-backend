@@ -1,7 +1,9 @@
+// PlaylistDetailsRetrievalService.java
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,15 +81,15 @@ public class PlaylistDetailsRetrievalService {
             long totalDuration = calculateTotalDuration(tracks);
 
             return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+
+        } catch (IllegalArgumentException e) {
+            // リソースが見つからないエラー
+            logger.error("リソースが見つかりません。", e);
+            throw new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "リソースが見つかりません。");
         } catch (Exception e) {
-            // 認証やデータ取得に失敗した場合は PlaylistViewerNextException をスロー
+            // その他のエラー
             logger.error("プレイリストの詳細情報の取得中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_DETAILS_RETRIEVAL_ERROR",
-                    "プレイリストの詳細情報の取得中にエラーが発生しました。",
-                    e
-            );
+            throw new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "PLAYLIST_DETAILS_RETRIEVAL_ERROR", "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
         }
     }
 

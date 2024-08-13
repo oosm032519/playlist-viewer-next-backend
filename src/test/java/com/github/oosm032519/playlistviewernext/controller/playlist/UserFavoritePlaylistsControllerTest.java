@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,7 +71,7 @@ class UserFavoritePlaylistsControllerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> controller.getFavoritePlaylists(principal))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
                 .hasMessage("お気に入りプレイリスト一覧の取得中にエラーが発生しました。");
@@ -92,7 +92,7 @@ class UserFavoritePlaylistsControllerTest {
     @Test
     void hashUserId_Exception() {
         UserFavoritePlaylistsController spyController = spy(controller);
-        doThrow(new PlaylistViewerNextException(
+        doThrow(new DatabaseAccessException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "HASHING_ALGORITHM_ERROR",
                 "ハッシュアルゴリズムが見つかりません。",
@@ -101,7 +101,7 @@ class UserFavoritePlaylistsControllerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spyController.hashUserId("testUser"))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "HASHING_ALGORITHM_ERROR")
                 .hasMessage("ハッシュアルゴリズムが見つかりません。");

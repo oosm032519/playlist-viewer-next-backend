@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,16 +31,16 @@ public class SpotifyClientCredentialsAuthentication {
     /**
      * Spotifyのクライアントクレデンシャル認証を実行。
      *
-     * @throws PlaylistViewerNextException 認証中にエラーが発生した場合
+     * @throws AuthenticationException 認証中にエラーが発生した場合
      */
     public void authenticate() {
         try {
             authService.getClientCredentialsToken();
             LOGGER.info("クライアントクレデンシャル認証が成功しました。");
         } catch (Exception e) {
-            // 認証中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // 認証中にエラーが発生した場合は AuthenticationException をスロー
             LOGGER.error("クライアントクレデンシャル認証中にエラーが発生しました", e);
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "CLIENT_CREDENTIALS_AUTH_ERROR",
                     "クライアントクレデンシャル認証中にエラーが発生しました。",

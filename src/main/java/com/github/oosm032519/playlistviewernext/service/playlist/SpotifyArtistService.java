@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -29,7 +29,7 @@ public class SpotifyArtistService {
      *
      * @param artistId アーティストのID
      * @return アーティストのジャンルのリスト
-     * @throws PlaylistViewerNextException アーティスト情報の取得中にエラーが発生した場合
+     * @throws SpotifyApiException アーティスト情報の取得中にエラーが発生した場合
      */
     public List<String> getArtistGenres(String artistId) {
         try {
@@ -38,8 +38,8 @@ public class SpotifyArtistService {
                     .map(List::of)
                     .orElse(Collections.emptyList());
         } catch (Exception e) {
-            // アーティスト情報の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            // Spotify API 関連のエラーの場合は SpotifyApiException をスロー
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "ARTIST_INFO_RETRIEVAL_ERROR",
                     "アーティスト情報の取得中にエラーが発生しました。",

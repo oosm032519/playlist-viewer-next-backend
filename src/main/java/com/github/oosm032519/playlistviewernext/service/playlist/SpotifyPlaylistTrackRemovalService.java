@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
@@ -29,7 +30,7 @@ public class SpotifyPlaylistTrackRemovalService {
         String accessToken = getAccessToken(principal);
         if (accessToken == null) {
             logger.warn("Unauthorized access attempt with missing access token.");
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED_ACCESS",
                     "有効なアクセストークンがありません。"
@@ -54,7 +55,7 @@ public class SpotifyPlaylistTrackRemovalService {
             return successResponse(snapshotResult);
         } catch (Exception e) {
             logger.error("Error occurred while removing track from playlist.", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_REMOVAL_ERROR",
                     "トラックの削除中にエラーが発生しました。",

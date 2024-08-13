@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -114,43 +115,43 @@ class SpotifyPlaylistDetailsServiceTest {
 
         when(spotifyApi.getPlaylist(NON_EXISTENT_PLAYLIST_ID)).thenReturn(builder);
         when(builder.build()).thenReturn(getPlaylistRequest);
-        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+        when(getPlaylistRequest.execute()).thenReturn(null);
 
         // Act & Assert
         assertThatThrownBy(() -> playlistDetailsService.getPlaylistTracks(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(PlaylistViewerNextException.class)
-                .hasMessageContaining("トラック情報の取得中にエラーが発生しました。");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("指定されたプレイリストが見つかりません。");
     }
 
     @Test
-    void testGetPlaylistName_異常系_プレイリストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetPlaylistName_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
         GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
 
-        when(spotifyApi.getPlaylist(NON_EXISTENT_PLAYLIST_ID)).thenReturn(builder);
+        when(spotifyApi.getPlaylist(PLAYLIST_ID)).thenReturn(builder);
         when(builder.build()).thenReturn(getPlaylistRequest);
-        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("API Error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> playlistDetailsService.getPlaylistName(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(PlaylistViewerNextException.class)
+        assertThatThrownBy(() -> playlistDetailsService.getPlaylistName(PLAYLIST_ID))
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessageContaining("プレイリスト名の取得中にエラーが発生しました。");
     }
 
     @Test
-    void testGetPlaylistOwner_異常系_プレイリストが存在しない() throws IOException, SpotifyWebApiException, ParseException {
+    void testGetPlaylistOwner_異常系_APIエラー() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         GetPlaylistRequest.Builder builder = mock(GetPlaylistRequest.Builder.class);
         GetPlaylistRequest getPlaylistRequest = mock(GetPlaylistRequest.class);
 
-        when(spotifyApi.getPlaylist(NON_EXISTENT_PLAYLIST_ID)).thenReturn(builder);
+        when(spotifyApi.getPlaylist(PLAYLIST_ID)).thenReturn(builder);
         when(builder.build()).thenReturn(getPlaylistRequest);
-        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Playlist not found"));
+        when(getPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("API Error"));
 
         // Act & Assert
-        assertThatThrownBy(() -> playlistDetailsService.getPlaylistOwner(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(PlaylistViewerNextException.class)
+        assertThatThrownBy(() -> playlistDetailsService.getPlaylistOwner(PLAYLIST_ID))
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessageContaining("オーナー情報の取得中にエラーが発生しました。");
     }
 }

@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handlePlaylistViewerNextException(PlaylistViewerNextException ex) {
         logger.error("PlaylistViewerNextException が発生しました: {}", ex.getMessage(), ex);
 
-        ErrorResponse errorResponse = new ErrorResponse(ex.getHttpStatus(), ex.getErrorCode(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(ex.getHttpStatus(), ex.getErrorCode(), ex.getMessage(), ex.getDetails());
         return new ResponseEntity<>(errorResponse, ex.getHttpStatus());
     }
 }

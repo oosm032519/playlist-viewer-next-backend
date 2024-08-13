@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import org.slf4j.Logger;
@@ -61,7 +62,7 @@ public class PlaylistCreationController {
         // ユーザーのアクセストークンを取得
         String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED_ACCESS",
                     "ユーザーが認証されていないか、アクセストークンが見つかりません。"
@@ -79,9 +80,8 @@ public class PlaylistCreationController {
             logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
             return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
         } catch (Exception e) {
-            // プレイリスト作成中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストの作成中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_CREATION_ERROR",
                     "プレイリストの作成中にエラーが発生しました。",

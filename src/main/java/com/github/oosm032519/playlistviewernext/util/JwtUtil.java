@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.util;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.KeyTemplates;
 import com.google.crypto.tink.KeysetHandle;
@@ -49,16 +50,13 @@ public class JwtUtil {
     public void init() {
         logger.info("JwtUtil初期化開始");
         try {
-            // Ed25519キーペアの生成 (署名用)
             OctetKeyPair octetKeyPair = new OctetKeyPairGenerator(Curve.Ed25519)
                     .keyID(secret)
                     .generate();
 
-            // EdDSA署名用のsignerとverifierを初期化
             this.signer = new Ed25519Signer(octetKeyPair);
             this.verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
 
-            // Tinkの初期化
             AeadConfig.register();
             KeysetHandle keysetHandle = KeysetHandle.generateNew(
                     KeyTemplates.get("XCHACHA20_POLY1305"));
@@ -66,12 +64,11 @@ public class JwtUtil {
 
             logger.debug("署名者、検証者、暗号化器の生成に成功しました。");
         } catch (JOSEException | GeneralSecurityException e) {
-            // 初期化中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("初期化中にエラーが発生しました", e);
             if (e.getCause() != null) {
                 logger.error("原因: ", e.getCause());
             }
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "JWT_UTIL_INIT_ERROR",
                     "JwtUtilの初期化に失敗しました。",
@@ -87,7 +84,6 @@ public class JwtUtil {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + 3600000); // 1時間
         try {
-            // JWTクレームセットの構築
             JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
                     .issuer(issuer)
                     .audience(audience)
@@ -96,11 +92,9 @@ public class JwtUtil {
 
             claims.forEach(claimsSetBuilder::claim);
 
-            // 署名付きJWTの作成
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.EdDSA), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
-            // JWEオブジェクトの作成と暗号化
             byte[] associatedData = "JWT".getBytes();
             byte[] ciphertext = aead.encrypt(signedJWT.serialize().getBytes(), associatedData);
 
@@ -109,9 +103,8 @@ public class JwtUtil {
             logger.debug("生成されたトークン: {}", token);
             return token;
         } catch (JOSEException | GeneralSecurityException e) {
-            // トークン生成中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("トークン生成中にエラーが発生しました", e);
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TOKEN_GENERATION_ERROR",
                     "トークンの生成に失敗しました。",
@@ -124,30 +117,25 @@ public class JwtUtil {
         logger.info("トークン検証開始");
         logger.debug("検証対象トークン: {}", token);
         try {
-            // JWEオブジェクトの解析と復号
             byte[] ciphertext = Hex.decode(token);
             byte[] associatedData = "JWT".getBytes();
             byte[] plaintext = aead.decrypt(ciphertext, associatedData);
 
-            // 署名付きJWTの取得と検証
             SignedJWT signedJWT = SignedJWT.parse(new String(plaintext));
             if (!signedJWT.verify(verifier)) {
-                // トークン署名検証に失敗した場合は PlaylistViewerNextException をスロー
                 logger.warn("トークンの署名が無効です");
-                throw new PlaylistViewerNextException(
+                throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "INVALID_TOKEN_SIGNATURE",
                         "トークンの署名が無効です。"
                 );
             }
 
-            // クレームセットの取得と有効期限の確認
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
             Date expirationTime = claimsSet.getExpirationTime();
             if (expirationTime != null && expirationTime.before(new Date())) {
-                // トークン有効期限切れの場合は PlaylistViewerNextException をスロー
                 logger.warn("トークンの有効期限が切れています");
-                throw new PlaylistViewerNextException(
+                throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "TOKEN_EXPIRED",
                         "トークンの有効期限が切れています。"
@@ -159,13 +147,11 @@ public class JwtUtil {
             logger.debug("検証されたクレーム: {}", claims);
             return claims;
         } catch (Exception e) {
-            // トークン検証中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("トークン検証中にエラーが発生しました", e);
-            throw new PlaylistViewerNextException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
+            throw new InvalidRequestException(
+                    HttpStatus.BAD_REQUEST,
                     "TOKEN_VALIDATION_ERROR",
-                    "トークン検証中にエラーが発生しました。",
-                    e
+                    "トークン検証中にエラーが発生しました。"
             );
         }
     }

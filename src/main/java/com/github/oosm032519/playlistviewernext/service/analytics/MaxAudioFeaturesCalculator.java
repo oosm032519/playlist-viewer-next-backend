@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -35,9 +35,9 @@ public class MaxAudioFeaturesCalculator {
             logger.info("calculateMaxAudioFeatures: 上限オーディオフィーチャー計算完了: {}", result);
             return result;
         } catch (Exception e) {
-            // 最大オーディオフィーチャーの計算中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // 最大オーディオフィーチャーの計算中にエラーが発生した場合は DatabaseAccessException をスロー
             logger.error("最大オーディオフィーチャーの計算中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "MAX_AUDIO_FEATURES_CALCULATION_ERROR",
                     "最大オーディオフィーチャーの計算中にエラーが発生しました。",

@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.google.gson.JsonArray;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -80,12 +82,11 @@ class SpotifyPlaylistTrackRemovalServiceTest {
     void removeTrackFromPlaylist_UnauthorizedAccess() {
         when(principal.getAttributes()).thenReturn(new HashMap<>());
 
-        try {
-            service.removeTrackFromPlaylist(request, principal);
-        } catch (PlaylistViewerNextException e) {
-            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(e.getMessage()).isEqualTo("有効なアクセストークンがありません。");
-        }
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
+                () -> service.removeTrackFromPlaylist(request, principal));
+
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getMessage()).isEqualTo("有効なアクセストークンがありません。");
 
         verify(spotifyApi, never()).setAccessToken(any());
         verify(spotifyApi, never()).removeItemsFromPlaylist(any(), any());
@@ -101,12 +102,11 @@ class SpotifyPlaylistTrackRemovalServiceTest {
         when(removeItemsBuilder.build()).thenReturn(removeItemsRequest);
         when(removeItemsRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
-        try {
-            service.removeTrackFromPlaylist(request, principal);
-        } catch (PlaylistViewerNextException e) {
-            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-            assertThat(e.getMessage()).isEqualTo("トラックの削除中にエラーが発生しました。");
-        }
+        SpotifyApiException exception = assertThrows(SpotifyApiException.class,
+                () -> service.removeTrackFromPlaylist(request, principal));
+
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception.getMessage()).isEqualTo("トラックの削除中にエラーが発生しました。");
 
         verify(spotifyApi).setAccessToken("validToken");
         verify(spotifyApi).removeItemsFromPlaylist(eq("playlistId"), any(JsonArray.class));

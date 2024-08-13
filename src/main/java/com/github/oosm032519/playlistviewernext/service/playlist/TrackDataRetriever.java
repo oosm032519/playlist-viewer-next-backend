@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -31,7 +31,7 @@ public class TrackDataRetriever {
      *
      * @param tracks プレイリストのトラック配列
      * @return トラック情報のリスト
-     * @throws PlaylistViewerNextException トラックデータの取得中にエラーが発生した場合
+     * @throws SpotifyApiException トラックデータの取得中にエラーが発生した場合
      */
     public List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) {
         logger.info("getTrackListData: トラック数: {}", tracks.length);
@@ -44,9 +44,9 @@ public class TrackDataRetriever {
             logger.info("getTrackListData: トラックデータリスト作成完了");
             return trackList;
         } catch (Exception e) {
-            // トラックデータの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // トラックデータの取得中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("トラックデータの取得中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_DATA_RETRIEVAL_ERROR",
                     "トラックデータの取得中にエラーが発生しました。",
@@ -61,13 +61,8 @@ public class TrackDataRetriever {
         trackData.put("track", fullTrack);
 
         String trackId = fullTrack.getId();
-        try {
-            AudioFeatures audioFeatures = trackService.getAudioFeaturesForTrack(trackId);
-            trackData.put("audioFeatures", audioFeatures);
-        } catch (Exception e) {
-            logger.error("Error fetching audio features for track {}: {}", trackId, e.getMessage());
-            trackData.put("audioFeatures", null);
-        }
+        AudioFeatures audioFeatures = trackService.getAudioFeaturesForTrack(trackId);
+        trackData.put("audioFeatures", audioFeatures);
 
         return trackData;
     }

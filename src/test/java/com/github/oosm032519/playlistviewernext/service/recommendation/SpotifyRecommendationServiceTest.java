@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
@@ -110,7 +110,7 @@ class SpotifyRecommendationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessageContaining("推奨トラックの取得中にエラーが発生しました。");
     }
 

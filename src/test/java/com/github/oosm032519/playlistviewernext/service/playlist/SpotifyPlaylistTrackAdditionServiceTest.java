@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -74,7 +74,7 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         when(addItemsToPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act & Assert
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId));
+        SpotifyApiException exception = assertThrows(SpotifyApiException.class, () -> spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId));
         assertThat(exception.getMessage()).isEqualTo("トラックの追加中にエラーが発生しました。");
         assertThat(exception.getCause()).isInstanceOf(SpotifyWebApiException.class);
         assertThat(exception.getCause().getMessage()).isEqualTo("Spotify API error");

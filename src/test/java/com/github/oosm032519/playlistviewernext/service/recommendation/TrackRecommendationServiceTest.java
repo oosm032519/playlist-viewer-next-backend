@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,26 +75,26 @@ class TrackRecommendationServiceTest {
     }
 
     @Test
-    void givenSpotifyWebApiException_whenGetRecommendations_thenThrowsPlaylistViewerNextException() throws Exception {
+    void givenSpotifyWebApiException_whenGetRecommendations_thenThrowsSpotifyApiException() throws Exception {
         // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .thenThrow(new RuntimeException(new SpotifyWebApiException("API Error")));
 
         // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () ->
+        assertThrows(SpotifyApiException.class, () ->
                 trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
         );
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
-    void givenIOException_whenGetRecommendations_thenThrowsPlaylistViewerNextException() throws Exception {
+    void givenIOException_whenGetRecommendations_thenThrowsSpotifyApiException() throws Exception {
         // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
                 .thenThrow(new RuntimeException(new IOException("IO Error")));
 
         // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () ->
+        assertThrows(SpotifyApiException.class, () ->
                 trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
         );
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);

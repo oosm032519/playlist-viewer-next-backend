@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
@@ -48,7 +49,7 @@ public class PlaylistTrackAdditionController {
 
         String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED_ACCESS",
                     "ユーザーが認証されていないか、アクセストークンが見つかりません。"
@@ -65,9 +66,9 @@ public class PlaylistTrackAdditionController {
 
             return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
-            // トラックの追加中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // トラックの追加中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("トラックの追加中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",
                     "トラックの追加中にエラーが発生しました。",

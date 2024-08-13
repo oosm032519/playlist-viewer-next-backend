@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +65,9 @@ public class PlaylistSearchController {
             // 検索結果を返す
             return ResponseEntity.ok(playlists);
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は SpotifyApiException をスロー
             logger.error("Error occurred while searching playlists", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_SEARCH_ERROR",
                     "プレイリストの検索中にエラーが発生しました。",

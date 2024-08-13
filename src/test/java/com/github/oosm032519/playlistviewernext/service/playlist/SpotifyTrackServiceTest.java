@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,6 @@ class SpotifyTrackServiceTest {
 
     @Test
     void testGetAudioFeaturesForTrack_ShouldReturnAudioFeatures() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
         String trackId = "test-track-id";
         GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
         GetAudioFeaturesForTrackRequest getAudioFeaturesRequest = mock(GetAudioFeaturesForTrackRequest.class);
@@ -47,16 +46,13 @@ class SpotifyTrackServiceTest {
         when(builder.build()).thenReturn(getAudioFeaturesRequest);
         when(getAudioFeaturesRequest.execute()).thenReturn(audioFeatures);
 
-        // Act
         AudioFeatures result = trackService.getAudioFeaturesForTrack(trackId);
 
-        // Assert
         assertThat(result).isEqualTo(audioFeatures);
     }
 
     @Test
-    void testGetAudioFeaturesForTrack_ShouldThrowExceptionWhenTrackNotFound() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
+    void testGetAudioFeaturesForTrack_ShouldThrowSpotifyApiExceptionWhenTrackNotFound() throws IOException, SpotifyWebApiException, ParseException {
         String trackId = "non-existent-track-id";
         GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
         GetAudioFeaturesForTrackRequest getAudioFeaturesRequest = mock(GetAudioFeaturesForTrackRequest.class);
@@ -65,15 +61,13 @@ class SpotifyTrackServiceTest {
         when(builder.build()).thenReturn(getAudioFeaturesRequest);
         when(getAudioFeaturesRequest.execute()).thenThrow(new SpotifyWebApiException("Track not found"));
 
-        // Act & Assert
         assertThatThrownBy(() -> trackService.getAudioFeaturesForTrack(trackId))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessageContaining("オーディオ特徴の取得中にエラーが発生しました。");
     }
 
     @Test
     void testGetAudioFeaturesForTrack_ShouldReturnDetailedAudioFeatures() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
         String trackId = "test-track-id";
         GetAudioFeaturesForTrackRequest.Builder builder = mock(GetAudioFeaturesForTrackRequest.Builder.class);
         GetAudioFeaturesForTrackRequest getAudioFeaturesRequest = mock(GetAudioFeaturesForTrackRequest.class);
@@ -89,10 +83,8 @@ class SpotifyTrackServiceTest {
         when(audioFeatures.getMode()).thenReturn(Modality.MINOR);
         when(audioFeatures.getTimeSignature()).thenReturn(4);
 
-        // Act
         AudioFeatures result = trackService.getAudioFeaturesForTrack(trackId);
 
-        // Assert
         assertThat(result).isNotNull();
         assertThat(result.getDanceability()).isEqualTo(0.8f);
         assertThat(result.getEnergy()).isEqualTo(0.9f);

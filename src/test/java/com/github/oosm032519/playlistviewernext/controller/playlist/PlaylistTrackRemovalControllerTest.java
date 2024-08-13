@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,14 +45,14 @@ class PlaylistTrackRemovalControllerTest {
     class RemoveTrackFromPlaylistTests {
 
         @Test
-        @DisplayName("Should throw PlaylistViewerNextException when principal is null")
-        void shouldThrowPlaylistViewerNextExceptionWhenPrincipalIsNull() {
+        @DisplayName("Should throw AuthenticationException when principal is null")
+        void shouldThrowAuthenticationExceptionWhenPrincipalIsNull() {
             // Arrange
             OAuth2User principal = null;
 
             // Act & Assert
             assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal))
-                    .isInstanceOf(PlaylistViewerNextException.class)
+                    .isInstanceOf(AuthenticationException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.UNAUTHORIZED)
                     .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS")
                     .hasMessage("認証されていないユーザーがアクセスしようとしました。");
@@ -75,32 +76,33 @@ class PlaylistTrackRemovalControllerTest {
         }
 
         @Test
-        @DisplayName("Should throw PlaylistViewerNextException when track removal fails")
-        void shouldThrowPlaylistViewerNextExceptionWhenTrackRemovalFails() {
+        @DisplayName("Should throw SpotifyApiException when track removal fails")
+        void shouldThrowSpotifyApiExceptionWhenTrackRemovalFails() {
             // Arrange
             OAuth2User principal = mock(OAuth2User.class);
-            ResponseEntity<String> serviceResponse = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            ResponseEntity<String> serviceResponse = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error body");
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
             // Act & Assert
             assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal))
-                    .isInstanceOf(PlaylistViewerNextException.class)
+                    .isInstanceOf(SpotifyApiException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                     .hasFieldOrPropertyWithValue("errorCode", "TRACK_REMOVAL_ERROR")
-                    .hasMessage("トラックの削除中にエラーが発生しました。");
+                    .hasMessage("トラックの削除に失敗しました。")
+                    .hasFieldOrPropertyWithValue("details", "Spotify APIからのエラーレスポンス: Error body");
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
 
         @Test
-        @DisplayName("Should throw PlaylistViewerNextException when an exception occurs during track removal")
-        void shouldThrowPlaylistViewerNextExceptionWhenExceptionOccursDuringTrackRemoval() {
+        @DisplayName("Should throw SpotifyApiException when an exception occurs during track removal")
+        void shouldThrowSpotifyApiExceptionWhenExceptionOccursDuringTrackRemoval() {
             // Arrange
             OAuth2User principal = mock(OAuth2User.class);
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenThrow(new RuntimeException("Some error"));
 
             // Act & Assert
             assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal))
-                    .isInstanceOf(PlaylistViewerNextException.class)
+                    .isInstanceOf(SpotifyApiException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                     .hasFieldOrPropertyWithValue("errorCode", "TRACK_REMOVAL_ERROR")
                     .hasMessage("トラックの削除中にエラーが発生しました。")

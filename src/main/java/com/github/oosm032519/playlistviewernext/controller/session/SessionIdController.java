@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,9 @@ public class SessionIdController {
 
         String temporaryToken = body.get("temporaryToken");
         if (temporaryToken == null) {
-            // 一時トークンがない場合は PlaylistViewerNextException をスロー
+            // 一時トークンがない場合は InvalidRequestException をスロー
             logger.warn("一時トークンが提供されていません。リクエストボディ: {}", body);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "TEMPORARY_TOKEN_MISSING",
                     "一時トークンが提供されていません。"
@@ -43,12 +44,13 @@ public class SessionIdController {
             String sessionId = redisTemplate.opsForValue().get("temp:" + temporaryToken);
 
             if (sessionId == null) {
-                // セッションIDが見つからない場合は PlaylistViewerNextException をスロー
+                // セッションIDが見つからない場合は DatabaseAccessException をスロー
                 logger.warn("セッションIDが見つかりません。一時トークン: {}", temporaryToken);
-                throw new PlaylistViewerNextException(
-                        HttpStatus.NOT_FOUND,
+                throw new DatabaseAccessException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
                         "SESSION_ID_NOT_FOUND",
-                        "セッションIDが見つかりません。"
+                        "セッションIDが見つかりません。",
+                        null // DatabaseAccessException の原因はここでは特定できないため null を設定
                 );
             }
 
@@ -61,12 +63,12 @@ public class SessionIdController {
             logger.info("セッションID取得処理が完了しました。セッションID: {}", sessionId);
             return ResponseEntity.ok(Map.of("sessionId", sessionId));
         } catch (Exception e) {
-            // セッションID取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            logger.error("セッションIDの取得中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            // Redisアクセス中にエラーが発生した場合は DatabaseAccessException をスロー
+            logger.error("Redisアクセス中にエラーが発生しました。", e);
+            throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "SESSION_ID_RETRIEVAL_ERROR",
-                    "セッションIDの取得中にエラーが発生しました。",
+                    "REDIS_ACCESS_ERROR",
+                    "Redisアクセス中にエラーが発生しました。",
                     e
             );
         }

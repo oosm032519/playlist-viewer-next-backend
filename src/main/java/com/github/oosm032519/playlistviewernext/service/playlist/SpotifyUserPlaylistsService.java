@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,40 +21,33 @@ import java.util.Optional;
 public class SpotifyUserPlaylistsService {
     private final SpotifyApi spotifyApi;
 
-    /**
-     * SpotifyUserPlaylistsServiceのコンストラクタ。
-     *
-     * @param spotifyApi Spotify API クライアント
-     */
     @Autowired
     public SpotifyUserPlaylistsService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
 
-    /**
-     * 現在のユーザーのプレイリストを取得します。
-     *
-     * @return プレイリストのリスト
-     * @throws PlaylistViewerNextException プレイリストの取得中にエラーが発生した場合
-     */
     public List<PlaylistSimplified> getCurrentUsersPlaylists() {
         try {
-            // SecurityContextHolder から OAuth2User を取得
             OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-            // OAuth2User から spotify_access_token を取得
             String spotifyAccessToken = oauth2User.getAttribute("spotify_access_token");
 
-            // SpotifyApi にアクセストークンを設定
-            spotifyApi.setAccessToken(spotifyAccessToken);
+            if (spotifyAccessToken == null) {
+                throw new AuthenticationException(
+                        HttpStatus.UNAUTHORIZED,
+                        "AUTHENTICATION_ERROR",
+                        "Spotify access token is missing"
+                );
+            }
 
+            spotifyApi.setAccessToken(spotifyAccessToken);
             return getPlaylists();
+        } catch (AuthenticationException e) {
+            throw e;
         } catch (Exception e) {
-            // プレイリストの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLISTS_RETRIEVAL_ERROR",
-                    "プレイリストの取得中にエラーが発生しました。",
+                    "Error occurred while retrieving playlists",
                     e
             );
         }

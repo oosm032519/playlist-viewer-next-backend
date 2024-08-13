@@ -1,11 +1,14 @@
 package com.github.oosm032519.playlistviewernext.util;
 
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.nimbusds.jose.JOSEException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.ParseException;
@@ -59,9 +62,8 @@ class JwtUtilTest {
     @Test
     void testValidateTokenWithInvalidToken() {
         assertThatThrownBy(() -> jwtUtil.validateToken("invalidToken"))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
-                .hasMessageContaining("トークン検証中にエラーが発生しました。")
-                .hasCauseInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("トークン検証中にエラーが発生しました。");
     }
 
     @Test
@@ -77,11 +79,16 @@ class JwtUtilTest {
         ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
         ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
 
-        doThrow(new RuntimeException("Initialization failed")).when(spyJwtUtil).init();
+        doThrow(new AuthenticationException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "JWT_UTIL_INIT_ERROR",
+                "JwtUtilの初期化に失敗しました。",
+                new RuntimeException("Initialization failed")
+        )).when(spyJwtUtil).init();
 
         assertThatThrownBy(() -> spyJwtUtil.init())
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Initialization failed");
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("JwtUtilの初期化に失敗しました。");
     }
 
     @Test
@@ -90,11 +97,16 @@ class JwtUtilTest {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", "123");
 
-        doThrow(new RuntimeException("Token generation failed")).when(spyJwtUtil).generateToken(any());
+        doThrow(new AuthenticationException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "TOKEN_GENERATION_ERROR",
+                "トークンの生成に失敗しました。",
+                new RuntimeException("Token generation failed")
+        )).when(spyJwtUtil).generateToken(any());
 
         assertThatThrownBy(() -> spyJwtUtil.generateToken(claims))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Token generation failed");
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("トークンの生成に失敗しました。");
     }
 
     @Test
@@ -104,21 +116,18 @@ class JwtUtilTest {
 
         String token = jwtUtil.generateToken(claims);
 
-        // Mockを使用して有効期限切れのトークンをシミュレート
         JwtUtil spyJwtUtil = spy(jwtUtil);
         doAnswer(invocation -> {
-            throw new com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+            throw new AuthenticationException(
+                    HttpStatus.UNAUTHORIZED,
                     "TOKEN_EXPIRED",
-                    "トークンの有効期限が切れています。",
-                    new JOSEException("Token has expired")
+                    "トークンの有効期限が切れています。"
             );
         }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
-                .hasMessageContaining("トークンの有効期限が切れています。")
-                .hasCauseInstanceOf(JOSEException.class);
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("トークンの有効期限が切れています。");
     }
 
     @Test
@@ -128,20 +137,17 @@ class JwtUtilTest {
 
         String token = jwtUtil.generateToken(claims);
 
-        // Mockを使用して無効な署名をシミュレート
         JwtUtil spyJwtUtil = spy(jwtUtil);
         doAnswer(invocation -> {
-            throw new com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+            throw new AuthenticationException(
+                    HttpStatus.UNAUTHORIZED,
                     "INVALID_TOKEN_SIGNATURE",
-                    "トークンの署名が無効です。",
-                    new JOSEException("Invalid token signature")
+                    "トークンの署名が無効です。"
             );
         }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
-                .hasMessageContaining("トークンの署名が無効です。")
-                .hasCauseInstanceOf(JOSEException.class);
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("トークンの署名が無効です。");
     }
 }

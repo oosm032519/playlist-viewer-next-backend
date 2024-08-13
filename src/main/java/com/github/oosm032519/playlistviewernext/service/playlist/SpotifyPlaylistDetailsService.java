@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -30,14 +31,24 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリスト内のトラックの配列
-     * @throws PlaylistViewerNextException トラック情報の取得中にエラーが発生した場合
+     * @throws ResourceNotFoundException プレイリストが見つからない場合
+     * @throws SpotifyApiException       トラック情報の取得中にエラーが発生した場合
      */
     public PlaylistTrack[] getPlaylistTracks(String playlistId) {
         try {
-            return getPlaylist(playlistId).getTracks().getItems();
+            Playlist playlist = getPlaylist(playlistId);
+            if (playlist == null) {
+                throw new ResourceNotFoundException(
+                        HttpStatus.NOT_FOUND,
+                        "PLAYLIST_NOT_FOUND",
+                        "指定されたプレイリストが見つかりません。"
+                );
+            }
+            return playlist.getTracks().getItems();
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            // トラック情報の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACKS_RETRIEVAL_ERROR",
                     "トラック情報の取得中にエラーが発生しました。",
@@ -51,15 +62,25 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリスト情報
-     * @throws PlaylistViewerNextException プレイリスト情報の取得中にエラーが発生した場合
+     * @throws ResourceNotFoundException プレイリストが見つからない場合
+     * @throws SpotifyApiException       プレイリスト情報の取得中にエラーが発生した場合
      */
     private Playlist getPlaylist(String playlistId) {
         try {
             GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-            return getPlaylistRequest.execute();
+            Playlist playlist = getPlaylistRequest.execute();
+            if (playlist == null) {
+                throw new ResourceNotFoundException(
+                        HttpStatus.NOT_FOUND,
+                        "PLAYLIST_NOT_FOUND",
+                        "指定されたプレイリストが見つかりません。"
+                );
+            }
+            return playlist;
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            // プレイリスト情報の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_INFO_RETRIEVAL_ERROR",
                     "プレイリスト情報の取得中にエラーが発生しました。",
@@ -73,14 +94,17 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリストの名前
-     * @throws PlaylistViewerNextException プレイリスト名の取得中にエラーが発生した場合
+     * @throws ResourceNotFoundException プレイリストが見つからない場合
+     * @throws SpotifyApiException       プレイリスト名の取得中にエラーが発生した場合
      */
     public String getPlaylistName(String playlistId) {
         try {
-            return getPlaylist(playlistId).getName();
+            Playlist playlist = getPlaylist(playlistId);
+            return playlist.getName();
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            // プレイリスト名の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_NAME_RETRIEVAL_ERROR",
                     "プレイリスト名の取得中にエラーが発生しました。",
@@ -94,14 +118,17 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリストのオーナー情報
-     * @throws PlaylistViewerNextException オーナー情報の取得中にエラーが発生した場合
+     * @throws ResourceNotFoundException プレイリストが見つからない場合
+     * @throws SpotifyApiException       オーナー情報の取得中にエラーが発生した場合
      */
     public User getPlaylistOwner(String playlistId) {
         try {
-            return getPlaylist(playlistId).getOwner();
+            Playlist playlist = getPlaylist(playlistId);
+            return playlist.getOwner();
+        } catch (ResourceNotFoundException e) {
+            throw e;
         } catch (Exception e) {
-            // オーナー情報の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "OWNER_INFO_RETRIEVAL_ERROR",
                     "オーナー情報の取得中にエラーが発生しました。",

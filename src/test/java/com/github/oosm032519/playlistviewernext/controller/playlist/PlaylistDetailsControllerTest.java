@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
@@ -87,7 +89,39 @@ class PlaylistDetailsControllerTest {
     }
 
     @Test
-    void shouldHandleExceptionGracefully() {
+    void shouldHandleResourceNotFoundException() {
+        // Given
+        String playlistId = "testPlaylistId";
+        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "プレイリストが見つかりません"));
+
+        // When & Then
+        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.NOT_FOUND)
+                .hasFieldOrPropertyWithValue("errorCode", "RESOURCE_NOT_FOUND")
+                .hasMessage("プレイリストが見つかりません");
+
+        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
+    }
+
+    @Test
+    void shouldHandleSpotifyApiException() {
+        // Given
+        String playlistId = "testPlaylistId";
+        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new SpotifyApiException(HttpStatus.BAD_REQUEST, "SPOTIFY_API_ERROR", "Spotify API エラー", new RuntimeException("API error")));
+
+        // When & Then
+        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
+                .isInstanceOf(SpotifyApiException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.BAD_REQUEST)
+                .hasFieldOrPropertyWithValue("errorCode", "SPOTIFY_API_ERROR")
+                .hasMessage("Spotify API エラー");
+
+        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
+    }
+
+    @Test
+    void shouldHandleGenericException() {
         // Given
         String playlistId = "testPlaylistId";
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));

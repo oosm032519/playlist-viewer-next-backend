@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.filter;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -52,9 +53,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Redisからセッション情報を取得
                 String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
                 if (fullSessionToken == null) {
-                    // セッション情報がない場合は PlaylistViewerNextException をスロー
                     logger.warn("セッション情報がRedisに見つかりません - セッションID: {}", sessionId);
-                    throw new PlaylistViewerNextException(
+                    throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
                             "SESSION_NOT_FOUND",
                             "セッション情報が見つかりません。"
@@ -64,9 +64,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // フルセッショントークンを検証
                 Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                 if (fullSessionClaims == null) {
-                    // トークン検証に失敗した場合は PlaylistViewerNextException をスロー
                     logger.warn("フルセッショントークンの検証に失敗しました - セッションID: {}", sessionId);
-                    throw new PlaylistViewerNextException(
+                    throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
                             "INVALID_SESSION",
                             "無効なセッションです。"
@@ -98,19 +97,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // SecurityContextHolder に設定
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                } else {
-                    // クレーム検証に失敗した場合は PlaylistViewerNextException をスロー
-                    logger.warn("無効なJWTクレーム");
-                    throw new PlaylistViewerNextException(
-                            HttpStatus.UNAUTHORIZED,
-                            "INVALID_JWT_CLAIMS",
-                            "無効なJWTクレームです。"
-                    );
                 }
+            } catch (InvalidRequestException e) {
+                throw e; // InvalidRequestException をそのままスロー
             } catch (Exception e) {
-                // JWTトークンの検証中にエラーが発生した場合は PlaylistViewerNextException をスロー
+                // その他の例外は AuthenticationException に変換
                 logger.error("JWTトークンの検証エラー", e);
-                throw new PlaylistViewerNextException(
+                throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "JWT_VALIDATION_ERROR",
                         "JWTトークンの検証中にエラーが発生しました。",
@@ -144,10 +137,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String issuer = (String) claims.get("iss");
             logger.debug("発行者の検証: {}", issuer);
             if (!jwtUtil.getIssuer().equals(issuer)) {
-                // 発行者検証に失敗した場合は PlaylistViewerNextException をスロー
                 logger.warn("無効な発行者: {}", issuer);
-                throw new PlaylistViewerNextException(
-                        HttpStatus.UNAUTHORIZED,
+                throw new InvalidRequestException(
+                        HttpStatus.BAD_REQUEST,
                         "INVALID_ISSUER",
                         "無効な発行者です。"
                 );
@@ -158,10 +150,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     (String) claims.get("aud");
             logger.debug("対象者の検証: {}", audience);
             if (!jwtUtil.getAudience().equals(audience)) {
-                // 対象者検証に失敗した場合は PlaylistViewerNextException をスロー
                 logger.warn("無効な対象者: {}", audience);
-                throw new PlaylistViewerNextException(
-                        HttpStatus.UNAUTHORIZED,
+                throw new InvalidRequestException(
+                        HttpStatus.BAD_REQUEST,
                         "INVALID_AUDIENCE",
                         "無効な対象者です。"
                 );
@@ -170,10 +161,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Date expiration = (Date) claims.get("exp");
             logger.debug("有効期限の検証: {}", expiration);
             if (expiration.before(new Date())) {
-                // 有効期限切れの場合は PlaylistViewerNextException をスロー
                 logger.warn("トークンの有効期限切れ: {}", expiration);
-                throw new PlaylistViewerNextException(
-                        HttpStatus.UNAUTHORIZED,
+                throw new InvalidRequestException(
+                        HttpStatus.BAD_REQUEST,
                         "TOKEN_EXPIRED",
                         "トークンの有効期限が切れています。"
                 );
@@ -181,10 +171,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             logger.debug("必須クレームの確認");
             if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
-                // 必須クレームがない場合は PlaylistViewerNextException をスロー
                 logger.warn("必須クレームが不足しています");
-                throw new PlaylistViewerNextException(
-                        HttpStatus.UNAUTHORIZED,
+                throw new InvalidRequestException(
+                        HttpStatus.BAD_REQUEST,
                         "MISSING_CLAIMS",
                         "必須クレームが不足しています。"
                 );
@@ -192,9 +181,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             logger.info("クレームの検証が成功しました");
             return true;
-        } catch (PlaylistViewerNextException e) {
+        } catch (InvalidRequestException e) {
             logger.error("クレーム検証エラー", e);
-            return false;
+            throw e; // InvalidRequestException を再スロー
         }
     }
 }

@@ -1,18 +1,21 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,18 +63,6 @@ class UserFavoritePlaylistsServiceTest {
         verify(userFavoritePlaylistRepository).findByUserId(userId);
     }
 
-    private UserFavoritePlaylist createUserFavoritePlaylist(Long id, String userId, String playlistId, String playlistName, int totalTracks, LocalDateTime addedAt, String playlistOwnerName) {
-        UserFavoritePlaylist playlist = new UserFavoritePlaylist();
-        playlist.setId(id);
-        playlist.setUserId(userId);
-        playlist.setPlaylistId(playlistId);
-        playlist.setPlaylistName(playlistName);
-        playlist.setTotalTracks(totalTracks);
-        playlist.setAddedAt(addedAt);
-        playlist.setPlaylistOwnerName(playlistOwnerName);
-        return playlist;
-    }
-
     @Test
     void getFavoritePlaylists_EmptyList() {
         // Arrange
@@ -84,5 +75,33 @@ class UserFavoritePlaylistsServiceTest {
         // Assert
         assertThat(result).isEmpty();
         verify(userFavoritePlaylistRepository).findByUserId(userId);
+    }
+
+    @Test
+    void getFavoritePlaylists_DatabaseAccessException() {
+        // Arrange
+        String userId = "testUser";
+        when(userFavoritePlaylistRepository.findByUserId(userId)).thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.getFavoritePlaylists(userId))
+                .isInstanceOf(DatabaseAccessException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
+                .hasMessage("お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。");
+
+        verify(userFavoritePlaylistRepository).findByUserId(userId);
+    }
+
+    private UserFavoritePlaylist createUserFavoritePlaylist(Long id, String userId, String playlistId, String playlistName, int totalTracks, LocalDateTime addedAt, String playlistOwnerName) {
+        UserFavoritePlaylist playlist = new UserFavoritePlaylist();
+        playlist.setId(id);
+        playlist.setUserId(userId);
+        playlist.setPlaylistId(playlistId);
+        playlist.setPlaylistName(playlistName);
+        playlist.setTotalTracks(totalTracks);
+        playlist.setAddedAt(addedAt);
+        playlist.setPlaylistOwnerName(playlistOwnerName);
+        return playlist;
     }
 }

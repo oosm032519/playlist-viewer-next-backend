@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -56,15 +58,12 @@ public class TrackDataRetrieverTest {
     }
 
     @Test
-    public void shouldHandleExceptionWhenFetchingAudioFeatures() throws Exception {
+    public void shouldThrowSpotifyApiExceptionWhenFetchingAudioFeatures() {
         when(trackService.getAudioFeaturesForTrack(anyString())).thenThrow(new RuntimeException("Test Exception"));
 
-        List<Map<String, Object>> result = trackDataRetriever.getTrackListData(playlistTracks);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).containsKeys("track", "audioFeatures");
-        assertThat(result.get(0).get("track")).isNotNull();
-        assertThat(result.get(0).get("audioFeatures")).isNull();
+        assertThatThrownBy(() -> trackDataRetriever.getTrackListData(playlistTracks))
+                .isInstanceOf(SpotifyApiException.class)
+                .hasMessageContaining("トラックデータの取得中にエラーが発生しました。");
 
         verify(trackService, times(1)).getAudioFeaturesForTrack("testTrackId");
     }

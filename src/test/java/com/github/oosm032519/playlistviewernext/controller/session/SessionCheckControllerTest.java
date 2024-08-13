@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -77,7 +78,7 @@ public class SessionCheckControllerTest {
     public void testCheckSession_unauthenticatedUser_noCookies() {
         when(request.getCookies()).thenReturn(null);
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
                 () -> sessionCheckController.checkSession(request));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -94,7 +95,7 @@ public class SessionCheckControllerTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("session:invalidSessionId")).thenReturn(null);
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
                 () -> sessionCheckController.checkSession(request));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -115,7 +116,7 @@ public class SessionCheckControllerTest {
 
         when(jwtUtil.validateToken("validToken")).thenThrow(new RuntimeException("Token validation error"));
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
                 () -> sessionCheckController.checkSession(request));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -142,7 +143,7 @@ public class SessionCheckControllerTest {
     public void testLogout_noSessionId() {
         when(request.getCookies()).thenReturn(null);
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        AuthenticationException exception = assertThrows(AuthenticationException.class,
                 () -> sessionCheckController.logout(request, response));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -156,7 +157,7 @@ public class SessionCheckControllerTest {
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         when(redisTemplate.delete("session:validSessionId")).thenReturn(false);
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        DatabaseAccessException exception = assertThrows(DatabaseAccessException.class,
                 () -> sessionCheckController.logout(request, response));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -172,7 +173,7 @@ public class SessionCheckControllerTest {
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         doThrow(new RuntimeException("Redis error")).when(redisTemplate).delete("session:validSessionId");
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        DatabaseAccessException exception = assertThrows(DatabaseAccessException.class,
                 () -> sessionCheckController.logout(request, response));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);

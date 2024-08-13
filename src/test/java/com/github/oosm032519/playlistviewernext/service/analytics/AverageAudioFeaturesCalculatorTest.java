@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -88,7 +88,7 @@ public class AverageAudioFeaturesCalculatorTest {
 
         // Assert that the custom exception is thrown
         assertThatThrownBy(() -> calculator.calculateAverageAudioFeatures(trackList))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("オーディオフィーチャーがnullです。");
     }
 }

@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import org.slf4j.Logger;
@@ -45,7 +46,7 @@ public class PlaylistTrackRemovalController {
         LOGGER.info("removeTrackFromPlaylist メソッドが呼び出されました。リクエスト: {}", request);
 
         if (principal == null) {
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED_ACCESS",
                     "認証されていないユーザーがアクセスしようとしました。"
@@ -57,16 +58,19 @@ public class PlaylistTrackRemovalController {
             if (response.getStatusCode() == HttpStatus.OK) {
                 return ResponseEntity.ok(Map.of("message", "トラックが正常に削除されました。"));
             } else {
-                throw new PlaylistViewerNextException(
+                throw new SpotifyApiException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "TRACK_REMOVAL_ERROR",
-                        "トラックの削除に失敗しました。"
+                        "トラックの削除に失敗しました。",
+                        "Spotify APIからのエラーレスポンス: " + response.getBody()
                 );
             }
+        } catch (SpotifyApiException e) {
+            throw e; // SpotifyApiException はそのまま再スロー
         } catch (Exception e) {
-            // トラックの削除中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // 予期しない例外が発生した場合は、一般的な SpotifyApiException をスロー
             LOGGER.error("トラックの削除中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_REMOVAL_ERROR",
                     "トラックの削除中にエラーが発生しました。",

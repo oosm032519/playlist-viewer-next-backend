@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -44,13 +44,13 @@ public class AverageAudioFeaturesCalculator {
      *
      * @param trackList トラックのリスト（各トラックはオーディオフィーチャーを含むマップ）
      * @return 各オーディオフィーチャーの平均値を含むマップ
-     * @throws PlaylistViewerNextException 平均オーディオフィーチャーの計算中にエラーが発生した場合
+     * @throws InvalidRequestException トラックリストが空、またはオーディオフィーチャーがnullの場合
      */
     public Map<String, Float> calculateAverageAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateAverageAudioFeatures: 計算開始");
 
         if (trackList == null || trackList.isEmpty()) {
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "EMPTY_TRACK_LIST",
                     "トラックリストが空です。"
@@ -67,7 +67,7 @@ public class AverageAudioFeaturesCalculator {
                     .map(trackData -> {
                         AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
                         if (audioFeatures == null) {
-                            throw new PlaylistViewerNextException(
+                            throw new InvalidRequestException(
                                     HttpStatus.BAD_REQUEST,
                                     "NULL_AUDIO_FEATURES",
                                     "オーディオフィーチャーがnullです。"
@@ -90,17 +90,9 @@ public class AverageAudioFeaturesCalculator {
             logger.info("calculateAverageAudioFeatures: 平均オーディオフィーチャー計算完了: {}", averageAudioFeatures);
 
             return averageAudioFeatures;
-        } catch (PlaylistViewerNextException e) {
-            logger.error("平均オーディオフィーチャーの計算中にエラーが発生しました。", e);
-            throw e;
         } catch (Exception e) {
             logger.error("予期しないエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "AVERAGE_AUDIO_FEATURES_CALCULATION_ERROR",
-                    "平均オーディオフィーチャーの計算中にエラーが発生しました。",
-                    e
-            );
+            throw e;
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class UserPlaylistsControllerTest {
         when(userPlaylistsService.getCurrentUsersPlaylists()).thenThrow(new RuntimeException("Test exception"));
 
         // メソッドの実行と例外の検証
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+        SpotifyApiException exception = assertThrows(SpotifyApiException.class,
                 () -> userPlaylistsController.getFollowedPlaylists());
 
         // 例外の詳細を検証

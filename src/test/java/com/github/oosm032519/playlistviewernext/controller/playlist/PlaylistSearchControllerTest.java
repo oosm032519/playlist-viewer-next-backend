@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,7 +60,7 @@ class PlaylistSearchControllerTest {
     }
 
     @Test
-    void givenServiceThrowsException_whenSearchPlaylists_thenThrowsPlaylistViewerNextException() throws Exception {
+    void givenServiceThrowsException_whenSearchPlaylists_thenThrowsSpotifyApiException() throws Exception {
         // Arrange
         String query = "test query";
         int offset = 0;
@@ -71,7 +71,7 @@ class PlaylistSearchControllerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> searchController.searchPlaylists(query, offset, limit))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_SEARCH_ERROR")
                 .hasMessage("プレイリストの検索中にエラーが発生しました。");

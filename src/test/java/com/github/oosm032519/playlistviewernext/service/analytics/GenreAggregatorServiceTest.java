@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
-import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +13,7 @@ import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,39 +78,36 @@ class GenreAggregatorServiceTest {
     }
 
     @Test
-    void aggregateGenres_ShouldHandleException() throws Exception {
+    void aggregateGenres_ShouldHandleSpotifyWebApiException() throws Exception {
+        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
+        // SpotifyWebApiException をラップした RuntimeException をスローするように変更
+        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new SpotifyWebApiException("Test Exception")));
+
+        assertThrows(SpotifyApiException.class, () -> {
+            genreAggregatorService.aggregateGenres(playlistTracks);
+        });
+    }
+
+    @Test
+    void aggregateGenres_ShouldHandleIOException() throws Exception {
+        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
+        // IOException をラップした RuntimeException をスローするように変更
+        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new IOException("Test Exception")));
+
+        assertThrows(SpotifyApiException.class, () -> {
+            genreAggregatorService.aggregateGenres(playlistTracks);
+        });
+    }
+
+    @Test
+    void aggregateGenres_ShouldHandleRuntimeException() throws Exception {
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
         when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException("Test Exception"));
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> {
+        assertThrows(PlaylistViewerNextException.class, () -> {
             genreAggregatorService.aggregateGenres(playlistTracks);
         });
-        assertThat(exception).hasMessageContaining("ジャンルの集計中にエラーが発生しました。");
     }
-
-    @Test
-    void aggregateGenres_ShouldHandleSpotifyWebApiException() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new SpotifyWebApiException("Test Exception")));
-
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> {
-            genreAggregatorService.aggregateGenres(playlistTracks);
-        });
-        assertThat(exception).hasMessageContaining("ジャンルの集計中にエラーが発生しました。");
-    }
-
-    @Test
-    void aggregateGenres_ShouldHandleParseException() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new ParseException("Test Exception")));
-
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> {
-            genreAggregatorService.aggregateGenres(playlistTracks);
-        });
-        assertThat(exception).hasMessageContaining("ジャンルの集計中にエラーが発生しました。");
-    }
-
-    // 他のテストメソッドは変更なし
 
     private PlaylistTrack[] createMockPlaylistTracks() {
         PlaylistTrack track1 = mock(PlaylistTrack.class);

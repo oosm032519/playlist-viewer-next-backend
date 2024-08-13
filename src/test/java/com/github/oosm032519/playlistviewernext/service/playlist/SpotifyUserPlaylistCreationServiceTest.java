@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -103,7 +104,7 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessage("プレイリストの作成中にエラーが発生しました。")
                 .hasCauseInstanceOf(SpotifyWebApiException.class);
     }
@@ -118,7 +119,7 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessage("プレイリストの作成中にエラーが発生しました。")
                 .hasCauseInstanceOf(IOException.class);
     }
@@ -133,7 +134,7 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessage("プレイリストの作成中にエラーが発生しました。")
                 .hasCauseInstanceOf(org.apache.hc.core5.http.ParseException.class);
     }
@@ -152,7 +153,7 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasMessage("プレイリストの作成中にエラーが発生しました。")
                 .hasCauseInstanceOf(SpotifyWebApiException.class);
     }

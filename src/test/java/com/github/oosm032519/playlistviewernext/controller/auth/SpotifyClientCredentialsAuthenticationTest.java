@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ class SpotifyClientCredentialsAuthenticationTest {
     void authenticate_HandlesExceptionGracefully() throws Exception {
         doThrow(new RuntimeException("Auth error")).when(authService).getClientCredentialsToken();
 
-        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> authController.authenticate());
+        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> authController.authenticate());
 
         verify(authService, times(1)).getClientCredentialsToken();
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpStatus());

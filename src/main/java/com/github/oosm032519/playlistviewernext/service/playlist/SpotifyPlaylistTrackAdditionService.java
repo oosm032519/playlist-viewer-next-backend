@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -22,7 +22,7 @@ public class SpotifyPlaylistTrackAdditionService {
      * @param playlistId  トラックを追加するプレイリストのID
      * @param trackId     追加するトラックのID
      * @return SnapshotResult プレイリストのスナップショット結果
-     * @throws PlaylistViewerNextException トラックの追加中にエラーが発生した場合
+     * @throws SpotifyApiException トラックの追加中にエラーが発生した場合
      */
     public SnapshotResult addTrackToPlaylist(String accessToken, String playlistId, String trackId) {
         try {
@@ -32,8 +32,8 @@ public class SpotifyPlaylistTrackAdditionService {
                     .build()
                     .execute();
         } catch (Exception e) {
-            // トラックの追加中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            // トラックの追加中にエラーが発生した場合は SpotifyApiException をスロー
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",
                     "トラックの追加中にエラーが発生しました。",

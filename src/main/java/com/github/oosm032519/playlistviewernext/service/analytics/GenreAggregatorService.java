@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,13 @@ public class GenreAggregatorService {
                         try {
                             return artistService.getArtistGenres(artist.getId()).stream();
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            // Spotify API 関連のエラーは SpotifyApiException でラップ
+                            throw new SpotifyApiException(
+                                    HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "SPOTIFY_API_ERROR",
+                                    "Spotify API からのデータ取得中にエラーが発生しました。",
+                                    e
+                            );
                         }
                     })
                     .forEach(genre -> genreCount.merge(genre, 1, Integer::sum));
@@ -60,8 +67,11 @@ public class GenreAggregatorService {
                             (e1, _) -> e1,
                             LinkedHashMap::new
                     ));
+        } catch (SpotifyApiException e) {
+            // SpotifyApiException はそのままスロー
+            throw e;
         } catch (Exception e) {
-            // ジャンルの集計中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // 予期せぬエラーは PlaylistViewerNextException でラップ
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "GENRE_AGGREGATION_ERROR",

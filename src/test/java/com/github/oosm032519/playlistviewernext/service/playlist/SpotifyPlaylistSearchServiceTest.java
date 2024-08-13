@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -103,7 +103,7 @@ class SpotifyPlaylistSearchServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query, offset, limit))
-                .isInstanceOf(PlaylistViewerNextException.class)
-                .hasMessageContaining("プレイリストの検索中にエラーが発生しました。");
+                .isInstanceOf(SpotifyApiException.class)
+                .hasMessageContaining("Spotifyプレイリストの検索中にエラーが発生しました。");
     }
 }

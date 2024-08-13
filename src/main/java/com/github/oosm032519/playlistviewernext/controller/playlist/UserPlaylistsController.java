@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +40,9 @@ public class UserPlaylistsController {
         try {
             return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists()); // authentication を渡さない
         } catch (Exception e) {
-            // エラーが発生した場合は PlaylistViewerNextException をスロー
+            // エラーが発生した場合は SpotifyApiException をスロー
             LOGGER.error("フォロー中のプレイリストの取得中にエラーが発生しました", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR",
                     "フォロー中のプレイリストの取得中にエラーが発生しました。",

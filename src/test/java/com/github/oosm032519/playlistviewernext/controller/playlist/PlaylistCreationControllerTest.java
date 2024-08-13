@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,14 +47,14 @@ class PlaylistCreationControllerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistCreationController.createPlaylist(List.of("track1", "track2"), principal))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(AuthenticationException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.UNAUTHORIZED)
                 .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS")
                 .hasMessage("ユーザーが認証されていないか、アクセストークンが見つかりません。");
     }
 
     @Test
-    void whenUserIsAuthenticated_thenCreatePlaylistSuccessfully() throws Exception {
+    void whenUserIsAuthenticated_thenCreatePlaylistSuccessfully() {
         // Arrange
         String accessToken = "validAccessToken";
         String userId = "userId";
@@ -75,7 +76,7 @@ class PlaylistCreationControllerTest {
     }
 
     @Test
-    void whenInternalServerErrorOccurs_thenThrowPlaylistViewerNextException() throws Exception {
+    void whenInternalServerErrorOccurs_thenThrowPlaylistViewerNextException() {
         // Arrange
         String accessToken = "validAccessToken";
         String userId = "userId";
@@ -90,7 +91,7 @@ class PlaylistCreationControllerTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistCreationController.createPlaylist(trackIds, principal))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(SpotifyApiException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_CREATION_ERROR")
                 .hasMessage("プレイリストの作成中にエラーが発生しました。")

@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -29,7 +29,7 @@ public class SpotifyPlaylistSearchService {
      * @param offset 検索結果のオフセット
      * @param limit  検索結果の最大数
      * @return 検索結果のプレイリストのリスト
-     * @throws PlaylistViewerNextException プレイリストの検索中にエラーが発生した場合
+     * @throws SpotifyApiException プレイリストの検索中にエラーが発生した場合
      */
     public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) {
         try {
@@ -37,11 +37,11 @@ public class SpotifyPlaylistSearchService {
             Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
             return getPlaylistsFromResult(searchResult);
         } catch (Exception e) {
-            // プレイリストの検索中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            throw new PlaylistViewerNextException(
+            // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_SEARCH_ERROR",
-                    "プレイリストの検索中にエラーが発生しました。",
+                    "SPOTIFY_API_ERROR",
+                    "Spotifyプレイリストの検索中にエラーが発生しました。",
                     e
             );
         }

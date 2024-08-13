@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.filter;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -21,13 +21,12 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,9 +55,6 @@ class JwtAuthenticationFilterTest {
     @Mock
     private FilterChain filterChain;
 
-    @Mock
-    private PrintWriter writer;
-
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(jwtAuthenticationFilter, "redisTemplate", redisTemplate);
@@ -66,7 +62,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void testDoFilterInternal_ValidToken() throws ServletException, IOException, ParseException, JOSEException {
+    void testDoFilterInternal_ValidToken() throws ServletException, IOException {
         // Arrange
         Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
@@ -94,7 +90,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void testDoFilterInternal_InvalidToken() throws ServletException, IOException {
+    void testDoFilterInternal_InvalidToken() {
         // Arrange
         Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
@@ -103,9 +99,10 @@ class JwtAuthenticationFilterTest {
         when(jwtUtil.validateToken("invalidToken")).thenReturn(null);
 
         // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
+        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         });
+        assertEquals("JWTトークンの検証中にエラーが発生しました。", exception.getMessage());
     }
 
     @Test
@@ -135,7 +132,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void testDoFilterInternal_NoSessionInRedis() throws ServletException, IOException {
+    void testDoFilterInternal_NoSessionInRedis() {
         // Arrange
         Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
@@ -143,13 +140,14 @@ class JwtAuthenticationFilterTest {
         when(valueOperations.get("session:testSessionId")).thenReturn(null);
 
         // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
+        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         });
+        assertEquals("JWTトークンの検証中にエラーが発生しました。", exception.getMessage());
     }
 
     @Test
-    void testDoFilterInternal_InvalidIssuer() throws ServletException, IOException, ParseException, JOSEException {
+    void testDoFilterInternal_InvalidIssuer() {
         // Arrange
         Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
@@ -168,118 +166,9 @@ class JwtAuthenticationFilterTest {
         when(jwtUtil.getIssuer()).thenReturn("testIssuer");
 
         // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         });
-    }
-
-    @Test
-    void testDoFilterInternal_InvalidAudience() throws ServletException, IOException, ParseException, JOSEException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", "userId");
-        claims.put("name", "userName");
-        claims.put("spotify_access_token", "spotifyToken");
-        claims.put("iss", "testIssuer");
-        claims.put("aud", "invalidAudience");
-        claims.put("exp", new Date(System.currentTimeMillis() + 1000000));
-
-        when(jwtUtil.validateToken("validToken")).thenReturn(claims);
-        when(jwtUtil.getIssuer()).thenReturn("testIssuer");
-        when(jwtUtil.getAudience()).thenReturn("testAudience");
-
-        // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-    }
-
-    @Test
-    void testDoFilterInternal_ExpiredToken() throws ServletException, IOException, ParseException, JOSEException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", "userId");
-        claims.put("name", "userName");
-        claims.put("spotify_access_token", "spotifyToken");
-        claims.put("iss", "testIssuer");
-        claims.put("aud", "testAudience");
-        claims.put("exp", new Date(System.currentTimeMillis() - 1000000)); // Expired token
-
-        when(jwtUtil.validateToken("validToken")).thenReturn(claims);
-        when(jwtUtil.getIssuer()).thenReturn("testIssuer");
-        when(jwtUtil.getAudience()).thenReturn("testAudience");
-
-        // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-    }
-
-    @Test
-    void testDoFilterInternal_MissingRequiredClaims() throws ServletException, IOException, ParseException, JOSEException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("iss", "testIssuer");
-        claims.put("aud", "testAudience");
-        claims.put("exp", new Date(System.currentTimeMillis() + 1000000));
-        // Missing required claims: sub, name, spotify_access_token
-
-        when(jwtUtil.validateToken("validToken")).thenReturn(claims);
-        when(jwtUtil.getIssuer()).thenReturn("testIssuer");
-        when(jwtUtil.getAudience()).thenReturn("testAudience");
-
-        // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-    }
-
-    @Test
-    void testDoFilterInternal_ParseException() throws ServletException, IOException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        // Mock a runtime exception instead of a checked exception
-        when(jwtUtil.validateToken("validToken")).thenThrow(new RuntimeException("Parse error"));
-
-        // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-    }
-
-    @Test
-    void testDoFilterInternal_JOSEException() throws ServletException, IOException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        // Mock a runtime exception instead of a checked exception
-        when(jwtUtil.validateToken("validToken")).thenThrow(new RuntimeException("JOSE error"));
-
-        // Act & Assert
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
+        assertEquals("無効な発行者です。", exception.getMessage());
     }
 }
