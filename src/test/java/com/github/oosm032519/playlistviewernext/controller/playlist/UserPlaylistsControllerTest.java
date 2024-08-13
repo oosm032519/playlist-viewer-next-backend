@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,7 +34,7 @@ class UserPlaylistsControllerTest {
     }
 
     @Test
-    void getFollowedPlaylists_Success() throws Exception {
+    void getFollowedPlaylists_Success() {
         // テストデータの準備
         PlaylistSimplified playlist1 = mock(PlaylistSimplified.class);
         PlaylistSimplified playlist2 = mock(PlaylistSimplified.class);
@@ -49,22 +51,27 @@ class UserPlaylistsControllerTest {
     }
 
     @Test
-    void getFollowedPlaylists_Exception() throws Exception {
+    void getFollowedPlaylists_Exception() {
         // 例外をスローするようにモックを設定
         when(userPlaylistsService.getCurrentUsersPlaylists()).thenThrow(new RuntimeException("Test exception"));
 
-        // メソッドの実行
-        ResponseEntity<?> response = userPlaylistsController.getFollowedPlaylists();
+        // メソッドの実行と例外の検証
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> userPlaylistsController.getFollowedPlaylists());
 
-        // 検証
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("Error: Test exception");
+        // 例外の詳細を検証
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception.getErrorCode()).isEqualTo("FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR");
+        assertThat(exception.getMessage()).isEqualTo("フォロー中のプレイリストの取得中にエラーが発生しました。");
+        assertThat(exception.getCause()).isInstanceOf(RuntimeException.class);
+        assertThat(exception.getCause().getMessage()).isEqualTo("Test exception");
+
         verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }
 
     // 追加のテストケース: 空のプレイリストリストを返す場合
     @Test
-    void getFollowedPlaylists_EmptyList() throws Exception {
+    void getFollowedPlaylists_EmptyList() {
         // 空のリストを返すようにモックを設定
         when(userPlaylistsService.getCurrentUsersPlaylists()).thenReturn(List.of());
 

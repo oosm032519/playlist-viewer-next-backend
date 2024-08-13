@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,8 +74,8 @@ class SpotifyArtistServiceTest {
         when(getArtistRequest.execute()).thenThrow(new SpotifyWebApiException("Artist not found"));
 
         assertThatThrownBy(() -> artistService.getArtistGenres(artistId))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Artist not found");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("アーティスト情報の取得中にエラーが発生しました。");
     }
 
     @Test

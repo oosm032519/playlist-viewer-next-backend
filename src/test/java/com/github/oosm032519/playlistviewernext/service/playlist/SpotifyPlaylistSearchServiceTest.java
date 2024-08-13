@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyPlaylistSearchServiceTest {
@@ -101,7 +103,7 @@ class SpotifyPlaylistSearchServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query, offset, limit))
-                .isInstanceOf(IOException.class)
-                .hasMessage("API error");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストの検索中にエラーが発生しました。");
     }
 }

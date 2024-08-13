@@ -10,7 +10,6 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
@@ -50,6 +49,14 @@ public class AverageAudioFeaturesCalculator {
     public Map<String, Float> calculateAverageAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateAverageAudioFeatures: 計算開始");
 
+        if (trackList == null || trackList.isEmpty()) {
+            throw new PlaylistViewerNextException(
+                    HttpStatus.BAD_REQUEST,
+                    "EMPTY_TRACK_LIST",
+                    "トラックリストが空です。"
+            );
+        }
+
         try {
             Map<AudioFeature, Double> audioFeaturesSum = new EnumMap<>(AudioFeature.class);
             for (AudioFeature feature : AudioFeature.values()) {
@@ -57,8 +64,17 @@ public class AverageAudioFeaturesCalculator {
             }
 
             trackList.stream()
-                    .map(trackData -> (AudioFeatures) trackData.get("audioFeatures"))
-                    .filter(Objects::nonNull)
+                    .map(trackData -> {
+                        AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+                        if (audioFeatures == null) {
+                            throw new PlaylistViewerNextException(
+                                    HttpStatus.BAD_REQUEST,
+                                    "NULL_AUDIO_FEATURES",
+                                    "オーディオフィーチャーがnullです。"
+                            );
+                        }
+                        return audioFeatures;
+                    })
                     .forEach(audioFeatures -> {
                         for (AudioFeature feature : AudioFeature.values()) {
                             audioFeaturesSum.put(feature, audioFeaturesSum.get(feature) + feature.extract(audioFeatures));
@@ -74,9 +90,11 @@ public class AverageAudioFeaturesCalculator {
             logger.info("calculateAverageAudioFeatures: 平均オーディオフィーチャー計算完了: {}", averageAudioFeatures);
 
             return averageAudioFeatures;
-        } catch (Exception e) {
-            // 平均オーディオフィーチャーの計算中にエラーが発生した場合は PlaylistViewerNextException をスロー
+        } catch (PlaylistViewerNextException e) {
             logger.error("平均オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("予期しないエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "AVERAGE_AUDIO_FEATURES_CALCULATION_ERROR",

@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,8 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 class UserFavoritePlaylistsControllerTest {
 
@@ -40,7 +41,6 @@ class UserFavoritePlaylistsControllerTest {
         String userId = "testUser";
         when(principal.getAttribute("id")).thenReturn(userId);
 
-        // userIdをハッシュ化
         String hashedUserId = controller.hashUserId(userId);
 
         List<FavoritePlaylistResponse> expectedPlaylists = Arrays.asList(
@@ -55,7 +55,7 @@ class UserFavoritePlaylistsControllerTest {
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(userFavoritePlaylistsService).getFavoritePlaylists(hashedUserId); // ハッシュ化されたIDで検証
+        verify(userFavoritePlaylistsService).getFavoritePlaylists(hashedUserId);
     }
 
     @Test
@@ -64,16 +64,46 @@ class UserFavoritePlaylistsControllerTest {
         String userId = "testUser";
         when(principal.getAttribute("id")).thenReturn(userId);
 
-        // userIdをハッシュ化
         String hashedUserId = controller.hashUserId(userId);
 
-        when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId)).thenThrow(new RuntimeException("Test exception"));
+        when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId))
+                .thenThrow(new RuntimeException("Test exception"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> controller.getFavoritePlaylists(principal))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
+                .hasMessage("お気に入りプレイリスト一覧の取得中にエラーが発生しました。");
+    }
+
+    @Test
+    void hashUserId_Success() {
+        // Arrange
+        String userId = "testUser";
 
         // Act
-        ResponseEntity<List<FavoritePlaylistResponse>> response = controller.getFavoritePlaylists(principal);
+        String hashedUserId = controller.hashUserId(userId);
 
         // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNull();
+        assertThat(hashedUserId).isNotNull().isNotEmpty();
+    }
+
+    @Test
+    void hashUserId_Exception() {
+        UserFavoritePlaylistsController spyController = spy(controller);
+        doThrow(new PlaylistViewerNextException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "HASHING_ALGORITHM_ERROR",
+                "ハッシュアルゴリズムが見つかりません。",
+                new Exception()))
+                .when(spyController).hashUserId(anyString());
+
+        // Act & Assert
+        assertThatThrownBy(() -> spyController.hashUserId("testUser"))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "HASHING_ALGORITHM_ERROR")
+                .hasMessage("ハッシュアルゴリズムが見つかりません。");
     }
 }

@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -74,5 +76,19 @@ public class AverageAudioFeaturesCalculatorTest {
         assertThat(result.get("instrumentalness")).isCloseTo(0.25f, within(0.00001f));
         assertThat(result.get("liveness")).isCloseTo(0.35f, within(0.00001f));
         assertThat(result.get("speechiness")).isCloseTo(0.45f, within(0.00001f));
+    }
+
+    @Test
+    public void testCalculateAverageAudioFeaturesWithException() {
+        // Create track list with null audio features to simulate error
+        Map<String, Object> track1 = new HashMap<>();
+        track1.put("audioFeatures", null);
+
+        List<Map<String, Object>> trackList = List.of(track1);
+
+        // Assert that the custom exception is thrown
+        assertThatThrownBy(() -> calculator.calculateAverageAudioFeatures(trackList))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("オーディオフィーチャーがnullです。");
     }
 }

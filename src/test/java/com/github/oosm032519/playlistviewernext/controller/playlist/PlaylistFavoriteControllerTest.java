@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,14 +84,13 @@ class PlaylistFavoriteControllerTest {
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
         when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenThrow(new RuntimeException("DB error"));
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.favoritePlaylist(
-                principal, "playlistId", "playlistName", 10, "ownerName");
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "プレイリストのお気に入り登録中にエラーが発生しました。");
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.favoritePlaylist(
+                principal, "playlistId", "playlistName", 10, "ownerName"))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_ERROR")
+                .hasMessage("プレイリストのお気に入り登録中にエラーが発生しました。");
     }
 
     @Test
@@ -128,13 +128,12 @@ class PlaylistFavoriteControllerTest {
         // Arrange
         when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
 
-        // Act
-        ResponseEntity<Map<String, Object>> response = playlistFavoriteController.unfavoritePlaylist(principal, "playlistId");
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).containsEntry("status", "error");
-        assertThat(response.getBody()).containsEntry("message", "プレイリストのお気に入り解除中にエラーが発生しました。");
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.unfavoritePlaylist(principal, "playlistId"))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_UNFAVORITE_ERROR")
+                .hasMessage("プレイリストのお気に入り解除中にエラーが発生しました。");
     }
 
     @Test
@@ -171,12 +170,12 @@ class PlaylistFavoriteControllerTest {
         // Arrange
         when(userFavoritePlaylistRepository.findByUserId(anyString())).thenThrow(new RuntimeException("DB error"));
 
-        // Act
-        ResponseEntity<List<Map<String, Object>>> response = playlistFavoriteController.getFavoritePlaylists(principal);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNull();
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.getFavoritePlaylists(principal))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
+                .hasMessage("お気に入りプレイリスト一覧の取得中にエラーが発生しました。");
     }
 
     @Test
@@ -210,7 +209,20 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void hashUserId_ThrowsRuntimeException() {
+    void checkFavorite_Error() {
+        // Arrange
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.checkFavorite(principal, "playlistId"))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_CHECK_ERROR")
+                .hasMessage("プレイリストのお気に入り確認中にエラーが発生しました。");
+    }
+
+    @Test
+    void hashUserId_ThrowsPlaylistViewerNextException() {
         // Arrange
         PlaylistFavoriteController controller = new PlaylistFavoriteController(userFavoritePlaylistRepository);
 
@@ -224,9 +236,10 @@ class PlaylistFavoriteControllerTest {
                 controller.favoritePlaylist(principal, "playlistId", "playlistName", 10, "ownerName");
             }
         })
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "HASHING_ALGORITHM_ERROR")
                 .hasMessage("ハッシュアルゴリズムが見つかりません。")
                 .hasCauseInstanceOf(NoSuchAlgorithmException.class);
     }
-
 }

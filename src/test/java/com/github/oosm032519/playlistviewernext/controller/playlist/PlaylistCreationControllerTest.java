@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 class PlaylistCreationControllerTest {
 
@@ -39,16 +40,16 @@ class PlaylistCreationControllerTest {
     }
 
     @Test
-    void whenUserIsNotAuthenticated_thenReturnUnauthorized() {
+    void whenUserIsNotAuthenticated_thenThrowPlaylistViewerNextException() {
         // Arrange
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(null);
 
-        // Act
-        ResponseEntity<String> response = playlistCreationController.createPlaylist(List.of("track1", "track2"), principal);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).contains("認証が必要です。");
+        // Act & Assert
+        assertThatThrownBy(() -> playlistCreationController.createPlaylist(List.of("track1", "track2"), principal))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.UNAUTHORIZED)
+                .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS")
+                .hasMessage("ユーザーが認証されていないか、アクセストークンが見つかりません。");
     }
 
     @Test
@@ -62,7 +63,7 @@ class PlaylistCreationControllerTest {
 
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
         when(principal.getAttribute("id")).thenReturn(userId);
-        when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
+        when(principal.getAttribute("name")).thenReturn(userName);
         when(spotifyUserPlaylistCreationService.createPlaylist(eq(accessToken), eq(userId), any(String.class), eq(trackIds))).thenReturn(playlistId);
 
         // Act
@@ -74,7 +75,7 @@ class PlaylistCreationControllerTest {
     }
 
     @Test
-    void whenInternalServerErrorOccurs_thenReturnInternalServerError() throws Exception {
+    void whenInternalServerErrorOccurs_thenThrowPlaylistViewerNextException() throws Exception {
         // Arrange
         String accessToken = "validAccessToken";
         String userId = "userId";
@@ -83,14 +84,17 @@ class PlaylistCreationControllerTest {
 
         when(userAuthenticationService.getAccessToken(principal)).thenReturn(accessToken);
         when(principal.getAttribute("id")).thenReturn(userId);
-        when(principal.getAttributes()).thenReturn(Map.of("display_name", userName));
-        when(spotifyUserPlaylistCreationService.createPlaylist(eq(accessToken), eq(userId), any(String.class), eq(trackIds))).thenThrow(new RuntimeException("Some error"));
+        when(principal.getAttribute("name")).thenReturn(userName);
+        when(spotifyUserPlaylistCreationService.createPlaylist(eq(accessToken), eq(userId), any(String.class), eq(trackIds)))
+                .thenThrow(new RuntimeException("Some error"));
 
-        // Act
-        ResponseEntity<String> response = playlistCreationController.createPlaylist(trackIds, principal);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).contains("エラー: Some error");
+        // Act & Assert
+        assertThatThrownBy(() -> playlistCreationController.createPlaylist(trackIds, principal))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_CREATION_ERROR")
+                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasCauseInstanceOf(RuntimeException.class)
+                .hasRootCauseMessage("Some error");
     }
 }

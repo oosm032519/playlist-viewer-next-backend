@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyPlaylistTrackAdditionServiceTest {
@@ -72,8 +74,10 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         when(addItemsToPlaylistRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
         // Act & Assert
-        SpotifyWebApiException exception = assertThrows(SpotifyWebApiException.class, () -> spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId));
-        assertThat(exception.getMessage()).isEqualTo("Spotify API error");
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class, () -> spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId));
+        assertThat(exception.getMessage()).isEqualTo("トラックの追加中にエラーが発生しました。");
+        assertThat(exception.getCause()).isInstanceOf(SpotifyWebApiException.class);
+        assertThat(exception.getCause().getMessage()).isEqualTo("Spotify API error");
 
         verify(spotifyApi).setAccessToken(accessToken);
         verify(spotifyApi).addItemsToPlaylist(playlistId, new String[]{"spotify:track:" + trackId});

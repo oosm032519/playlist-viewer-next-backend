@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
-import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,15 +11,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistSearchControllerTest {
@@ -39,7 +39,7 @@ class PlaylistSearchControllerTest {
     }
 
     @Test
-    void givenValidQuery_whenSearchPlaylists_thenReturnsPlaylistsSuccessfully() throws IOException, ParseException, SpotifyWebApiException {
+    void givenValidQuery_whenSearchPlaylists_thenReturnsPlaylistsSuccessfully() throws Exception {
         // Arrange
         String query = "test query";
         int offset = 0;
@@ -56,10 +56,11 @@ class PlaylistSearchControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
+        verify(authController).authenticate();
     }
 
     @Test
-    void givenServiceThrowsException_whenSearchPlaylists_thenHandlesExceptionGracefully() throws IOException, ParseException, SpotifyWebApiException {
+    void givenServiceThrowsException_whenSearchPlaylists_thenThrowsPlaylistViewerNextException() throws Exception {
         // Arrange
         String query = "test query";
         int offset = 0;
@@ -68,13 +69,15 @@ class PlaylistSearchControllerTest {
         // モックサービスが例外をスローするように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(new RuntimeException("API error"));
 
-        // Act
-        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
+        // Act & Assert
+        assertThatThrownBy(() -> searchController.searchPlaylists(query, offset, limit))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_SEARCH_ERROR")
+                .hasMessage("プレイリストの検索中にエラーが発生しました。");
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNull();
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
+        verify(authController).authenticate();
     }
 
     private List<PlaylistSimplified> createMockPlaylists() {

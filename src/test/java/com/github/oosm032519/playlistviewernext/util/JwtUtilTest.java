@@ -59,8 +59,9 @@ class JwtUtilTest {
     @Test
     void testValidateTokenWithInvalidToken() {
         assertThatThrownBy(() -> jwtUtil.validateToken("invalidToken"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("input is not hexadecimal");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessageContaining("トークン検証中にエラーが発生しました。")
+                .hasCauseInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -105,11 +106,19 @@ class JwtUtilTest {
 
         // Mockを使用して有効期限切れのトークンをシミュレート
         JwtUtil spyJwtUtil = spy(jwtUtil);
-        doThrow(new JOSEException("Token has expired")).when(spyJwtUtil).validateToken(token);
+        doAnswer(invocation -> {
+            throw new com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+                    "TOKEN_EXPIRED",
+                    "トークンの有効期限が切れています。",
+                    new JOSEException("Token has expired")
+            );
+        }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
-                .isInstanceOf(JOSEException.class)
-                .hasMessage("Token has expired");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessageContaining("トークンの有効期限が切れています。")
+                .hasCauseInstanceOf(JOSEException.class);
     }
 
     @Test
@@ -121,10 +130,18 @@ class JwtUtilTest {
 
         // Mockを使用して無効な署名をシミュレート
         JwtUtil spyJwtUtil = spy(jwtUtil);
-        doThrow(new JOSEException("Invalid token signature")).when(spyJwtUtil).validateToken(token);
+        doAnswer(invocation -> {
+            throw new com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException(
+                    org.springframework.http.HttpStatus.UNAUTHORIZED,
+                    "INVALID_TOKEN_SIGNATURE",
+                    "トークンの署名が無効です。",
+                    new JOSEException("Invalid token signature")
+            );
+        }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
-                .isInstanceOf(JOSEException.class)
-                .hasMessage("Invalid token signature");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessageContaining("トークンの署名が無効です。")
+                .hasCauseInstanceOf(JOSEException.class);
     }
 }

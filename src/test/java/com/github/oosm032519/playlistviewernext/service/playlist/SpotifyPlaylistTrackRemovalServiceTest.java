@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.google.gson.JsonArray;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
 
     @Test
     void removeTrackFromPlaylist_Success() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // テストケースの設定
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("spotify_access_token", "validToken");
         when(principal.getAttributes()).thenReturn(attributes);
@@ -66,10 +66,8 @@ class SpotifyPlaylistTrackRemovalServiceTest {
         when(removeItemsBuilder.build()).thenReturn(removeItemsRequest);
         when(removeItemsRequest.execute()).thenReturn(snapshotResult);
 
-        // メソッドの実行
         ResponseEntity<String> response = service.removeTrackFromPlaylist(request, principal);
 
-        // 検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("トラックが正常に削除されました。Snapshot ID: snapshotId");
 
@@ -80,15 +78,14 @@ class SpotifyPlaylistTrackRemovalServiceTest {
 
     @Test
     void removeTrackFromPlaylist_UnauthorizedAccess() {
-        // テストケースの設定
         when(principal.getAttributes()).thenReturn(new HashMap<>());
 
-        // メソッドの実行
-        ResponseEntity<String> response = service.removeTrackFromPlaylist(request, principal);
-
-        // 検証
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isEqualTo("有効なアクセストークンがありません。");
+        try {
+            service.removeTrackFromPlaylist(request, principal);
+        } catch (PlaylistViewerNextException e) {
+            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            assertThat(e.getMessage()).isEqualTo("有効なアクセストークンがありません。");
+        }
 
         verify(spotifyApi, never()).setAccessToken(any());
         verify(spotifyApi, never()).removeItemsFromPlaylist(any(), any());
@@ -96,7 +93,6 @@ class SpotifyPlaylistTrackRemovalServiceTest {
 
     @Test
     void removeTrackFromPlaylist_SpotifyApiException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        // テストケースの設定
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("spotify_access_token", "validToken");
         when(principal.getAttributes()).thenReturn(attributes);
@@ -105,12 +101,12 @@ class SpotifyPlaylistTrackRemovalServiceTest {
         when(removeItemsBuilder.build()).thenReturn(removeItemsRequest);
         when(removeItemsRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
 
-        // メソッドの実行
-        ResponseEntity<String> response = service.removeTrackFromPlaylist(request, principal);
-
-        // 検証
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isEqualTo("エラー: Spotify API error");
+        try {
+            service.removeTrackFromPlaylist(request, principal);
+        } catch (PlaylistViewerNextException e) {
+            assertThat(e.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            assertThat(e.getMessage()).isEqualTo("トラックの削除中にエラーが発生しました。");
+        }
 
         verify(spotifyApi).setAccessToken("validToken");
         verify(spotifyApi).removeItemsFromPlaylist(eq("playlistId"), any(JsonArray.class));

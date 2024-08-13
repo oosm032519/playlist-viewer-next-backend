@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,30 +75,28 @@ class TrackRecommendationServiceTest {
     }
 
     @Test
-    void givenSpotifyWebApiException_whenGetRecommendations_thenReturnsEmptyList() throws Exception {
+    void givenSpotifyWebApiException_whenGetRecommendations_thenThrowsPlaylistViewerNextException() throws Exception {
         // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
-                .thenThrow(new SpotifyWebApiException("API Error"));
+                .thenThrow(new RuntimeException(new SpotifyWebApiException("API Error")));
 
-        // Act
-        List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
-
-        // Assert
-        assertThat(result).isEmpty();
+        // Act & Assert
+        assertThrows(PlaylistViewerNextException.class, () ->
+                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
+        );
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 
     @Test
-    void givenIOException_whenGetRecommendations_thenReturnsEmptyList() throws Exception {
+    void givenIOException_whenGetRecommendations_thenThrowsPlaylistViewerNextException() throws Exception {
         // Arrange
         when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
-                .thenThrow(new IOException("IO Error"));
+                .thenThrow(new RuntimeException(new IOException("IO Error")));
 
-        // Act
-        List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
-
-        // Assert
-        assertThat(result).isEmpty();
+        // Act & Assert
+        assertThrows(PlaylistViewerNextException.class, () ->
+                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
+        );
         verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
     }
 }

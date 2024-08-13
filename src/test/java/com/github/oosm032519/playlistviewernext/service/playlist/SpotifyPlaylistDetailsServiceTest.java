@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,14 +10,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.*;
+import se.michaelthelin.spotify.model_objects.specification.Paging;
+import se.michaelthelin.spotify.model_objects.specification.Playlist;
+import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.User;
 import se.michaelthelin.spotify.requests.data.playlists.GetPlaylistRequest;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyPlaylistDetailsServiceTest {
@@ -113,8 +118,8 @@ class SpotifyPlaylistDetailsServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistDetailsService.getPlaylistTracks(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Playlist not found");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("トラック情報の取得中にエラーが発生しました。");
     }
 
     @Test
@@ -129,8 +134,8 @@ class SpotifyPlaylistDetailsServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistDetailsService.getPlaylistName(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Playlist not found");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリスト名の取得中にエラーが発生しました。");
     }
 
     @Test
@@ -145,7 +150,7 @@ class SpotifyPlaylistDetailsServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistDetailsService.getPlaylistOwner(NON_EXISTENT_PLAYLIST_ID))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Playlist not found");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("オーナー情報の取得中にエラーが発生しました。");
     }
 }

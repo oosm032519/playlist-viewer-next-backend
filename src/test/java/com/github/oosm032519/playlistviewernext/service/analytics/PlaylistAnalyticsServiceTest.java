@@ -1,70 +1,94 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
-import org.apache.hc.core5.http.ParseException;
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
 class PlaylistAnalyticsServiceTest {
 
     @Mock
     private SpotifyPlaylistAnalyticsService analyticsService;
 
+    private static final String PLAYLIST_ID = "testPlaylistId";
     @InjectMocks
-    private PlaylistAnalyticsService playlistAnalyticsServiceWrapper;
+    private PlaylistAnalyticsService playlistAnalyticsService;
 
     @BeforeEach
     void setUp() {
-        // 各テストメソッドの前に実行される設定
+        // テストごとにモックをリセット
     }
 
     @Test
-    void getGenreCountsForPlaylist_ReturnsGenreCountsSuccessfully() throws IOException, ParseException, SpotifyWebApiException, PlaylistAnalyticsException {
+    void getGenreCountsForPlaylist_Success() {
         // Arrange
-        String playlistId = "testPlaylistId";
-        Map<String, Integer> expectedGenreCounts = Map.of("pop", 2, "rock", 1);
-
-        // モックの振る舞いを設定
-        when(analyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(expectedGenreCounts);
+        Map<String, Integer> expectedGenreCounts = new HashMap<>();
+        expectedGenreCounts.put("Rock", 5);
+        expectedGenreCounts.put("Pop", 3);
+        when(analyticsService.getGenreCountsForPlaylist(PLAYLIST_ID)).thenReturn(expectedGenreCounts);
 
         // Act
-        Map<String, Integer> actualGenreCounts = playlistAnalyticsServiceWrapper.getGenreCountsForPlaylist(playlistId);
+        Map<String, Integer> result = playlistAnalyticsService.getGenreCountsForPlaylist(PLAYLIST_ID);
 
         // Assert
-        assertThat(actualGenreCounts).isEqualTo(expectedGenreCounts);
-
-        // モックが正しく呼び出されたかを検証
-        verify(analyticsService).getGenreCountsForPlaylist(playlistId);
+        assertThat(result).isEqualTo(expectedGenreCounts);
     }
 
     @Test
-    void getTop5GenresForPlaylist_ReturnsTop5GenresSuccessfully() throws IOException, ParseException, SpotifyWebApiException, PlaylistAnalyticsException {
+    void getGenreCountsForPlaylist_ThrowsException() {
         // Arrange
-        String playlistId = "testPlaylistId";
-        List<String> expectedTop5Genres = List.of("pop", "rock");
+        when(analyticsService.getGenreCountsForPlaylist(PLAYLIST_ID)).thenThrow(new RuntimeException("Test exception"));
 
-        // モックの振る舞いを設定
-        when(analyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(expectedTop5Genres);
+        // Act & Assert
+        assertThatThrownBy(() -> playlistAnalyticsService.getGenreCountsForPlaylist(PLAYLIST_ID))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。")
+                .satisfies(thrown -> {
+                    PlaylistViewerNextException exception = (PlaylistViewerNextException) thrown;
+                    assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                    assertThat(exception.getErrorCode()).isEqualTo("GENRE_COUNTS_RETRIEVAL_ERROR");
+                });
+    }
+
+    @Test
+    void getTop5GenresForPlaylist_Success() {
+        // Arrange
+        List<String> expectedTopGenres = Arrays.asList("Rock", "Pop", "Jazz", "Blues", "Classical");
+        when(analyticsService.getTop5GenresForPlaylist(PLAYLIST_ID)).thenReturn(expectedTopGenres);
 
         // Act
-        List<String> actualTop5Genres = playlistAnalyticsServiceWrapper.getTop5GenresForPlaylist(playlistId);
+        List<String> result = playlistAnalyticsService.getTop5GenresForPlaylist(PLAYLIST_ID);
 
         // Assert
-        assertThat(actualTop5Genres).isEqualTo(expectedTop5Genres);
+        assertThat(result).isEqualTo(expectedTopGenres);
+    }
 
-        // モックが正しく呼び出されたかを検証
-        verify(analyticsService).getTop5GenresForPlaylist(playlistId);
+    @Test
+    void getTop5GenresForPlaylist_ThrowsException() {
+        // Arrange
+        when(analyticsService.getTop5GenresForPlaylist(PLAYLIST_ID)).thenThrow(new RuntimeException("Test exception"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistAnalyticsService.getTop5GenresForPlaylist(PLAYLIST_ID))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストのトップ5ジャンルの取得中にエラーが発生しました。")
+                .satisfies(thrown -> {
+                    PlaylistViewerNextException exception = (PlaylistViewerNextException) thrown;
+                    assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+                    assertThat(exception.getErrorCode()).isEqualTo("TOP_GENRES_RETRIEVAL_ERROR");
+                });
     }
 }

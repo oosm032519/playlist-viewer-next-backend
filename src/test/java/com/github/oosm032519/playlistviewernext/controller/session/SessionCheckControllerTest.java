@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
-import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,13 +14,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -48,7 +49,6 @@ public class SessionCheckControllerTest {
 
     @Test
     public void testCheckSession_authenticatedUser() throws Exception {
-        // モックの設定
         Cookie cookie = new Cookie("sessionId", "validSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
 
@@ -62,36 +62,31 @@ public class SessionCheckControllerTest {
         claims.put("spotify_access_token", "spotifyToken");
         when(jwtUtil.validateToken("validToken")).thenReturn(claims);
 
-        // メソッドの実行
         ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.checkSession(request);
 
-        // アサーション
         assertThat(responseEntity.getBody()).containsEntry("status", "success");
         assertThat(responseEntity.getBody()).containsEntry("userId", "userId123");
         assertThat(responseEntity.getBody()).containsEntry("userName", "John Doe");
         assertThat(responseEntity.getBody()).containsEntry("spotifyAccessToken", "spotifyToken");
 
-        // 検証
         verify(jwtUtil).validateToken("validToken");
         verify(redisTemplate.opsForValue()).get("session:validSessionId");
     }
 
     @Test
     public void testCheckSession_unauthenticatedUser_noCookies() {
-        // モックの設定
         when(request.getCookies()).thenReturn(null);
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.checkSession(request);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.checkSession(request));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "User not authenticated");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getErrorCode()).isEqualTo("SESSION_NOT_FOUND");
+        assertThat(exception.getMessage()).isEqualTo("有効なセッションIDが存在しません。");
     }
 
     @Test
     public void testCheckSession_unauthenticatedUser_invalidSessionId() {
-        // モックの設定
         Cookie cookie = new Cookie("sessionId", "invalidSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
 
@@ -99,20 +94,18 @@ public class SessionCheckControllerTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("session:invalidSessionId")).thenReturn(null);
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.checkSession(request);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.checkSession(request));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "User not authenticated");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getErrorCode()).isEqualTo("SESSION_VALIDATION_ERROR");
+        assertThat(exception.getMessage()).isEqualTo("セッション情報の検証中にエラーが発生しました。");
 
-        // 検証
         verify(redisTemplate.opsForValue()).get("session:invalidSessionId");
     }
 
     @Test
-    public void testCheckSession_joseException() throws Exception {
-        // モックの設定
+    public void testCheckSession_validationError() throws Exception {
         Cookie cookie = new Cookie("sessionId", "validSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
 
@@ -120,98 +113,70 @@ public class SessionCheckControllerTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("session:validSessionId")).thenReturn("validToken");
 
-        when(jwtUtil.validateToken("validToken")).thenThrow(new JOSEException("Invalid token"));
+        when(jwtUtil.validateToken("validToken")).thenThrow(new RuntimeException("Token validation error"));
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.checkSession(request);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.checkSession(request));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "User not authenticated");
-    }
-
-    @Test
-    public void testCheckSession_parseException() throws Exception {
-        // モックの設定
-        Cookie cookie = new Cookie("sessionId", "validSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{cookie});
-
-        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:validSessionId")).thenReturn("validToken");
-
-        when(jwtUtil.validateToken("validToken")).thenThrow(new ParseException("Invalid token", 0));
-
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.checkSession(request);
-
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "User not authenticated");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getErrorCode()).isEqualTo("SESSION_VALIDATION_ERROR");
+        assertThat(exception.getMessage()).isEqualTo("セッション情報の検証中にエラーが発生しました。");
     }
 
     @Test
     public void testLogout_successful() {
-        // モックの設定
         Cookie cookie = new Cookie("sessionId", "validSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         when(redisTemplate.delete("session:validSessionId")).thenReturn(true);
 
-        // メソッドの実行
         ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.logout(request, response);
 
-        // アサーション
         assertThat(responseEntity.getBody()).containsEntry("status", "success");
         assertThat(responseEntity.getBody()).containsEntry("message", "ログアウトしました。");
 
-        // 検証
         verify(redisTemplate).delete("session:validSessionId");
         verify(response).addCookie(any(Cookie.class));
     }
 
     @Test
     public void testLogout_noSessionId() {
-        // モックの設定
         when(request.getCookies()).thenReturn(null);
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.logout(request, response);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.logout(request, response));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "有効なセッションIDが存在しません。");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getErrorCode()).isEqualTo("SESSION_NOT_FOUND");
+        assertThat(exception.getMessage()).isEqualTo("有効なセッションIDが存在しません。");
     }
 
     @Test
     public void testLogout_sessionNotFoundInRedis() {
-        // モックの設定
         Cookie cookie = new Cookie("sessionId", "validSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         when(redisTemplate.delete("session:validSessionId")).thenReturn(false);
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.logout(request, response);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.logout(request, response));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "セッション情報が見つかりません。");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
+        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。");
 
-        // 検証
         verify(redisTemplate).delete("session:validSessionId");
     }
 
     @Test
     public void testLogout_redisException() {
-        // モックの設定
         Cookie cookie = new Cookie("sessionId", "validSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         doThrow(new RuntimeException("Redis error")).when(redisTemplate).delete("session:validSessionId");
 
-        // メソッドの実行
-        ResponseEntity<Map<String, Object>> responseEntity = sessionCheckController.logout(request, response);
+        PlaylistViewerNextException exception = assertThrows(PlaylistViewerNextException.class,
+                () -> sessionCheckController.logout(request, response));
 
-        // アサーション
-        assertThat(responseEntity.getBody()).containsEntry("status", "error");
-        assertThat(responseEntity.getBody()).containsEntry("message", "ログアウト処理中にエラーが発生しました。");
+        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
+        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。");
     }
 }

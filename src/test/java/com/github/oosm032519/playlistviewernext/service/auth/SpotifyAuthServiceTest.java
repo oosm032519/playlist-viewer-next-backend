@@ -60,8 +60,9 @@ class SpotifyAuthServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
-                .isInstanceOf(IOException.class)
-                .hasMessage("Test IO Exception");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("クライアントクレデンシャルトークンの取得中にエラーが発生しました。")
+                .hasCauseInstanceOf(IOException.class);
     }
 
     @Test
@@ -71,8 +72,9 @@ class SpotifyAuthServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Test Spotify Web API Exception");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("クライアントクレデンシャルトークンの取得中にエラーが発生しました。")
+                .hasCauseInstanceOf(SpotifyWebApiException.class);
     }
 
     @Test
@@ -82,7 +84,8 @@ class SpotifyAuthServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
-                .isInstanceOf(ParseException.class)
-                .hasMessage("Test Parse Exception");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("クライアントクレデンシャルトークンの取得中にエラーが発生しました。")
+                .hasCauseInstanceOf(ParseException.class);
     }
 }

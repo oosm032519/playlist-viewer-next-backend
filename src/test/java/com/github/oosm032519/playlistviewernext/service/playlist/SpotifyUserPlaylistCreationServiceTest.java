@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,7 +94,7 @@ class SpotifyUserPlaylistCreationServiceTest {
     }
 
     @Test
-    void createPlaylist_SpotifyApiException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    void createPlaylist_SpotifyApiException() throws IOException, ParseException, SpotifyWebApiException {
         // Arrange
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
@@ -103,12 +103,13 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Spotify API error");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasCauseInstanceOf(SpotifyWebApiException.class);
     }
 
     @Test
-    void createPlaylist_IOException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    void createPlaylist_IOException() throws IOException, ParseException, SpotifyWebApiException {
         // Arrange
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
@@ -117,12 +118,13 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(IOException.class)
-                .hasMessage("Network error");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasCauseInstanceOf(IOException.class);
     }
 
     @Test
-    void createPlaylist_ParseException() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
+    void createPlaylist_ParseException() throws IOException, ParseException, SpotifyWebApiException {
         // Arrange
         when(spotifyApi.createPlaylist(anyString(), anyString())).thenReturn(createPlaylistRequestBuilder);
         when(createPlaylistRequestBuilder.public_(anyBoolean())).thenReturn(createPlaylistRequestBuilder);
@@ -131,8 +133,9 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(org.apache.hc.core5.http.ParseException.class)
-                .hasMessage("Parse error");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasCauseInstanceOf(org.apache.hc.core5.http.ParseException.class);
     }
 
     @Test
@@ -149,7 +152,8 @@ class SpotifyUserPlaylistCreationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> service.createPlaylist(accessToken, userId, playlistName, trackIds))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Failed to add tracks");
+                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
+                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasCauseInstanceOf(SpotifyWebApiException.class);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -84,8 +85,8 @@ public class SpotifyUserPlaylistsServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessageContaining("API error");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストの取得中にエラーが発生しました。");
         verify(spotifyApi).setAccessToken(accessToken);
     }
 
@@ -98,8 +99,8 @@ public class SpotifyUserPlaylistsServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("IO error");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("プレイリストの取得中にエラーが発生しました。");
         verify(spotifyApi).setAccessToken(accessToken);
     }
 }

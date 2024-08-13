@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,8 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyTrackServiceTest {
@@ -65,8 +67,8 @@ class SpotifyTrackServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> trackService.getAudioFeaturesForTrack(trackId))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("Track not found");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("オーディオ特徴の取得中にエラーが発生しました。");
     }
 
     @Test

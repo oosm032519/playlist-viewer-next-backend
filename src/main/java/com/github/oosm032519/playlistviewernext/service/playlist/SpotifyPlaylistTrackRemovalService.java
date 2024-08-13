@@ -28,6 +28,7 @@ public class SpotifyPlaylistTrackRemovalService {
     public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
         String accessToken = getAccessToken(principal);
         if (accessToken == null) {
+            logger.warn("Unauthorized access attempt with missing access token.");
             throw new PlaylistViewerNextException(
                     HttpStatus.UNAUTHORIZED,
                     "UNAUTHORIZED_ACCESS",
@@ -40,7 +41,7 @@ public class SpotifyPlaylistTrackRemovalService {
         String playlistId = request.getPlaylistId();
         String trackId = request.getTrackId();
 
-        logger.info("プレイリストID: {}, トラックID: {}", playlistId, trackId);
+        logger.info("Removing track from playlist. Playlist ID: {}, Track ID: {}", playlistId, trackId);
 
         JsonArray tracks = createTracksJsonArray(trackId);
 
@@ -52,8 +53,7 @@ public class SpotifyPlaylistTrackRemovalService {
             SnapshotResult snapshotResult = removeItemsFromPlaylistRequest.execute();
             return successResponse(snapshotResult);
         } catch (Exception e) {
-            // トラックの削除中にエラーが発生した場合は PlaylistViewerNextException をスロー
-            logger.error("トラックの削除中にエラーが発生しました。", e);
+            logger.error("Error occurred while removing track from playlist.", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_REMOVAL_ERROR",
@@ -68,7 +68,7 @@ public class SpotifyPlaylistTrackRemovalService {
         String accessToken = (String) attributes.get("spotify_access_token");
 
         if (accessToken == null || accessToken.isEmpty()) {
-            logger.warn("有効なアクセストークンがありません。ユーザー属性: {}", attributes);
+            logger.warn("No valid access token found. User attributes: {}", attributes);
             return null;
         }
         return accessToken;
@@ -79,7 +79,7 @@ public class SpotifyPlaylistTrackRemovalService {
     }
 
     private ResponseEntity<String> successResponse(SnapshotResult snapshotResult) {
-        logger.info("トラックが正常に削除されました。Snapshot ID: {}", snapshotResult.getSnapshotId());
+        logger.info("Track successfully removed. Snapshot ID: {}", snapshotResult.getSnapshotId());
         return ResponseEntity.ok("トラックが正常に削除されました。Snapshot ID: " + snapshotResult.getSnapshotId());
     }
 }

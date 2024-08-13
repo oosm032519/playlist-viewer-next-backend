@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
 import org.apache.hc.core5.http.ParseException;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,9 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.model_objects.specification.*;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
+import se.michaelthelin.spotify.model_objects.specification.Recommendations;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
 
 import java.io.IOException;
@@ -107,8 +110,8 @@ class SpotifyRecommendationServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyRecommendationService.getRecommendations(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
-                .isInstanceOf(SpotifyWebApiException.class)
-                .hasMessage("API error");
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessageContaining("推奨トラックの取得中にエラーが発生しました。");
     }
 
     @Test

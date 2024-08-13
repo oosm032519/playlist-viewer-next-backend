@@ -1,7 +1,6 @@
-// PlaylistDetailsControllerTest.java
-
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +38,6 @@ class PlaylistDetailsControllerTest {
 
     @BeforeEach
     void setUp() {
-        // 各テストメソッドの前に実行される設定
         reset(playlistDetailsRetrievalService, playlistAnalyticsService, trackRecommendationService);
     }
 
@@ -88,18 +87,17 @@ class PlaylistDetailsControllerTest {
     }
 
     @Test
-    void shouldHandleExceptionGracefully() throws Exception {
+    void shouldHandleExceptionGracefully() {
         // Given
         String playlistId = "testPlaylistId";
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
 
-        // When
-        ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("error")).isEqualTo("API error");
+        // When & Then
+        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_DETAILS_ERROR")
+                .hasMessage("プレイリストの詳細情報の取得中にエラーが発生しました。");
 
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }

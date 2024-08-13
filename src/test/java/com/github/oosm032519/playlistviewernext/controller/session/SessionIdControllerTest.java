@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
+import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -54,34 +56,55 @@ class SessionIdControllerTest {
     }
 
     @Test
-    void getSessionId_WithMissingTemporaryToken_ReturnsBadRequest() {
+    void getSessionId_WithMissingTemporaryToken_ThrowsException() {
         // Arrange
         Map<String, String> requestBody = Map.of();
 
-        // Act
-        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isEqualTo("一時トークンが提供されていません");
+        // Act & Assert
+        assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.BAD_REQUEST)
+                .hasFieldOrPropertyWithValue("errorCode", "TEMPORARY_TOKEN_MISSING")
+                .hasMessage("一時トークンが提供されていません。");
 
         verifyNoInteractions(valueOperations);
         verifyNoInteractions(redisTemplate);
     }
 
     @Test
-    void getSessionId_WithInvalidTemporaryToken_ReturnsNotFound() {
+    void getSessionId_WithInvalidTemporaryToken_ThrowsException() {
         // Arrange
         String temporaryToken = "invalidToken";
         Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
 
         when(valueOperations.get("temp:" + temporaryToken)).thenReturn(null);
 
-        // Act
-        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
+        // Act & Assert
+        assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "SESSION_ID_RETRIEVAL_ERROR")
+                .hasMessage("セッションIDの取得中にエラーが発生しました。");
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(valueOperations).get("temp:" + temporaryToken);
+    }
+
+    @Test
+    void getSessionId_WithRedisException_ThrowsException() {
+        // Arrange
+        String temporaryToken = "validToken";
+        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
+
+        when(valueOperations.get("temp:" + temporaryToken)).thenThrow(new RuntimeException("Redis error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasFieldOrPropertyWithValue("errorCode", "SESSION_ID_RETRIEVAL_ERROR")
+                .hasMessage("セッションIDの取得中にエラーが発生しました。")
+                .hasCauseInstanceOf(RuntimeException.class)
+                .hasRootCauseMessage("Redis error");
 
         verify(valueOperations).get("temp:" + temporaryToken);
     }
