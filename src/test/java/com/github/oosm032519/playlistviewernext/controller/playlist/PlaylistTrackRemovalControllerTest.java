@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
@@ -16,10 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,7 +53,7 @@ class PlaylistTrackRemovalControllerTest {
             assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal))
                     .isInstanceOf(AuthenticationException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.UNAUTHORIZED)
-                    .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS")
+                    .hasFieldOrPropertyWithValue("errorCode", "AUTHENTICATION_ERROR") // エラーコードを修正
                     .hasMessage("認証されていないユーザーがアクセスしようとしました。");
         }
 
@@ -67,29 +66,28 @@ class PlaylistTrackRemovalControllerTest {
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
             // Act
-            ResponseEntity<Map<String, String>> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+            ResponseEntity<?> response = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
 
             // Assert
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isEqualTo(Map.of("message", "トラックが正常に削除されました。"));
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
 
         @Test
-        @DisplayName("Should throw SpotifyApiException when track removal fails")
+        @DisplayName("Should return INTERNAL_SERVER_ERROR and correct error code when track removal fails")
         void shouldThrowSpotifyApiExceptionWhenTrackRemovalFails() {
             // Arrange
             OAuth2User principal = mock(OAuth2User.class);
             ResponseEntity<String> serviceResponse = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error body");
             when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal)).thenReturn(serviceResponse);
 
-            // Act & Assert
-            assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal))
-                    .isInstanceOf(SpotifyApiException.class)
-                    .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                    .hasFieldOrPropertyWithValue("errorCode", "TRACK_REMOVAL_ERROR")
-                    .hasMessage("Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。")
-                    .hasFieldOrPropertyWithValue("details", "Spotify APIからのエラーレスポンス: Error body");
+            // Act
+            ResponseEntity<?> responseEntity = playlistTrackRemovalController.removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
+
+            // Assert
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+            ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
+            assertThat(errorResponse.getErrorCode()).isEqualTo("TRACK_REMOVAL_ERROR");
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
 

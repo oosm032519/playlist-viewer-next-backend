@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,7 +49,7 @@ class PlaylistSearchControllerTest {
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedPlaylists);
 
         // Act
-        ResponseEntity<List<PlaylistSimplified>> response = searchController.searchPlaylists(query, offset, limit);
+        ResponseEntity<List<PlaylistSimplified>> response = (ResponseEntity<List<PlaylistSimplified>>) searchController.searchPlaylists(query, offset, limit);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -69,12 +68,13 @@ class PlaylistSearchControllerTest {
         // モックサービスが例外をスローするように設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(new RuntimeException("API error"));
 
-        // Act & Assert
-        assertThatThrownBy(() -> searchController.searchPlaylists(query, offset, limit))
-                .isInstanceOf(SpotifyApiException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_SEARCH_ERROR")
-                .hasMessage("Spotify APIでプレイリストの検索中にエラーが発生しました。検索キーワードを見直して、しばらく時間をおいてから再度お試しください。");
+        // Act
+        ResponseEntity<?> responseEntity = searchController.searchPlaylists(query, offset, limit);
+
+        // Assert
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
 
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
         verify(authController).authenticate();

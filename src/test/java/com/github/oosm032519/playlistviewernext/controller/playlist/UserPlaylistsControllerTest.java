@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,16 +54,13 @@ class UserPlaylistsControllerTest {
         // 例外をスローするようにモックを設定
         when(userPlaylistsService.getCurrentUsersPlaylists()).thenThrow(new RuntimeException("Test exception"));
 
-        // メソッドの実行と例外の検証
-        SpotifyApiException exception = assertThrows(SpotifyApiException.class,
-                () -> userPlaylistsController.getFollowedPlaylists());
+        // メソッドの実行
+        ResponseEntity<?> responseEntity = userPlaylistsController.getFollowedPlaylists();
 
-        // 例外の詳細を検証
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(exception.getErrorCode()).isEqualTo("FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("フォロー中のプレイリストを取得できませんでした。しばらく時間をおいてから再度お試しください。");
-        assertThat(exception.getCause()).isInstanceOf(RuntimeException.class);
-        assertThat(exception.getCause().getMessage()).isEqualTo("Test exception");
+        // 検証
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
 
         verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }

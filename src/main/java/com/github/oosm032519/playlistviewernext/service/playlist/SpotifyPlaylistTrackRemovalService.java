@@ -32,7 +32,7 @@ public class SpotifyPlaylistTrackRemovalService {
             logger.warn("Unauthorized access attempt with missing access token.");
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "UNAUTHORIZED_ACCESS",
+                    "AUTHENTICATION_ERROR",
                     "有効なアクセストークンがありません。"
             );
         }

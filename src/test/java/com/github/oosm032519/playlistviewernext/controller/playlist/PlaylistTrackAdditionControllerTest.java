@@ -80,7 +80,7 @@ class PlaylistTrackAdditionControllerTest {
                 () -> playlistTrackAdditionController.addTrackToPlaylist(request, principal));
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(exception.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
+        assertThat(exception.getErrorCode()).isEqualTo("AUTHENTICATION_ERROR");
         assertThat(exception.getMessage()).isEqualTo("ユーザーが認証されていないか、アクセストークンが見つかりません。");
 
         verify(userAuthenticationService).getAccessToken(principal);

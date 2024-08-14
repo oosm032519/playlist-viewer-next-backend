@@ -50,6 +50,7 @@ public class AverageAudioFeaturesCalculator {
         logger.info("calculateAverageAudioFeatures: 計算開始");
 
         if (trackList == null || trackList.isEmpty()) {
+            logger.warn("トラックリストが空です。");
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "EMPTY_TRACK_LIST",
@@ -63,23 +64,21 @@ public class AverageAudioFeaturesCalculator {
                 audioFeaturesSum.put(feature, 0.0);
             }
 
-            trackList.stream()
-                    .map(trackData -> {
-                        AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
-                        if (audioFeatures == null) {
-                            throw new InvalidRequestException(
-                                    HttpStatus.BAD_REQUEST,
-                                    "NULL_AUDIO_FEATURES",
-                                    "オーディオフィーチャーがnullです。"
-                            );
-                        }
-                        return audioFeatures;
-                    })
-                    .forEach(audioFeatures -> {
-                        for (AudioFeature feature : AudioFeature.values()) {
-                            audioFeaturesSum.put(feature, audioFeaturesSum.get(feature) + feature.extract(audioFeatures));
-                        }
-                    });
+            for (Map<String, Object> trackData : trackList) {
+                AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
+                if (audioFeatures == null) {
+                    logger.warn("トラックデータにオーディオフィーチャーが含まれていません。 trackData: {}", trackData);
+                    throw new InvalidRequestException(
+                            HttpStatus.BAD_REQUEST,
+                            "NULL_AUDIO_FEATURES",
+                            "オーディオフィーチャーがnullです。"
+                    );
+                }
+
+                for (AudioFeature feature : AudioFeature.values()) {
+                    audioFeaturesSum.put(feature, audioFeaturesSum.get(feature) + feature.extract(audioFeatures));
+                }
+            }
 
             Map<String, Float> averageAudioFeatures = audioFeaturesSum.entrySet().stream()
                     .collect(Collectors.toMap(
@@ -90,9 +89,13 @@ public class AverageAudioFeaturesCalculator {
             logger.info("calculateAverageAudioFeatures: 平均オーディオフィーチャー計算完了: {}", averageAudioFeatures);
 
             return averageAudioFeatures;
-        } catch (Exception e) {
-            logger.error("予期しないエラーが発生しました。", e);
+        } catch (InvalidRequestException e) {
+            // InvalidRequestException はそのまま再スロー
             throw e;
+        } catch (Exception e) {
+            // 予期しないエラーが発生した場合は、RuntimeExceptionをスロー
+            logger.error("平均オーディオフィーチャーの計算中に予期しないエラーが発生しました。", e);
+            throw new RuntimeException("平均オーディオフィーチャーの計算中にエラーが発生しました。", e);
         }
     }
 }

@@ -2,6 +2,8 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,9 @@ import java.util.Optional;
 
 @Service
 public class SpotifyUserPlaylistsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyUserPlaylistsService.class);
+
     private final SpotifyApi spotifyApi;
 
     @Autowired
@@ -42,8 +47,10 @@ public class SpotifyUserPlaylistsService {
             spotifyApi.setAccessToken(spotifyAccessToken);
             return getPlaylists();
         } catch (AuthenticationException e) {
+            // AuthenticationException はそのまま再スロー
             throw e;
         } catch (Exception e) {
+            logger.error("Error occurred while retrieving playlists", e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLISTS_RETRIEVAL_ERROR",

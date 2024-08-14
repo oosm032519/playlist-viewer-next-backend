@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +63,22 @@ public class SessionIdController {
 
             logger.info("セッションID取得処理が完了しました。セッションID: {}", sessionId);
             return ResponseEntity.ok(Map.of("sessionId", sessionId));
+        } catch (DatabaseAccessException e) {
+            // DatabaseAccessException はそのまま再スロー
+            HttpStatus status = e.getHttpStatus();
+            String errorCode = e.getErrorCode();
+            String message = e.getMessage();
+            String details = e.getDetails();
+
+            // エラーログに記録
+            logger.error("Database access error occurred while retrieving session ID: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+            return new ResponseEntity<>(errorResponse, status);
         } catch (Exception e) {
-            // Redisアクセス中にエラーが発生した場合は DatabaseAccessException をスロー
-            logger.error("Redisアクセス中にエラーが発生しました。", e);
+            // Redisアクセス中に予期しないエラーが発生した場合は DatabaseAccessException をスロー
+            logger.error("Redisアクセス中に予期しないエラーが発生しました。", e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "REDIS_ACCESS_ERROR",

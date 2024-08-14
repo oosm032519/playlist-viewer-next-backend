@@ -1,5 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.slf4j.Logger;
@@ -39,15 +41,44 @@ public class UserPlaylistsController {
     public ResponseEntity<?> getFollowedPlaylists() {
         try {
             return ResponseEntity.ok(userPlaylistsService.getCurrentUsersPlaylists()); // authentication を渡さない
+        } catch (AuthenticationException e) {
+            // AuthenticationException はそのまま再スロー
+            HttpStatus status = e.getHttpStatus();
+            String errorCode = e.getErrorCode();
+            String message = e.getMessage();
+            String details = e.getDetails();
+
+            // エラーログに記録
+            LOGGER.error("Authentication error occurred while retrieving followed playlists: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+            return new ResponseEntity<>(errorResponse, status);
+        } catch (SpotifyApiException e) {
+            // SpotifyApiException はそのまま再スロー
+            HttpStatus status = e.getHttpStatus();
+            String errorCode = e.getErrorCode();
+            String message = e.getMessage();
+            String details = e.getDetails();
+
+            // エラーログに記録
+            LOGGER.error("Spotify API error occurred while retrieving followed playlists: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+            return new ResponseEntity<>(errorResponse, status);
         } catch (Exception e) {
-            // エラーが発生した場合は SpotifyApiException をスロー
-            LOGGER.error("フォロー中のプレイリストの取得中にエラーが発生しました", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR",
-                    "フォロー中のプレイリストを取得できませんでした。しばらく時間をおいてから再度お試しください。",
-                    e
-            );
+            // 予期しないエラーを処理
+            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+            String errorCode = "SYSTEM_UNEXPECTED_ERROR";
+            String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
+
+            // エラーログに記録
+            LOGGER.error("Unexpected error occurred while retrieving followed playlists: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
+            return new ResponseEntity<>(errorResponse, status);
         }
     }
 }

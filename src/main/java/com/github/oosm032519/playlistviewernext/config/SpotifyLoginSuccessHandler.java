@@ -3,6 +3,8 @@ package com.github.oosm032519.playlistviewernext.config;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyLoginSuccessHandler.class);
 
     private final JwtUtil jwtUtil;
 
@@ -68,6 +72,8 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
             User user = spotifyApi.getCurrentUsersProfile().build().execute();
             return user.getDisplayName();
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
+            logger.error("Spotifyユーザー名の取得中にエラーが発生しました。 userId: {}, spotifyAccessToken: {}", userId, spotifyAccessToken, e);
+            // エラーが発生した場合は、デフォルトでuserIdを返す
             return userId;
         }
     }

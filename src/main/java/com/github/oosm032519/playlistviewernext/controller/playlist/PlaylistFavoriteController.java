@@ -87,6 +87,7 @@ public class PlaylistFavoriteController {
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
             // ハッシュアルゴリズムが見つからない場合は IllegalStateException をスロー
+            logger.error("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
             throw new IllegalStateException("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
         }
     }

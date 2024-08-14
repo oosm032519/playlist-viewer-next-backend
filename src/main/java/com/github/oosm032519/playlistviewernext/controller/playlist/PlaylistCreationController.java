@@ -64,7 +64,7 @@ public class PlaylistCreationController {
         if (accessToken == null) {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "UNAUTHORIZED_ACCESS",
+                    "AUTHENTICATION_ERROR",
                     "ユーザーが認証されていないか、アクセストークンが見つかりません。"
             );
         }
@@ -79,8 +79,11 @@ public class PlaylistCreationController {
             String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, playlistName, trackIds);
             logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
             return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
+        } catch (SpotifyApiException e) {
+            // Spotify API エラーはそのまま再スロー
+            throw e;
         } catch (Exception e) {
-            logger.error("プレイリストの作成中にエラーが発生しました。", e);
+            logger.error("プレイリストの作成中に予期しないエラーが発生しました。", e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_CREATION_ERROR",

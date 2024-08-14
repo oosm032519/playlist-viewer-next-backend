@@ -49,7 +49,7 @@ class PlaylistCreationControllerTest {
         assertThatThrownBy(() -> playlistCreationController.createPlaylist(List.of("track1", "track2"), principal))
                 .isInstanceOf(AuthenticationException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.UNAUTHORIZED)
-                .hasFieldOrPropertyWithValue("errorCode", "UNAUTHORIZED_ACCESS")
+                .hasFieldOrPropertyWithValue("errorCode", "AUTHENTICATION_ERROR")
                 .hasMessage("ユーザーが認証されていないか、アクセストークンが見つかりません。");
     }
 

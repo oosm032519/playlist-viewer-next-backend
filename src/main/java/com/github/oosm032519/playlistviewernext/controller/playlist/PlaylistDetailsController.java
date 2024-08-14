@@ -65,14 +65,16 @@ public class PlaylistDetailsController {
             Map<String, Object> response = fetchPlaylistDetails(id);
             return ResponseEntity.ok(response);
         } catch (ResourceNotFoundException e) {
-            logger.error("プレイリストが見つかりませんでした", e);
-            throw e; // リソースが見つからない場合はそのまま例外をスロー
+            // リソースが見つからない場合はそのまま例外をスロー
+            logger.error("プレイリストが見つかりませんでした: {}", e.getMessage(), e);
+            throw e;
         } catch (SpotifyApiException e) {
-            logger.error("Spotify APIとの通信中にエラーが発生しました", e);
-            throw e; // Spotify APIのエラーはそのまま例外をスロー
+            // Spotify APIのエラーはそのまま例外をスロー
+            logger.error("Spotify APIとの通信中にエラーが発生しました: {}", e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
             // 予期しないエラーが発生した場合は PlaylistViewerNextException をスロー
-            logger.error("プレイリストの取得中にエラーが発生しました", e);
+            logger.error("プレイリストの取得中に予期しないエラーが発生しました: {}", e.getMessage(), e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_DETAILS_ERROR",

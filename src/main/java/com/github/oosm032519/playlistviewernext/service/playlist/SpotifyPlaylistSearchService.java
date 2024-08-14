@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -15,6 +17,8 @@ import java.util.Optional;
 
 @Service
 public class SpotifyPlaylistSearchService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyPlaylistSearchService.class);
 
     private final SpotifyApi spotifyApi;
 
@@ -38,6 +42,7 @@ public class SpotifyPlaylistSearchService {
             return getPlaylistsFromResult(searchResult);
         } catch (Exception e) {
             // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
+            logger.error("Spotifyプレイリストの検索中にエラーが発生しました。 query: {}, offset: {}, limit: {}", query, offset, limit, e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "SPOTIFY_API_ERROR",

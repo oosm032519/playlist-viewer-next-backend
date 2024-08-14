@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class PlaylistSearchController {
      * @return 検索結果のプレイリストのリストを含むResponseEntity
      */
     @GetMapping
-    public ResponseEntity<List<PlaylistSimplified>> searchPlaylists(
+    public ResponseEntity<?> searchPlaylists(
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit) {
@@ -64,15 +65,38 @@ public class PlaylistSearchController {
 
             // 検索結果を返す
             return ResponseEntity.ok(playlists);
+        } catch (SpotifyApiException e) {
+            // Spotify API エラーを処理
+            HttpStatus status = e.getHttpStatus();
+            String errorCode = e.getErrorCode();
+            String message = e.getMessage();
+            String details = e.getDetails();
+
+            // レート制限を超過した場合の処理
+            if (errorCode.equals("SPOTIFY_API_RATE_LIMIT_EXCEEDED")) {
+                // 一定時間待機してから再度リクエストを送信する
+                // ...
+                message = "Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。";
+            }
+
+            // エラーログに記録
+            logger.error("Spotify API error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+            return new ResponseEntity<>(errorResponse, status);
         } catch (Exception e) {
-            // エラーが発生した場合は SpotifyApiException をスロー
-            logger.error("Error occurred while searching playlists", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_SEARCH_ERROR",
-                    "Spotify APIでプレイリストの検索中にエラーが発生しました。検索キーワードを見直して、しばらく時間をおいてから再度お試しください。",
-                    e
-            );
+            // 予期しないエラーを処理
+            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+            String errorCode = "SYSTEM_UNEXPECTED_ERROR";
+            String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
+
+            // エラーログに記録
+            logger.error("Unexpected error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
+            return new ResponseEntity<>(errorResponse, status);
         }
     }
 }

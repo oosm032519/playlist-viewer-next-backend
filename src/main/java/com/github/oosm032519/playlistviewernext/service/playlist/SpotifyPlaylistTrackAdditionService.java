@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -8,6 +10,8 @@ import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 
 @Service
 public class SpotifyPlaylistTrackAdditionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyPlaylistTrackAdditionService.class);
 
     private final SpotifyApi spotifyApi;
 
@@ -33,6 +37,7 @@ public class SpotifyPlaylistTrackAdditionService {
                     .execute();
         } catch (Exception e) {
             // トラックの追加中にエラーが発生した場合は SpotifyApiException をスロー
+            logger.error("トラックの追加中にエラーが発生しました。 accessToken: {}, playlistId: {}, trackId: {}", accessToken, playlistId, trackId, e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",

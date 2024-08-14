@@ -1,6 +1,8 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -13,6 +15,9 @@ import java.util.Optional;
 
 @Service
 public class SpotifyArtistService {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyArtistService.class);
+
     private final SpotifyApi spotifyApi;
 
     /**
@@ -39,6 +44,7 @@ public class SpotifyArtistService {
                     .orElse(Collections.emptyList());
         } catch (Exception e) {
             // Spotify API 関連のエラーの場合は SpotifyApiException をスロー
+            logger.error("アーティスト情報の取得中にエラーが発生しました。 artistId: {}", artistId, e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "ARTIST_INFO_RETRIEVAL_ERROR",

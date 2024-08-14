@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +51,7 @@ class UserFavoritePlaylistsControllerTest {
         when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId)).thenReturn(expectedPlaylists);
 
         // Act
-        ResponseEntity<List<FavoritePlaylistResponse>> response = controller.getFavoritePlaylists(principal);
+        ResponseEntity<List<FavoritePlaylistResponse>> response = (ResponseEntity<List<FavoritePlaylistResponse>>) controller.getFavoritePlaylists(principal);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -69,12 +70,13 @@ class UserFavoritePlaylistsControllerTest {
         when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId))
                 .thenThrow(new RuntimeException("Test exception"));
 
-        // Act & Assert
-        assertThatThrownBy(() -> controller.getFavoritePlaylists(principal))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
-                .hasMessage("お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。");
+        // Act
+        ResponseEntity<?> response = controller.getFavoritePlaylists(principal);
+
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
     }
 
     @Test

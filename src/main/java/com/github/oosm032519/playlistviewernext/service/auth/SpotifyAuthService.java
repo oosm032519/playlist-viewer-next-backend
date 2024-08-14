@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.auth;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class SpotifyAuthService {
     /**
      * クライアントクレデンシャルフローを使用してSpotify APIのアクセストークンを取得する。
      *
-     * @throws PlaylistViewerNextException アクセストークンの取得中にエラーが発生した場合
+     * @throws SpotifyApiException アクセストークンの取得中にエラーが発生した場合
      */
     public void getClientCredentialsToken() {
         ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();
@@ -38,9 +38,9 @@ public class SpotifyAuthService {
             spotifyApi.setAccessToken(clientCredentials.getAccessToken());
             logger.info("クライアントクレデンシャルトークンが正常に取得されました");
         } catch (Exception e) {
-            // アクセストークンの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
+            // アクセストークンの取得中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("クライアントクレデンシャルトークンの取得中にエラーが発生しました", e);
-            throw new PlaylistViewerNextException(
+            throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "CLIENT_CREDENTIALS_AUTH_ERROR",
                     "クライアントクレデンシャルトークンの取得中にエラーが発生しました。",

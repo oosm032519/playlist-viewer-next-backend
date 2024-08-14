@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.filter;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,11 +15,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +29,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -54,6 +54,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private FilterChain filterChain;
+
+    @Mock
+    private PrintWriter printWriter;
 
     @BeforeEach
     void setUp() {
@@ -147,7 +150,7 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void testDoFilterInternal_InvalidIssuer() {
+    void testDoFilterInternal_InvalidIssuer() throws IOException, ServletException {
         // Arrange
         Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
         when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
@@ -165,10 +168,15 @@ class JwtAuthenticationFilterTest {
         when(jwtUtil.validateToken("validToken")).thenReturn(claims);
         when(jwtUtil.getIssuer()).thenReturn("testIssuer");
 
-        // Act & Assert
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-        assertEquals("無効な発行者です。", exception.getMessage());
+        // response.getWriter() のモックを追加
+        when(response.getWriter()).thenReturn(printWriter);
+
+        // Act
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(response).setStatus(HttpStatus.BAD_REQUEST.value());
+        verify(response).setContentType("application/json");
+        verify(printWriter).write(anyString());
     }
 }

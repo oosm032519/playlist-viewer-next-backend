@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 
@@ -146,12 +147,22 @@ public class JwtUtil {
             logger.info("トークン検証成功");
             logger.debug("検証されたクレーム: {}", claims);
             return claims;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            // IllegalArgumentException を InvalidRequestException にラップ
+            logger.error("トークン検証中にエラーが発生しました: 不正なトークン形式です。", e);
+            throw new InvalidRequestException(
+                    HttpStatus.BAD_REQUEST,
+                    "TOKEN_VALIDATION_ERROR",
+                    "ログイン処理中にエラーが発生しました。再度ログインしてください。",
+                    e
+            );
+        } catch (JOSEException | ParseException | GeneralSecurityException e) {
             logger.error("トークン検証中にエラーが発生しました", e);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "TOKEN_VALIDATION_ERROR",
-                    "ログイン処理中にエラーが発生しました。再度ログインしてください。"
+                    "ログイン処理中にエラーが発生しました。再度ログインしてください。",
+                    e
             );
         }
     }

@@ -1,5 +1,3 @@
-// SpotifyOAuth2UserService.java
-
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;

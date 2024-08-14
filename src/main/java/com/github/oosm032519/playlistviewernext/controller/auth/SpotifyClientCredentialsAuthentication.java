@@ -37,9 +37,12 @@ public class SpotifyClientCredentialsAuthentication {
         try {
             authService.getClientCredentialsToken();
             LOGGER.info("クライアントクレデンシャル認証が成功しました。");
+        } catch (SpotifyApiException e) {
+            // Spotify API エラーはそのまま再スロー
+            throw e;
         } catch (Exception e) {
-            // 認証中にエラーが発生した場合は SpotifyApiException をスロー
-            LOGGER.error("クライアントクレデンシャル認証中にエラーが発生しました", e);
+            // 認証中に予期しないエラーが発生した場合は SpotifyApiException をスロー
+            LOGGER.error("クライアントクレデンシャル認証中に予期しないエラーが発生しました", e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "CLIENT_CREDENTIALS_AUTH_ERROR",

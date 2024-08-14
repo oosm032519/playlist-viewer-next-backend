@@ -51,7 +51,7 @@ public class PlaylistTrackAdditionController {
         if (accessToken == null) {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "UNAUTHORIZED_ACCESS",
+                    "AUTHENTICATION_ERROR",
                     "ユーザーが認証されていないか、アクセストークンが見つかりません。"
             );
         }
@@ -65,9 +65,12 @@ public class PlaylistTrackAdditionController {
             responseBody.put("snapshot_id", snapshotResult.getSnapshotId());
 
             return ResponseEntity.ok(responseBody);
+        } catch (SpotifyApiException e) {
+            // Spotify API エラーはそのまま再スロー
+            throw e;
         } catch (Exception e) {
-            // トラックの追加中にエラーが発生した場合は SpotifyApiException をスロー
-            logger.error("トラックの追加中にエラーが発生しました。", e);
+            // トラックの追加中に予期しないエラーが発生した場合は SpotifyApiException をスロー
+            logger.error("トラックの追加中に予期しないエラーが発生しました。", e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",
