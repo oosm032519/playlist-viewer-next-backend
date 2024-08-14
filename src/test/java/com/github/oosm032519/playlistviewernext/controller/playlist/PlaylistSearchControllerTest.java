@@ -74,7 +74,7 @@ class PlaylistSearchControllerTest {
                 .isInstanceOf(SpotifyApiException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_SEARCH_ERROR")
-                .hasMessage("プレイリストの検索中にエラーが発生しました。");
+                .hasMessage("Spotify APIでプレイリストの検索中にエラーが発生しました。検索キーワードを見直して、しばらく時間をおいてから再度お試しください。");
 
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
         verify(authController).authenticate();

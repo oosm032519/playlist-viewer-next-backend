@@ -74,7 +74,7 @@ class UserFavoritePlaylistsControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
-                .hasMessage("お気に入りプレイリスト一覧の取得中にエラーが発生しました。");
+                .hasMessage("お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test

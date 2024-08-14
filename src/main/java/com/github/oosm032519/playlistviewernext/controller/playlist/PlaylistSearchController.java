@@ -70,7 +70,7 @@ public class PlaylistSearchController {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_SEARCH_ERROR",
-                    "プレイリストの検索中にエラーが発生しました。",
+                    "Spotify APIでプレイリストの検索中にエラーが発生しました。検索キーワードを見直して、しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

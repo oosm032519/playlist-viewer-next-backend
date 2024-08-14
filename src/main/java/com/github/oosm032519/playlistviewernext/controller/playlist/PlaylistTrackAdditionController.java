@@ -71,7 +71,7 @@ public class PlaylistTrackAdditionController {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",
-                    "トラックの追加中にエラーが発生しました。",
+                    "Spotify APIでトラックの追加中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

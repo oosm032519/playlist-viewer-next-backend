@@ -64,7 +64,7 @@ public class UserFavoritePlaylistsController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
-                    "お気に入りプレイリスト一覧の取得中にエラーが発生しました。",
+                    "お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

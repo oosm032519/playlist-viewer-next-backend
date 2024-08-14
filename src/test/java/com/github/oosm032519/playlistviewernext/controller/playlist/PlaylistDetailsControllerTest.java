@@ -131,7 +131,7 @@ class PlaylistDetailsControllerTest {
                 .isInstanceOf(PlaylistViewerNextException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_DETAILS_ERROR")
-                .hasMessage("プレイリストの詳細情報の取得中にエラーが発生しました。");
+                .hasMessage("プレイリスト情報の取得中にエラーが発生しました。URLが正しいか確認し、しばらく時間をおいてから再度お試しください。");
 
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }

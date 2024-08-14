@@ -69,7 +69,7 @@ class SessionIdControllerTest {
                 .isInstanceOf(InvalidRequestException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.BAD_REQUEST)
                 .hasFieldOrPropertyWithValue("errorCode", "TEMPORARY_TOKEN_MISSING")
-                .hasMessage("一時トークンが提供されていません。");
+                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
     }
 
     @Test
@@ -85,7 +85,7 @@ class SessionIdControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "REDIS_ACCESS_ERROR")
-                .hasMessage("Redisアクセス中にエラーが発生しました。");
+                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
     }
 
     @Test
@@ -101,6 +101,6 @@ class SessionIdControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "REDIS_ACCESS_ERROR")
-                .hasMessage("Redisアクセス中にエラーが発生しました。");
+                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
     }
 }

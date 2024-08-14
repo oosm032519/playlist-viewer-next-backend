@@ -76,7 +76,7 @@ public class PlaylistDetailsController {
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_DETAILS_ERROR",
-                    "プレイリストの詳細情報の取得中にエラーが発生しました。",
+                    "プレイリスト情報の取得中にエラーが発生しました。URLが正しいか確認し、しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

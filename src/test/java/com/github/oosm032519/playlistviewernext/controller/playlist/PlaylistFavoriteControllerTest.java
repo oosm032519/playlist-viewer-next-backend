@@ -90,7 +90,7 @@ class PlaylistFavoriteControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_ERROR")
-                .hasMessage("プレイリストのお気に入り登録中にエラーが発生しました。");
+                .hasMessage("プレイリストをお気に入りに登録できませんでした。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test
@@ -133,7 +133,7 @@ class PlaylistFavoriteControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_UNFAVORITE_ERROR")
-                .hasMessage("プレイリストのお気に入り解除中にエラーが発生しました。");
+                .hasMessage("プレイリストをお気に入りから解除できませんでした。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test
@@ -175,7 +175,7 @@ class PlaylistFavoriteControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
-                .hasMessage("お気に入りプレイリスト一覧の取得中にエラーが発生しました。");
+                .hasMessage("お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test
@@ -218,7 +218,7 @@ class PlaylistFavoriteControllerTest {
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_CHECK_ERROR")
-                .hasMessage("プレイリストのお気に入り確認中にエラーが発生しました。");
+                .hasMessage("プレイリストのお気に入り状態を確認できませんでした。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test

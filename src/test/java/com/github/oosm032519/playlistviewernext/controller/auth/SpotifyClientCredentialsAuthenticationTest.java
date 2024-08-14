@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
-import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +32,11 @@ class SpotifyClientCredentialsAuthenticationTest {
     void authenticate_HandlesExceptionGracefully() throws Exception {
         doThrow(new RuntimeException("Auth error")).when(authService).getClientCredentialsToken();
 
-        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> authController.authenticate());
+        SpotifyApiException exception = assertThrows(SpotifyApiException.class, () -> authController.authenticate());
 
         verify(authService, times(1)).getClientCredentialsToken();
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpStatus());
         assertEquals("CLIENT_CREDENTIALS_AUTH_ERROR", exception.getErrorCode());
-        assertEquals("クライアントクレデンシャル認証中にエラーが発生しました。", exception.getMessage());
+        assertEquals("Spotify APIへの接続中にエラーが発生しました。しばらく時間をおいてから再度お試しください。", exception.getMessage());
     }
 }

@@ -45,7 +45,7 @@ public class UserPlaylistsController {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR",
-                    "フォロー中のプレイリストの取得中にエラーが発生しました。",
+                    "フォロー中のプレイリストを取得できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

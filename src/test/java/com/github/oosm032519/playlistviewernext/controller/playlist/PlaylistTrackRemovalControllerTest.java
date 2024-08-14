@@ -88,7 +88,7 @@ class PlaylistTrackRemovalControllerTest {
                     .isInstanceOf(SpotifyApiException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                     .hasFieldOrPropertyWithValue("errorCode", "TRACK_REMOVAL_ERROR")
-                    .hasMessage("トラックの削除に失敗しました。")
+                    .hasMessage("Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。")
                     .hasFieldOrPropertyWithValue("details", "Spotify APIからのエラーレスポンス: Error body");
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }
@@ -105,7 +105,7 @@ class PlaylistTrackRemovalControllerTest {
                     .isInstanceOf(SpotifyApiException.class)
                     .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                     .hasFieldOrPropertyWithValue("errorCode", "TRACK_REMOVAL_ERROR")
-                    .hasMessage("トラックの削除中にエラーが発生しました。")
+                    .hasMessage("トラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。")
                     .hasCauseInstanceOf(RuntimeException.class);
             verify(spotifyPlaylistTrackRemovalService).removeTrackFromPlaylist(playlistTrackRemovalRequest, principal);
         }

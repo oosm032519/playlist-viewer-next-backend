@@ -35,7 +35,7 @@ public class SessionIdController {
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "TEMPORARY_TOKEN_MISSING",
-                    "一時トークンが提供されていません。"
+                    "ログイン処理中にエラーが発生しました。再度ログインしてください。"
             );
         }
 
@@ -49,7 +49,7 @@ public class SessionIdController {
                 throw new DatabaseAccessException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "SESSION_ID_NOT_FOUND",
-                        "セッションIDが見つかりません。",
+                        "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                         null // DatabaseAccessException の原因はここでは特定できないため null を設定
                 );
             }
@@ -68,7 +68,7 @@ public class SessionIdController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "REDIS_ACCESS_ERROR",
-                    "Redisアクセス中にエラーが発生しました。",
+                    "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                     e
             );
         }

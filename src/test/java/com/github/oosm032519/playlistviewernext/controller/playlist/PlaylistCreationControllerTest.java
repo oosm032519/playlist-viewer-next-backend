@@ -94,7 +94,7 @@ class PlaylistCreationControllerTest {
                 .isInstanceOf(SpotifyApiException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_CREATION_ERROR")
-                .hasMessage("プレイリストの作成中にエラーが発生しました。")
+                .hasMessage("Spotify APIでプレイリストの作成中にエラーが発生しました。しばらく時間をおいてから再度お試しください。")
                 .hasCauseInstanceOf(RuntimeException.class)
                 .hasRootCauseMessage("Some error");
     }

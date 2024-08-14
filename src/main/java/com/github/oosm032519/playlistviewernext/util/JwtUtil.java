@@ -71,7 +71,7 @@ public class JwtUtil {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "JWT_UTIL_INIT_ERROR",
-                    "JwtUtilの初期化に失敗しました。",
+                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }
@@ -107,7 +107,7 @@ public class JwtUtil {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TOKEN_GENERATION_ERROR",
-                    "トークンの生成に失敗しました。",
+                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }
@@ -127,7 +127,7 @@ public class JwtUtil {
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "INVALID_TOKEN_SIGNATURE",
-                        "トークンの署名が無効です。"
+                        "セッションが有効期限切れか、無効です。再度ログインしてください。"
                 );
             }
 
@@ -138,7 +138,7 @@ public class JwtUtil {
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "TOKEN_EXPIRED",
-                        "トークンの有効期限が切れています。"
+                        "セッションが有効期限切れです。再度ログインしてください。"
                 );
             }
 
@@ -151,7 +151,7 @@ public class JwtUtil {
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "TOKEN_VALIDATION_ERROR",
-                    "トークン検証中にエラーが発生しました。"
+                    "ログイン処理中にエラーが発生しました。再度ログインしてください。"
             );
         }
     }

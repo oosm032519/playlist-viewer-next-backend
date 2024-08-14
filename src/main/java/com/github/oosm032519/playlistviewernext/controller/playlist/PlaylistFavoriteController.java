@@ -74,7 +74,7 @@ public class PlaylistFavoriteController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_FAVORITE_ERROR",
-                    "プレイリストのお気に入り登録中にエラーが発生しました。",
+                    "プレイリストをお気に入りに登録できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }
@@ -127,7 +127,7 @@ public class PlaylistFavoriteController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_UNFAVORITE_ERROR",
-                    "プレイリストのお気に入り解除中にエラーが発生しました。",
+                    "プレイリストをお気に入りから解除できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }
@@ -165,7 +165,7 @@ public class PlaylistFavoriteController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
-                    "お気に入りプレイリスト一覧の取得中にエラーが発生しました。",
+                    "お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }
@@ -191,7 +191,7 @@ public class PlaylistFavoriteController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_FAVORITE_CHECK_ERROR",
-                    "プレイリストのお気に入り確認中にエラーが発生しました。",
+                    "プレイリストのお気に入り状態を確認できませんでした。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

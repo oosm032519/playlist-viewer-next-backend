@@ -62,7 +62,7 @@ class UserPlaylistsControllerTest {
         // 例外の詳細を検証
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getErrorCode()).isEqualTo("FOLLOWED_PLAYLISTS_RETRIEVAL_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("フォロー中のプレイリストの取得中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("フォロー中のプレイリストを取得できませんでした。しばらく時間をおいてから再度お試しください。");
         assertThat(exception.getCause()).isInstanceOf(RuntimeException.class);
         assertThat(exception.getCause().getMessage()).isEqualTo("Test exception");
 

@@ -61,7 +61,7 @@ public class PlaylistTrackRemovalController {
                 throw new SpotifyApiException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "TRACK_REMOVAL_ERROR",
-                        "トラックの削除に失敗しました。",
+                        "Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                         "Spotify APIからのエラーレスポンス: " + response.getBody()
                 );
             }
@@ -73,7 +73,7 @@ public class PlaylistTrackRemovalController {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_REMOVAL_ERROR",
-                    "トラックの削除中にエラーが発生しました。",
+                    "トラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

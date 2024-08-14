@@ -84,7 +84,7 @@ public class PlaylistCreationController {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_CREATION_ERROR",
-                    "プレイリストの作成中にエラーが発生しました。",
+                    "Spotify APIでプレイリストの作成中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
         }

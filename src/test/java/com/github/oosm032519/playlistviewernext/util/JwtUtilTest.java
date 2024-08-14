@@ -63,7 +63,7 @@ class JwtUtilTest {
     void testValidateTokenWithInvalidToken() {
         assertThatThrownBy(() -> jwtUtil.validateToken("invalidToken"))
                 .isInstanceOf(InvalidRequestException.class)
-                .hasMessageContaining("トークン検証中にエラーが発生しました。");
+                .hasMessageContaining("ログイン処理中にエラーが発生しました。再度ログインしてください。");
     }
 
     @Test
@@ -82,13 +82,13 @@ class JwtUtilTest {
         doThrow(new AuthenticationException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "JWT_UTIL_INIT_ERROR",
-                "JwtUtilの初期化に失敗しました。",
+                "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                 new RuntimeException("Initialization failed")
         )).when(spyJwtUtil).init();
 
         assertThatThrownBy(() -> spyJwtUtil.init())
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("JwtUtilの初期化に失敗しました。");
+                .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test
@@ -100,13 +100,13 @@ class JwtUtilTest {
         doThrow(new AuthenticationException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "TOKEN_GENERATION_ERROR",
-                "トークンの生成に失敗しました。",
+                "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                 new RuntimeException("Token generation failed")
         )).when(spyJwtUtil).generateToken(any());
 
         assertThatThrownBy(() -> spyJwtUtil.generateToken(claims))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("トークンの生成に失敗しました。");
+                .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。");
     }
 
     @Test
@@ -121,13 +121,13 @@ class JwtUtilTest {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "TOKEN_EXPIRED",
-                    "トークンの有効期限が切れています。"
+                    "セッションが有効期限切れです。再度ログインしてください。"
             );
         }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("トークンの有効期限が切れています。");
+                .hasMessageContaining("セッションが有効期限切れです。再度ログインしてください。");
     }
 
     @Test
@@ -142,12 +142,12 @@ class JwtUtilTest {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "INVALID_TOKEN_SIGNATURE",
-                    "トークンの署名が無効です。"
+                    "セッションが有効期限切れか、無効です。再度ログインしてください。"
             );
         }).when(spyJwtUtil).validateToken(token);
 
         assertThatThrownBy(() -> spyJwtUtil.validateToken(token))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("トークンの署名が無効です。");
+                .hasMessageContaining("セッションが有効期限切れか、無効です。再度ログインしてください。");
     }
 }

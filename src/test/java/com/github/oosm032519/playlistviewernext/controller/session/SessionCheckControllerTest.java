@@ -83,7 +83,7 @@ public class SessionCheckControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(exception.getErrorCode()).isEqualTo("SESSION_NOT_FOUND");
-        assertThat(exception.getMessage()).isEqualTo("有効なセッションIDが存在しません。");
+        assertThat(exception.getMessage()).isEqualTo("セッションが有効期限切れか、無効です。再度ログインしてください。");
     }
 
     @Test
@@ -100,7 +100,7 @@ public class SessionCheckControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(exception.getErrorCode()).isEqualTo("SESSION_VALIDATION_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("セッション情報の検証中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("セッションの検証中にエラーが発生しました。再度ログインしてください。");
 
         verify(redisTemplate.opsForValue()).get("session:invalidSessionId");
     }
@@ -121,7 +121,7 @@ public class SessionCheckControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(exception.getErrorCode()).isEqualTo("SESSION_VALIDATION_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("セッション情報の検証中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("セッションの検証中にエラーが発生しました。再度ログインしてください。");
     }
 
     @Test
@@ -162,7 +162,7 @@ public class SessionCheckControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。再度お試しください。");
 
         verify(redisTemplate).delete("session:validSessionId");
     }
@@ -178,6 +178,6 @@ public class SessionCheckControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。再度お試しください。");
     }
 }

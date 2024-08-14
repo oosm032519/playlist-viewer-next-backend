@@ -102,7 +102,7 @@ class JwtAuthenticationFilterTest {
         AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         });
-        assertEquals("JWTトークンの検証中にエラーが発生しました。", exception.getMessage());
+        assertEquals("ログイン処理中にエラーが発生しました。再度ログインしてください。", exception.getMessage());
     }
 
     @Test
@@ -143,7 +143,7 @@ class JwtAuthenticationFilterTest {
         AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
             jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
         });
-        assertEquals("JWTトークンの検証中にエラーが発生しました。", exception.getMessage());
+        assertEquals("ログイン処理中にエラーが発生しました。再度ログインしてください。", exception.getMessage());
     }
 
     @Test

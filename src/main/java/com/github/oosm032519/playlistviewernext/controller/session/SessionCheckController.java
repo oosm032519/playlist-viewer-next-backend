@@ -69,7 +69,7 @@ public class SessionCheckController {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "SESSION_NOT_FOUND",
-                    "有効なセッションIDが存在しません。"
+                    "セッションが有効期限切れか、無効です。再度ログインしてください。"
             );
         }
     }
@@ -116,7 +116,7 @@ public class SessionCheckController {
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "SESSION_NOT_FOUND",
-                        "Redisにセッション情報が見つかりません。"
+                        "セッションが有効期限切れか、無効です。再度ログインしてください。"
                 );
             }
         } catch (Exception e) {
@@ -125,7 +125,7 @@ public class SessionCheckController {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
                     "SESSION_VALIDATION_ERROR",
-                    "セッション情報の検証中にエラーが発生しました。",
+                    "セッションの検証中にエラーが発生しました。再度ログインしてください。",
                     e
             );
         }
@@ -208,7 +208,7 @@ public class SessionCheckController {
                 throw new DatabaseAccessException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "SESSION_NOT_FOUND",
-                        "Redisにセッション情報が見つかりません。",
+                        "ログアウト処理中にエラーが発生しました。再度お試しください。",
                         null // DatabaseAccessException の原因はここでは特定できないため null を設定
                 );
             }
@@ -218,7 +218,7 @@ public class SessionCheckController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "LOGOUT_ERROR",
-                    "ログアウト処理中にエラーが発生しました。",
+                    "ログアウト処理中にエラーが発生しました。再度お試しください。",
                     e
             );
         }

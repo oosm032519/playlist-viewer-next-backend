@@ -57,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
                             "SESSION_NOT_FOUND",
-                            "セッション情報が見つかりません。"
+                            "セッションが有効期限切れか、無効です。再度ログインしてください。"
                     );
                 }
 
@@ -68,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
                             "INVALID_SESSION",
-                            "無効なセッションです。"
+                            "セッションが有効期限切れか、無効です。再度ログインしてください。"
                     );
                 }
 
@@ -106,7 +106,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "JWT_VALIDATION_ERROR",
-                        "JWTトークンの検証中にエラーが発生しました。",
+                        "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                         e
                 );
             }

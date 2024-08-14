@@ -104,7 +104,7 @@ class PlaylistTrackAdditionControllerTest {
 
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getErrorCode()).isEqualTo("TRACK_ADDITION_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("トラックの追加中にエラーが発生しました。");
+        assertThat(exception.getMessage()).isEqualTo("Spotify APIでトラックの追加中にエラーが発生しました。しばらく時間をおいてから再度お試しください。");
 
         verify(userAuthenticationService).getAccessToken(principal);
         verify(spotifyService).addTrackToPlaylist(ACCESS_TOKEN, PLAYLIST_ID, TRACK_ID);
