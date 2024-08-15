@@ -5,6 +5,7 @@ import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,12 @@ public class PlaylistTrackRemovalController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlaylistTrackRemovalController.class);
 
     private final SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
-    public PlaylistTrackRemovalController(SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService) {
+    public PlaylistTrackRemovalController(SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService,
+                                          HttpServletRequest request) {
         this.spotifyPlaylistTrackRemovalService = spotifyPlaylistTrackRemovalService;
+        this.request = request;
     }
 
     /**
@@ -85,12 +89,26 @@ public class PlaylistTrackRemovalController {
         } catch (Exception e) {
             // 予期しない例外が発生した場合は、一般的な SpotifyApiException をスロー
             LOGGER.error("トラックの削除中に予期しないエラーが発生しました。", e);
+            String requestParams = getRequestParams(); // リクエストパラメータを取得
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_REMOVAL_ERROR",
                     "トラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
+                    "リクエストパラメータ: " + requestParams,
                     e
             );
         }
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }

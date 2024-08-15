@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.exception.AuthenticationExceptio
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
@@ -37,17 +38,21 @@ public class PlaylistCreationController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
      * PlaylistCreationControllerのコンストラクタ。
      *
      * @param userAuthenticationService          ユーザー認証サービス
      * @param spotifyUserPlaylistCreationService Spotifyユーザープレイリスト作成サービス
+     * @param request                            HTTPリクエスト
      */
     public PlaylistCreationController(UserAuthenticationService userAuthenticationService,
-                                      SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService) {
+                                      SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService,
+                                      HttpServletRequest request) {
         this.userAuthenticationService = userAuthenticationService;
         this.spotifyUserPlaylistCreationService = spotifyUserPlaylistCreationService;
+        this.request = request;
     }
 
     /**
@@ -88,10 +93,12 @@ public class PlaylistCreationController {
             throw e;
         } catch (Exception e) {
             logger.error("プレイリストの作成中に予期しないエラーが発生しました。", e);
+            String requestParams = getRequestParams();
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_CREATION_ERROR",
                     "Spotify APIでプレイリストの作成中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
+                    "リクエストパラメータ: " + requestParams,
                     e
             );
         }
@@ -105,5 +112,17 @@ public class PlaylistCreationController {
      */
     private String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }

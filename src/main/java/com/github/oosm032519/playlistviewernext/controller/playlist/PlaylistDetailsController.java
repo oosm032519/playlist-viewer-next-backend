@@ -6,6 +6,7 @@ import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ public class PlaylistDetailsController {
     private final PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
     private final PlaylistAnalyticsService playlistAnalyticsService;
     private final TrackRecommendationService trackRecommendationService;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
      * PlaylistDetailsControllerのコンストラクタ。
@@ -41,15 +43,18 @@ public class PlaylistDetailsController {
      * @param playlistDetailsRetrievalService プレイリスト詳細取得サービス
      * @param playlistAnalyticsService        プレイリスト分析サービス
      * @param trackRecommendationService      トラック推奨サービス
+     * @param request                         HTTPリクエスト
      */
     public PlaylistDetailsController(
             PlaylistDetailsRetrievalService playlistDetailsRetrievalService,
             PlaylistAnalyticsService playlistAnalyticsService,
-            TrackRecommendationService trackRecommendationService
+            TrackRecommendationService trackRecommendationService,
+            HttpServletRequest request
     ) {
         this.playlistDetailsRetrievalService = playlistDetailsRetrievalService;
         this.playlistAnalyticsService = playlistAnalyticsService;
         this.trackRecommendationService = trackRecommendationService;
+        this.request = request;
     }
 
     /**
@@ -75,10 +80,12 @@ public class PlaylistDetailsController {
         } catch (Exception e) {
             // 予期しないエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストの取得中に予期しないエラーが発生しました: {}", e.getMessage(), e);
+            String requestParams = getRequestParams();
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "PLAYLIST_DETAILS_ERROR",
                     "プレイリスト情報の取得中にエラーが発生しました。URLが正しいか確認し、しばらく時間をおいてから再度お試しください。",
+                    "リクエストパラメータ: " + requestParams,
                     e
             );
         }
@@ -142,5 +149,17 @@ public class PlaylistDetailsController {
         logger.info("中央オーディオフィーチャー: {}", medianAudioFeatures);
         logger.info("最頻値: {}", modeValues);
         logger.info("推奨トラック数: {}", recommendations.size());
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }

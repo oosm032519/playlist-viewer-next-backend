@@ -21,4 +21,13 @@ public class ErrorResponse {
         this.details = details;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+                "\"status\":\"" + status + "\"" +
+                ",\"errorCode\":\"" + errorCode + "\"" +
+                ",\"message\":\"" + message + "\"" +
+                ",\"details\":\"" + details + "\"" +
+                "}";
+    }
 }

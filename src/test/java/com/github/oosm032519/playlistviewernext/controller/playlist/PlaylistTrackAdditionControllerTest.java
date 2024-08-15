@@ -5,6 +5,7 @@ import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,6 +35,9 @@ class PlaylistTrackAdditionControllerTest {
 
     @Mock
     private SpotifyPlaylistTrackAdditionService spotifyService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @Mock
     private OAuth2User principal;

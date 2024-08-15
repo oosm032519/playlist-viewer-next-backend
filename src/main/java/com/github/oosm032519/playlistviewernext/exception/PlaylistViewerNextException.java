@@ -40,4 +40,11 @@ public class PlaylistViewerNextException extends RuntimeException {
         this.errorCode = errorCode;
         this.details = details;
     }
+
+    public PlaylistViewerNextException(HttpStatus httpStatus, String errorCode, String message, String details, Throwable cause) {
+        super(message, cause);
+        this.httpStatus = httpStatus;
+        this.errorCode = errorCode;
+        this.details = details;
+    }
 }

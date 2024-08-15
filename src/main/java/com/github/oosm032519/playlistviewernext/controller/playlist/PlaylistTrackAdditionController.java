@@ -5,6 +5,7 @@ import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,11 +32,14 @@ public class PlaylistTrackAdditionController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyPlaylistTrackAdditionService spotifyService;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
     public PlaylistTrackAdditionController(UserAuthenticationService userAuthenticationService,
-                                           SpotifyPlaylistTrackAdditionService spotifyService) {
+                                           SpotifyPlaylistTrackAdditionService spotifyService,
+                                           HttpServletRequest request) {
         this.userAuthenticationService = userAuthenticationService;
         this.spotifyService = spotifyService;
+        this.request = request;
     }
 
     /**
@@ -74,12 +78,26 @@ public class PlaylistTrackAdditionController {
         } catch (Exception e) {
             // トラックの追加中に予期しないエラーが発生した場合は SpotifyApiException をスロー
             logger.error("トラックの追加中に予期しないエラーが発生しました。", e);
+            String requestParams = getRequestParams();
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TRACK_ADDITION_ERROR",
                     "Spotify APIでトラックの追加中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
+                    "リクエストパラメータ: " + requestParams,
                     e
             );
         }
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }

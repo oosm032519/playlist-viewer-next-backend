@@ -3,6 +3,7 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,9 @@ class PlaylistSearchControllerTest {
 
     @Mock
     private SpotifyClientCredentialsAuthentication authController;
+
+    @Mock
+    private HttpServletRequest request;
 
     @InjectMocks
     private PlaylistSearchController searchController;

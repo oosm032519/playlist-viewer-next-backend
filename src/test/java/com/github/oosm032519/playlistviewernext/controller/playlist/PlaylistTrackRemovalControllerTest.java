@@ -5,6 +5,7 @@ import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +27,9 @@ class PlaylistTrackRemovalControllerTest {
 
     @Mock
     private SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @InjectMocks
     private PlaylistTrackRemovalController playlistTrackRemovalController;

@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCre
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -37,17 +38,21 @@ public class PlaylistSearchController {
 
     private final SpotifyPlaylistSearchService playlistSearchService;
     private final SpotifyClientCredentialsAuthentication authController;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
      * PlaylistSearchControllerのコンストラクタ
      *
      * @param playlistSearchService Spotifyプレイリスト検索サービス
      * @param authController        Spotify認証コントローラー
+     * @param request               HTTPリクエスト
      */
     public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService,
-                                    SpotifyClientCredentialsAuthentication authController) {
+                                    SpotifyClientCredentialsAuthentication authController,
+                                    HttpServletRequest request) {
         this.playlistSearchService = playlistSearchService;
         this.authController = authController;
+        this.request = request;
     }
 
     /**
@@ -116,12 +121,13 @@ public class PlaylistSearchController {
                 HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
                 String errorCode = "SYSTEM_UNEXPECTED_ERROR";
                 String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
+                String requestParams = getRequestParams(); // リクエストパラメータを取得
 
                 // エラーログに記録
-                logger.error("Unexpected error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
+                logger.error("Unexpected error occurred while searching playlists: {} - {} - {} - リクエストパラメータ: {}", status, errorCode, message, requestParams, e);
 
                 // エラーレスポンスを返す
-                ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
+                ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, "リクエストパラメータ: " + requestParams);
                 return new ResponseEntity<>(errorResponse, status);
             }
         }
@@ -132,5 +138,17 @@ public class PlaylistSearchController {
         String message = "Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。";
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
         return new ResponseEntity<>(errorResponse, status);
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }

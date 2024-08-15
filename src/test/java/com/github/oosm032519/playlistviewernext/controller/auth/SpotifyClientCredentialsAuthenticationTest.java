@@ -2,6 +2,7 @@ package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +19,9 @@ class SpotifyClientCredentialsAuthenticationTest {
 
     @Mock
     private SpotifyAuthService authService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @InjectMocks
     private SpotifyClientCredentialsAuthentication authController;

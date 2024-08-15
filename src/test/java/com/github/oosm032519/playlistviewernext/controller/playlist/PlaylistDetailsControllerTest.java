@@ -6,6 +6,7 @@ import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class PlaylistDetailsControllerTest {
 
     @Mock
     private PlaylistAnalyticsService playlistAnalyticsService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @Mock
     private TrackRecommendationService trackRecommendationService;

@@ -2,6 +2,7 @@ package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,15 +18,18 @@ public class SpotifyClientCredentialsAuthentication {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyClientCredentialsAuthentication.class);
 
     private final SpotifyAuthService authService;
+    private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
      * コンストラクタでSpotifyAuthServiceをインジェクション。
      *
      * @param authService Spotifyの認証サービス
+     * @param request     HTTPリクエスト
      */
     @Autowired
-    public SpotifyClientCredentialsAuthentication(SpotifyAuthService authService) {
+    public SpotifyClientCredentialsAuthentication(SpotifyAuthService authService, HttpServletRequest request) {
         this.authService = authService;
+        this.request = request;
     }
 
     /**
@@ -43,12 +47,26 @@ public class SpotifyClientCredentialsAuthentication {
         } catch (Exception e) {
             // 認証中に予期しないエラーが発生した場合は SpotifyApiException をスロー
             LOGGER.error("クライアントクレデンシャル認証中に予期しないエラーが発生しました", e);
+            String requestParams = getRequestParams();
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "CLIENT_CREDENTIALS_AUTH_ERROR",
                     "Spotify APIへの接続中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
+                    "リクエストパラメータ: " + requestParams,
                     e
             );
         }
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> {
+            params.append(key).append("=").append(String.join(",", values)).append("&");
+        });
+        if (params.length() > 0) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 }
