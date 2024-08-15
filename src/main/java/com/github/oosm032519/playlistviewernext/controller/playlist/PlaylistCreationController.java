@@ -4,12 +4,15 @@ import com.github.oosm032519.playlistviewernext.exception.AuthenticationExceptio
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +28,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/playlists")
+@Validated
 public class PlaylistCreationController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistCreationController.class);
@@ -55,7 +59,7 @@ public class PlaylistCreationController {
      * @return プレイリスト作成の結果を含むResponseEntity
      */
     @PostMapping("/create")
-    public ResponseEntity<String> createPlaylist(@RequestBody List<String> trackIds,
+    public ResponseEntity<String> createPlaylist(@Valid @RequestBody @NotEmpty List<String> trackIds,
                                                  @AuthenticationPrincipal OAuth2User principal) {
         logger.info("プレイリスト作成リクエストを受信しました。トラックID数: {}", trackIds.size());
 

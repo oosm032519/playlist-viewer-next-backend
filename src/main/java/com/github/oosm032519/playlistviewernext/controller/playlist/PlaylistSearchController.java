@@ -4,10 +4,14 @@ import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCre
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/playlists/search")
+@Validated
 public class PlaylistSearchController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistSearchController.class);
@@ -55,9 +60,9 @@ public class PlaylistSearchController {
      */
     @GetMapping
     public ResponseEntity<?> searchPlaylists(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "20") int limit) {
+            @RequestParam @NotBlank String query,
+            @RequestParam(defaultValue = "0") @Min(0) int offset,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) {
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
 
         int retryCount = 0;

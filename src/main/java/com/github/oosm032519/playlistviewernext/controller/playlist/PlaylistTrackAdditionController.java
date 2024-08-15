@@ -5,12 +5,14 @@ import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +24,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/playlist")
+@Validated
 public class PlaylistTrackAdditionController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistTrackAdditionController.class);
@@ -43,7 +46,7 @@ public class PlaylistTrackAdditionController {
      * @return トラック追加の結果を含むレスポンスエンティティ
      */
     @PostMapping("/add-track")
-    public ResponseEntity<Map<String, String>> addTrackToPlaylist(@RequestBody PlaylistTrackAdditionRequest request,
+    public ResponseEntity<Map<String, String>> addTrackToPlaylist(@Valid @RequestBody PlaylistTrackAdditionRequest request,
                                                                   @AuthenticationPrincipal OAuth2User principal) {
         logger.info("トラック追加リクエストを受信しました。プレイリストID: {}, トラックID: {}", request.getPlaylistId(), request.getTrackId());
 

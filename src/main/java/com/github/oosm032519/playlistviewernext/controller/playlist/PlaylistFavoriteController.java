@@ -3,6 +3,9 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.MessageDigest;
@@ -18,6 +22,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/playlists")
+@Validated
 public class PlaylistFavoriteController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistFavoriteController.class);
@@ -30,10 +35,10 @@ public class PlaylistFavoriteController {
 
     @PostMapping("/favorite")
     public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
-                                                                @RequestParam String playlistId,
-                                                                @RequestParam String playlistName,
-                                                                @RequestParam int totalTracks,
-                                                                @RequestParam String playlistOwnerName
+                                                                @RequestParam @NotBlank String playlistId,
+                                                                @RequestParam @NotBlank String playlistName,
+                                                                @RequestParam @NotNull @PositiveOrZero int totalTracks,
+                                                                @RequestParam @NotBlank String playlistOwnerName
     ) {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
@@ -95,7 +100,7 @@ public class PlaylistFavoriteController {
     @DeleteMapping("/favorite")
     @Transactional
     public ResponseEntity<Map<String, Object>> unfavoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
-                                                                  @RequestParam String playlistId) {
+                                                                  @RequestParam @NotBlank String playlistId) {
         logger.info("プレイリストお気に入り解除リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = principal.getAttribute("id");
@@ -174,7 +179,7 @@ public class PlaylistFavoriteController {
 
     @GetMapping("/favoriteCheck")
     public ResponseEntity<Boolean> checkFavorite(@AuthenticationPrincipal OAuth2User principal,
-                                                 @RequestParam String playlistId) {
+                                                 @RequestParam @NotBlank String playlistId) {
         logger.info("プレイリストお気に入り確認リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = principal.getAttribute("id");

@@ -3,12 +3,15 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/session")
+@Validated
 public class SessionIdController {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionIdController.class);
@@ -26,7 +30,7 @@ public class SessionIdController {
     private RedisTemplate<String, String> redisTemplate;
 
     @PostMapping("/sessionId")
-    public ResponseEntity<?> getSessionId(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> getSessionId(@Valid @RequestBody Map<String, @NotBlank String> body) {
         logger.info("セッションID取得処理を開始します。リクエストボディ: {}", body);
 
         String temporaryToken = body.get("temporaryToken");
