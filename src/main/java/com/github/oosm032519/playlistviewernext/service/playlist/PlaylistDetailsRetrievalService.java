@@ -107,10 +107,10 @@ public class PlaylistDetailsRetrievalService {
     }
 
     private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues) {
-        logger.info("getPlaylistDetails: 最大オーディオフィーチャー: {}", maxAudioFeatures);
-        logger.info("getPlaylistDetails: 最小オーディオフィーチャー: {}", minAudioFeatures);
-        logger.info("getPlaylistDetails: 中央オーディオフィーチャー: {}", medianAudioFeatures);
-        logger.info("getPlaylistDetails: 平均オーディオフィーチャー: {}", averageAudioFeatures);
+        logger.info("getPlaylistDetails: 最大AudioFeatures: {}", maxAudioFeatures);
+        logger.info("getPlaylistDetails: 最小AudioFeatures: {}", minAudioFeatures);
+        logger.info("getPlaylistDetails: 中央AudioFeatures: {}", medianAudioFeatures);
+        logger.info("getPlaylistDetails: 平均AudioFeatures: {}", averageAudioFeatures);
         logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
     }
 

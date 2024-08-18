@@ -26,10 +26,10 @@ public class TrackRecommendationService {
      * トラックの推薦リストを取得する
      *
      * @param genres              推薦に使用する上位5つのジャンルのリスト
-     * @param maxAudioFeatures    オーディオ特徴量の最大値を含むマップ
-     * @param minAudioFeatures    オーディオ特徴量の最小値を含むマップ
-     * @param medianAudioFeatures オーディオ特徴量の中央値を含むマップ
-     * @param modeValues          オーディオ特徴量の最頻値を含むマップ
+     * @param maxAudioFeatures    AudioFeaturesの最大値を含むマップ
+     * @param minAudioFeatures    AudioFeaturesの最小値を含むマップ
+     * @param medianAudioFeatures AudioFeaturesの中央値を含むマップ
+     * @param modeValues          AudioFeaturesの最頻値を含むマップ
      * @return 推薦されたトラックのリスト
      * @throws SpotifyApiException トラックの推薦中にエラーが発生した場合
      */

@@ -10,8 +10,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリストのオーディオフィーチャーの中央値を計算するサービスクラス
- * トラックリストから各オーディオフィーチャーの中央値を算出する
+ * プレイリストのAudioFeaturesの中央値を計算するサービスクラス
+ * トラックリストから各AudioFeaturesの中央値を算出する
  */
 @Service
 public class MedianAudioFeaturesCalculator {
@@ -19,8 +19,8 @@ public class MedianAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MedianAudioFeaturesCalculator.class);
 
     /**
-     * 計算対象のオーディオフィーチャーのキーリスト
-     * これらのフィーチャーの中央値が計算される
+     * 計算対象のAudioFeaturesのキーリスト
+     * これらのAudioFeaturesの中央値が計算される
      */
     private static final List<String> FEATURE_KEYS = Arrays.asList(
             "danceability", "energy", "valence", "tempo",
@@ -28,11 +28,11 @@ public class MedianAudioFeaturesCalculator {
     );
 
     /**
-     * トラックリストのオーディオフィーチャーの中央値を計算する
+     * トラックリストのAudioFeaturesの中央値を計算する
      *
-     * @param trackList 各トラックのオーディオフィーチャーを含むリスト
-     * @return 各オーディオフィーチャーの中央値を含むマップ
-     * @throws PlaylistViewerNextException 中央オーディオフィーチャーの計算中にエラーが発生した場合
+     * @param trackList 各トラックのAudioFeaturesを含むリスト
+     * @return 各AudioFeaturesの中央値を含むマップ
+     * @throws PlaylistViewerNextException 中央AudioFeaturesの計算中にエラーが発生した場合
      */
     public Map<String, Float> calculateMedianAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMedianAudioFeatures: 計算開始");
@@ -40,7 +40,7 @@ public class MedianAudioFeaturesCalculator {
         try {
             Map<String, List<Float>> featureValues = initializeFeatureValues();
 
-            // 各トラックのオーディオフィーチャーを収集
+            // 各トラックのAudioFeaturesを収集
             for (Map<String, Object> trackData : trackList) {
                 AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
                 if (audioFeatures != null) {
@@ -51,21 +51,21 @@ public class MedianAudioFeaturesCalculator {
             // 中央値を計算
             Map<String, Float> medianAudioFeatures = calculateMedians(featureValues);
 
-            logger.info("calculateMedianAudioFeatures: 中央オーディオフィーチャー計算完了: {}", medianAudioFeatures);
+            logger.info("calculateMedianAudioFeatures: 中央AudioFeatures計算完了: {}", medianAudioFeatures);
             return medianAudioFeatures;
         } catch (Exception e) {
-            logger.error("中央オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            logger.error("中央AudioFeaturesの計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "MEDIAN_AUDIO_FEATURES_CALCULATION_ERROR",
-                    "中央オーディオフィーチャーの計算中にエラーが発生しました。",
+                    "中央AudioFeaturesの計算中にエラーが発生しました。",
                     e
             );
         }
     }
 
     /**
-     * フィーチャー値を格納するマップを初期化する
+     * AudioFeaturesを格納するマップを初期化する
      *
      * @return 初期化されたフィーチャー値マップ
      */
@@ -78,10 +78,10 @@ public class MedianAudioFeaturesCalculator {
     }
 
     /**
-     * 指定されたオーディオフィーチャーの値をフィーチャー値マップに追加する
+     * 指定されたAudioFeaturesの値をAudioFeatures値マップに追加する
      *
-     * @param featureValues フィーチャー値を格納するマップ
-     * @param audioFeatures 追加するオーディオフィーチャー
+     * @param featureValues AudioFeatures値を格納するマップ
+     * @param audioFeatures 追加するAudioFeatures
      */
     private void addFeatureValues(Map<String, List<Float>> featureValues, AudioFeatures audioFeatures) {
         featureValues.get("danceability").add(audioFeatures.getDanceability());
@@ -95,10 +95,10 @@ public class MedianAudioFeaturesCalculator {
     }
 
     /**
-     * 各フィーチャーの中央値を計算する
+     * 各AudioFeaturesの中央値を計算する
      *
-     * @param featureValues 各フィーチャーの値リストを含むマップ
-     * @return 各フィーチャーの中央値を含むマップ
+     * @param featureValues 各AudioFeaturesの値リストを含むマップ
+     * @return 各AudioFeaturesの中央値を含むマップ
      */
     private Map<String, Float> calculateMedians(Map<String, List<Float>> featureValues) {
         Map<String, Float> medianAudioFeatures = new HashMap<>();

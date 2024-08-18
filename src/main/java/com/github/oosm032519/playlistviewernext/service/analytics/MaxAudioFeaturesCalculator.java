@@ -10,7 +10,7 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリスト内の楽曲のオーディオ特徴量の最大値を計算するサービスクラス
+ * プレイリスト内の楽曲のAudioFeaturesの最大値を計算するサービスクラス
  * 外れ値を考慮した上限値を計算する
  */
 @Service
@@ -19,10 +19,10 @@ public class MaxAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MaxAudioFeaturesCalculator.class);
 
     /**
-     * 楽曲リストからオーディオ特徴量の最大値を計算する
+     * 楽曲リストからAudioFeaturesの最大値を計算する
      *
-     * @param trackList オーディオ特徴量を含む楽曲データのリスト
-     * @return 各オーディオ特徴量の最大値を含むマップ
+     * @param trackList AudioFeaturesを含む楽曲データのリスト
+     * @return 各AudioFeaturesの最大値を含むマップ
      * @throws PlaylistViewerNextException 計算中にエラーが発生した場合
      */
     public Map<String, Float> calculateMaxAudioFeatures(List<Map<String, Object>> trackList) {
@@ -33,23 +33,23 @@ public class MaxAudioFeaturesCalculator {
             collectAudioFeatures(trackList, audioFeatureValues);
             Map<String, Float> result = calculateUpperBounds(audioFeatureValues);
 
-            logger.info("calculateMaxAudioFeatures: 上限オーディオフィーチャー計算完了: {}", result);
+            logger.info("calculateMaxAudioFeatures: 上限AudioFeatures計算完了: {}", result);
             return result;
         } catch (Exception e) {
-            logger.error("最大オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            logger.error("最大AudioFeaturesの計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "MAX_AUDIO_FEATURES_CALCULATION_ERROR",
-                    "最大オーディオフィーチャーの計算中にエラーが発生しました。",
+                    "最大AudioFeaturesの計算中にエラーが発生しました。",
                     e
             );
         }
     }
 
     /**
-     * オーディオ特徴量の値を格納するマップを初期化する
+     * AudioFeaturesの値を格納するマップを初期化する
      *
-     * @return 初期化されたオーディオ特徴量マップ
+     * @return 初期化されたAudioFeaturesマップ
      */
     private Map<AudioFeatureType, List<Float>> initializeAudioFeatureValues() {
         Map<AudioFeatureType, List<Float>> audioFeatureValues = new EnumMap<>(AudioFeatureType.class);
@@ -60,10 +60,10 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 楽曲リストからオーディオ特徴量を収集する
+     * 楽曲リストからAudioFeaturesを収集する
      *
      * @param trackList          楽曲データのリスト
-     * @param audioFeatureValues 収集したオーディオ特徴量を格納するマップ
+     * @param audioFeatureValues 収集したAudioFeaturesを格納するマップ
      */
     private void collectAudioFeatures(List<Map<String, Object>> trackList, Map<AudioFeatureType, List<Float>> audioFeatureValues) {
         for (Map<String, Object> trackData : trackList) {
@@ -75,10 +75,10 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 収集したオーディオ特徴量から上限値を計算する
+     * 収集したAudioFeaturesから上限値を計算する
      *
-     * @param audioFeatureValues 収集したオーディオ特徴量
-     * @return 各オーディオ特徴量の上限値を含むマップ
+     * @param audioFeatureValues 収集したAudioFeatures
+     * @return 各AudioFeaturesの上限値を含むマップ
      */
     private Map<String, Float> calculateUpperBounds(Map<AudioFeatureType, List<Float>> audioFeatureValues) {
         Map<String, Float> result = new HashMap<>();
@@ -101,9 +101,9 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 個々のAudioFeaturesオブジェクトからオーディオ特徴量を収集する
+     * 個々のAudioFeaturesオブジェクトからAudioFeaturesを収集する
      *
-     * @param audioFeatureValues 収集したオーディオ特徴量を格納するマップ
+     * @param audioFeatureValues 収集したAudioFeaturesを格納するマップ
      * @param audioFeatures      収集対象のAudioFeaturesオブジェクト
      */
     private void collectAudioFeatureValues(Map<AudioFeatureType, List<Float>> audioFeatureValues, AudioFeatures audioFeatures) {
@@ -133,7 +133,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオ特徴量の種類を表す列挙型
+     * AudioFeaturesの種類を表す列挙型
      */
     private enum AudioFeatureType {
         DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS

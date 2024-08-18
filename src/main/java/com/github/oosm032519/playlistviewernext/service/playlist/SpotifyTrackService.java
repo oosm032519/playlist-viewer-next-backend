@@ -12,7 +12,7 @@ import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackReq
 
 /**
  * Spotifyトラックに関連するサービスを提供するクラス
- * Spotify APIを使用してトラックのオーディオ特徴を取得する
+ * トラックのAudioFeaturesを取得する
  */
 @Service
 public class SpotifyTrackService {
@@ -38,15 +38,15 @@ public class SpotifyTrackService {
     }
 
     /**
-     * 指定されたトラックIDに対応するオーディオ特徴を取得する
+     * 指定されたトラックIDに対応するAudioFeaturesを取得する
      *
      * @param trackId 取得対象のトラックID
      * @return 指定されたトラックのAudioFeatures
-     * @throws SpotifyApiException オーディオ特徴の取得中にエラーが発生した場合
+     * @throws SpotifyApiException AudioFeaturesの取得中にエラーが発生した場合
      */
     public AudioFeatures getAudioFeaturesForTrack(String trackId) {
         try {
-            // Spotify APIを使用してオーディオ特徴のリクエストを構築
+            // Spotify APIを使用してAudioFeaturesのリクエストを構築
             GetAudioFeaturesForTrackRequest audioFeaturesRequest = spotifyApi.getAudioFeaturesForTrack(trackId).build();
             // リクエストを実行し、結果を返す
             return audioFeaturesRequest.execute();
@@ -57,7 +57,7 @@ public class SpotifyTrackService {
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "AUDIO_FEATURES_RETRIEVAL_ERROR",
-                    "オーディオ特徴の取得中にエラーが発生しました。",
+                    "AudioFeaturesの取得中にエラーが発生しました。",
                     e
             );
         }

@@ -14,8 +14,8 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 /**
- * プレイリストのトラックのオーディオフィーチャーの平均値を計算するサービスクラス
- * トラックリストから各オーディオフィーチャーの平均値を算出する
+ * プレイリストのトラックのAudioFeaturesの平均値を計算するサービスクラス
+ * トラックリストから各AudioFeaturesの平均値を算出する
  */
 @Service
 public class AverageAudioFeaturesCalculator {
@@ -23,11 +23,11 @@ public class AverageAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(AverageAudioFeaturesCalculator.class);
 
     /**
-     * トラックリストのオーディオフィーチャーの平均値を計算するメソッド
+     * トラックリストのAudioFeaturesの平均値を計算するメソッド
      *
-     * @param trackList トラックのリスト（各トラックはオーディオフィーチャーを含むマップ）
-     * @return 各オーディオフィーチャーの平均値を含むマップ
-     * @throws InvalidRequestException トラックリストが空、またはオーディオフィーチャーがnullの場合
+     * @param trackList トラックのリスト（各トラックはAudioFeaturesを含むマップ）
+     * @return 各AudioFeaturesの平均値を含むマップ
+     * @throws InvalidRequestException トラックリストが空、またはAudioFeaturesがnullの場合
      * @throws RuntimeException        予期しないエラーが発生した場合
      */
     public Map<String, Float> calculateAverageAudioFeatures(List<Map<String, Object>> trackList) {
@@ -44,21 +44,21 @@ public class AverageAudioFeaturesCalculator {
         }
 
         try {
-            // 各オーディオフィーチャーの合計値を格納するマップを初期化
+            // 各AudioFeaturesの合計値を格納するマップを初期化
             Map<AudioFeature, Double> audioFeaturesSum = new EnumMap<>(AudioFeature.class);
             for (AudioFeature feature : AudioFeature.values()) {
                 audioFeaturesSum.put(feature, 0.0);
             }
 
-            // 各トラックのオーディオフィーチャーを合計
+            // 各トラックのAudioFeaturesを合計
             for (Map<String, Object> trackData : trackList) {
                 AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
                 if (audioFeatures == null) {
-                    logger.warn("トラックデータにオーディオフィーチャーが含まれていません。 trackData: {}", trackData);
+                    logger.warn("トラックデータにAudioFeaturesが含まれていません。 trackData: {}", trackData);
                     throw new InvalidRequestException(
                             HttpStatus.BAD_REQUEST,
                             "NULL_AUDIO_FEATURES",
-                            "オーディオフィーチャーがnullです。"
+                            "AudioFeaturesがnullです。"
                     );
                 }
 
@@ -74,7 +74,7 @@ public class AverageAudioFeaturesCalculator {
                             entry -> (float) (entry.getValue() / trackList.size())
                     ));
 
-            logger.info("calculateAverageAudioFeatures: 平均オーディオフィーチャー計算完了: {}", averageAudioFeatures);
+            logger.info("calculateAverageAudioFeatures: 平均AudioFeatures計算完了: {}", averageAudioFeatures);
 
             return averageAudioFeatures;
         } catch (InvalidRequestException e) {
@@ -82,14 +82,14 @@ public class AverageAudioFeaturesCalculator {
             throw e;
         } catch (Exception e) {
             // 予期しないエラーが発生した場合は、RuntimeExceptionをスロー
-            logger.error("平均オーディオフィーチャーの計算中に予期しないエラーが発生しました。", e);
-            throw new RuntimeException("平均オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            logger.error("平均AudioFeaturesの計算中に予期しないエラーが発生しました。", e);
+            throw new RuntimeException("平均AudioFeaturesの計算中にエラーが発生しました。", e);
         }
     }
 
     /**
-     * オーディオフィーチャーの種類を定義する列挙型
-     * 各フィーチャーにはAudioFeaturesオブジェクトから値を抽出する関数が関連付けられている
+     * AudioFeaturesの種類を定義する列挙型
+     * 各AudioFeaturesにはAudioFeaturesオブジェクトから値を抽出する関数が関連付けられている
      */
     private enum AudioFeature {
         DANCEABILITY(AudioFeatures::getDanceability),

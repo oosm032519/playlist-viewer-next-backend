@@ -63,7 +63,7 @@ class SpotifyTrackServiceTest {
 
         assertThatThrownBy(() -> trackService.getAudioFeaturesForTrack(trackId))
                 .isInstanceOf(SpotifyApiException.class)
-                .hasMessageContaining("オーディオ特徴の取得中にエラーが発生しました。");
+                .hasMessageContaining("AudioFeaturesの取得中にエラーが発生しました。");
     }
 
     @Test

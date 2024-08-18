@@ -32,7 +32,7 @@ public class SpotifyRecommendationService {
      * SpotifyRecommendationServiceのコンストラクタ。
      *
      * @param spotifyApi         Spotify APIクライアント
-     * @param audioFeatureSetter オーディオ特徴を設定するユーティリティ
+     * @param audioFeatureSetter AudioFeaturesを設定するユーティリティ
      */
     @Autowired
     public SpotifyRecommendationService(SpotifyApi spotifyApi, AudioFeatureSetter audioFeatureSetter) {
@@ -44,9 +44,9 @@ public class SpotifyRecommendationService {
      * 指定されたパラメータに基づいて推奨トラックのリストを取得します。
      *
      * @param seedGenres          ジャンルのシードリスト
-     * @param maxAudioFeatures    最大オーディオ特徴値のマップ
-     * @param minAudioFeatures    最小オーディオ特徴値のマップ
-     * @param medianAudioFeatures 中央値のオーディオ特徴値のマップ
+     * @param maxAudioFeatures    最大AudioFeaturesのマップ
+     * @param minAudioFeatures    最小AudioFeaturesのマップ
+     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
      * @param modeValues          モード値のマップ
      * @return 推奨トラックのリスト
      * @throws SpotifyApiException Spotify APIの呼び出し中にエラーが発生した場合
@@ -87,9 +87,9 @@ public class SpotifyRecommendationService {
      * 推奨リクエストを作成します。
      *
      * @param seedGenres          ジャンルのシードリスト
-     * @param maxAudioFeatures    最大オーディオ特徴値のマップ
-     * @param minAudioFeatures    最小オーディオ特徴値のマップ
-     * @param medianAudioFeatures 中央値のオーディオ特徴値のマップ
+     * @param maxAudioFeatures    最大AudioFeaturesのマップ
+     * @param minAudioFeatures    最小AudioFeaturesのマップ
+     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
      * @param modeValues          モード値のマップ
      * @return 構築されたGetRecommendationsRequest
      */
@@ -100,7 +100,7 @@ public class SpotifyRecommendationService {
                 .seed_genres(genres)
                 .limit(20);
 
-        // オーディオ特徴とモード値を設定
+        // AudioFeaturesとモード値を設定
         audioFeatureSetter.setMaxAudioFeatures(recommendationsRequestBuilder, maxAudioFeatures);
         audioFeatureSetter.setMinAudioFeatures(recommendationsRequestBuilder, minAudioFeatures);
         audioFeatureSetter.setMedianAudioFeatures(recommendationsRequestBuilder, medianAudioFeatures);

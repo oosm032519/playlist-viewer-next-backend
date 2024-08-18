@@ -10,8 +10,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリストの楽曲の最小オーディオフィーチャーを計算するサービスクラス
- * 与えられた楽曲リストから各オーディオフィーチャーの下限値を算出する
+ * プレイリストの楽曲の最小AudioFeaturesを計算するサービスクラス
+ * 与えられた楽曲リストから各AudioFeaturesの下限値を算出する
  */
 @Service
 public class MinAudioFeaturesCalculator {
@@ -19,10 +19,10 @@ public class MinAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculator.class);
 
     /**
-     * 楽曲リストから最小オーディオフィーチャーを計算する
+     * 楽曲リストから最小AudioFeaturesを計算する
      *
      * @param trackList 楽曲データのリスト。各楽曲はMap形式で、"audioFeatures"キーにAudioFeaturesオブジェクトを含む
-     * @return 各オーディオフィーチャーの下限値を含むMap。キーはフィーチャー名（小文字）、値は下限値
+     * @return 各AudioFeaturesの下限値を含むMap。キーはフィーチャー名（小文字）、値は下限値
      * @throws PlaylistViewerNextException 計算中にエラーが発生した場合
      */
     public Map<String, Float> calculateMinAudioFeatures(List<Map<String, Object>> trackList) {
@@ -43,24 +43,24 @@ public class MinAudioFeaturesCalculator {
 
             Map<String, Float> result = calculateLowerBounds(audioFeatureValues);
 
-            logger.info("calculateMinAudioFeatures: 下限オーディオフィーチャー計算完了: {}", result);
+            logger.info("calculateMinAudioFeatures: 下限AudioFeatures計算完了: {}", result);
             return result;
         } catch (Exception e) {
-            logger.error("最小オーディオフィーチャーの計算中にエラーが発生しました。", e);
+            logger.error("最小AudioFeaturesの計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "MIN_AUDIO_FEATURES_CALCULATION_ERROR",
-                    "最小オーディオフィーチャーの計算中にエラーが発生しました。",
+                    "最小AudioFeaturesの計算中にエラーが発生しました。",
                     e
             );
         }
     }
 
     /**
-     * AudioFeaturesオブジェクトから各オーディオフィーチャーの値を収集する
+     * AudioFeaturesオブジェクトから各AudioFeaturesの値を収集する
      *
-     * @param audioFeatureValues 各フィーチャーの値を格納するMap
-     * @param audioFeatures      楽曲のオーディオフィーチャー情報
+     * @param audioFeatureValues 各AudioFeaturesの値を格納するMap
+     * @param audioFeatures      楽曲のAudioFeatures情報
      */
     private void collectAudioFeatureValues(Map<AudioFeatureType, List<Float>> audioFeatureValues, AudioFeatures audioFeatures) {
         audioFeatureValues.get(AudioFeatureType.DANCEABILITY).add(audioFeatures.getDanceability());
@@ -74,11 +74,11 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * 各オーディオフィーチャーの下限値を計算する
+     * 各AudioFeaturesの下限値を計算する
      * 四分位数範囲（IQR）法を使用して外れ値を考慮した下限を算出する
      *
-     * @param audioFeatureValues 各フィーチャーの値のリストを含むMap
-     * @return 各フィーチャーの下限値を含むMap
+     * @param audioFeatureValues 各AudioFeaturesの値のリストを含むMap
+     * @return 各AudioFeaturesの下限値を含むMap
      */
     private Map<String, Float> calculateLowerBounds(Map<AudioFeatureType, List<Float>> audioFeatureValues) {
         Map<String, Float> result = new HashMap<>();
@@ -116,7 +116,7 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオフィーチャーの種類を表す列挙型
+     * AudioFeaturesの種類を表す列挙型
      */
     private enum AudioFeatureType {
         DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS

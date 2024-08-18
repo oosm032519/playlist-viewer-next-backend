@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * トラックリストの音楽特性の最頻値を計算するサービスクラス
+ * トラックリストのAudioFeaturesの最頻値を計算するサービスクラス
  */
 @Service
 public class ModeValuesCalculator {
@@ -22,9 +22,9 @@ public class ModeValuesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(ModeValuesCalculator.class);
 
     /**
-     * トラックリストから音楽特性の最頻値を計算する
+     * トラックリストからAudioFeaturesの最頻値を計算する
      *
-     * @param trackList 音楽特性を含むトラックのリスト
+     * @param trackList AudioFeaturesを含むトラックのリスト
      * @return 計算された最頻値のマップ
      * @throws PlaylistViewerNextException 計算中にエラーが発生した場合
      */
@@ -35,7 +35,7 @@ public class ModeValuesCalculator {
             Map<String, List<Integer>> numericFeatureValues = initializeNumericFeatureValues();
             Map<String, List<String>> stringFeatureValues = initializeStringFeatureValues();
 
-            // 各トラックの音楽特性を収集
+            // 各トラックのAudioFeaturesを収集
             trackList.forEach(trackData -> {
                 AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
                 if (audioFeatures != null) {
@@ -88,7 +88,7 @@ public class ModeValuesCalculator {
      * 数値特性を収集する
      *
      * @param numericFeatureValues 数値特性を格納するマップ
-     * @param audioFeatures        音楽特性オブジェクト
+     * @param audioFeatures        AudioFeaturesオブジェクト
      */
     private void collectNumericFeatures(Map<String, List<Integer>> numericFeatureValues, AudioFeatures audioFeatures) {
         numericFeatureValues.get("key").add(audioFeatures.getKey());
@@ -99,7 +99,7 @@ public class ModeValuesCalculator {
      * 文字列特性を収集する
      *
      * @param stringFeatureValues 文字列特性を格納するマップ
-     * @param audioFeatures       音楽特性オブジェクト
+     * @param audioFeatures       AudioFeaturesオブジェクト
      */
     private void collectStringFeatures(Map<String, List<String>> stringFeatureValues, AudioFeatures audioFeatures) {
         stringFeatureValues.get("mode").add(audioFeatures.getMode().toString());

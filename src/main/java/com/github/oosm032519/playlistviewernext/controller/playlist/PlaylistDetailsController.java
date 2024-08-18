@@ -105,7 +105,7 @@ public class PlaylistDetailsController {
         Map<String, Integer> genreCounts = playlistAnalyticsService.getGenreCountsForPlaylist(id);
         List<String> top5Genres = playlistAnalyticsService.getTop5GenresForPlaylist(id);
 
-        // オーディオフィーチャーの統計情報を取得
+        // AudioFeaturesの統計情報を取得
         Map<String, Float> maxAudioFeatures = (Map<String, Float>) response.get("maxAudioFeatures");
         Map<String, Float> minAudioFeatures = (Map<String, Float>) response.get("minAudioFeatures");
         Map<String, Float> medianAudioFeatures = (Map<String, Float>) response.get("medianAudioFeatures");
@@ -131,10 +131,10 @@ public class PlaylistDetailsController {
      *
      * @param genreCounts         ジャンルごとの曲数
      * @param top5Genres          上位5つのジャンル
-     * @param maxAudioFeatures    最大オーディオフィーチャー値
-     * @param minAudioFeatures    最小オーディオフィーチャー値
-     * @param medianAudioFeatures 中央値のオーディオフィーチャー
-     * @param modeValues          最頻値のオーディオフィーチャー
+     * @param maxAudioFeatures    最大AudioFeatures
+     * @param minAudioFeatures    最小AudioFeatures
+     * @param medianAudioFeatures 中央値のAudioFeatures
+     * @param modeValues          最頻値のAudioFeatures
      * @param recommendations     推奨トラックリスト
      */
     private void logPlaylistDetails(Map<String, Integer> genreCounts, List<String> top5Genres,
@@ -143,9 +143,9 @@ public class PlaylistDetailsController {
                                     List<Track> recommendations) {
         logger.info("ジャンル数: {}", genreCounts);
         logger.info("トップ5ジャンル: {}", top5Genres);
-        logger.info("最大オーディオフィーチャー: {}", maxAudioFeatures);
-        logger.info("最小オーディオフィーチャー: {}", minAudioFeatures);
-        logger.info("中央オーディオフィーチャー: {}", medianAudioFeatures);
+        logger.info("最大AudioFeatures: {}", maxAudioFeatures);
+        logger.info("最小AudioFeatures: {}", minAudioFeatures);
+        logger.info("中央AudioFeatures: {}", medianAudioFeatures);
         logger.info("最頻値: {}", modeValues);
         logger.info("推奨トラック数: {}", recommendations.size());
     }

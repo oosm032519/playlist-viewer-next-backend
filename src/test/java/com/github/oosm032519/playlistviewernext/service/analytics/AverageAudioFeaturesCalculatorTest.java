@@ -89,6 +89,6 @@ public class AverageAudioFeaturesCalculatorTest {
         // Assert that the custom exception is thrown
         assertThatThrownBy(() -> calculator.calculateAverageAudioFeatures(trackList))
                 .isInstanceOf(InvalidRequestException.class)
-                .hasMessageContaining("オーディオフィーチャーがnullです。");
+                .hasMessageContaining("AudioFeaturesがnullです。");
     }
 }

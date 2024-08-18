@@ -10,30 +10,30 @@ import java.util.function.BiConsumer;
 public class AudioFeatureSetter {
 
     /**
-     * GetRecommendationsRequest.Builderに最大オーディオ特徴量を設定する
+     * GetRecommendationsRequest.Builderに最大AudioFeaturesを設定する
      *
      * @param builder          GetRecommendationsRequest.Builderオブジェクト
-     * @param maxAudioFeatures 最大オーディオ特徴量のマップ
+     * @param maxAudioFeatures 最大AudioFeaturesのマップ
      */
     public void setMaxAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> maxAudioFeatures) {
         setAudioFeatures(builder, maxAudioFeatures, this::setMaxFeature);
     }
 
     /**
-     * GetRecommendationsRequest.Builderに最小オーディオ特徴量を設定する
+     * GetRecommendationsRequest.Builderに最小AudioFeaturesを設定する
      *
      * @param builder          GetRecommendationsRequest.Builderオブジェクト
-     * @param minAudioFeatures 最小オーディオ特徴量のマップ
+     * @param minAudioFeatures 最小AudioFeaturesのマップ
      */
     public void setMinAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> minAudioFeatures) {
         setAudioFeatures(builder, minAudioFeatures, this::setMinFeature);
     }
 
     /**
-     * GetRecommendationsRequest.Builderに中央値のオーディオ特徴量を設定する
+     * GetRecommendationsRequest.Builderに中央値のAudioFeaturesを設定する
      *
      * @param builder             GetRecommendationsRequest.Builderオブジェクト
-     * @param medianAudioFeatures 中央値のオーディオ特徴量のマップ
+     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
      */
     public void setMedianAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> medianAudioFeatures) {
         setAudioFeatures(builder, medianAudioFeatures, this::setMedianFeature);
