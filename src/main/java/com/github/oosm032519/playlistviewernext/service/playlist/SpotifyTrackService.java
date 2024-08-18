@@ -11,8 +11,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
 
 /**
- * Spotifyトラックに関連するサービスを提供するクラス。
- * このクラスは、Spotify APIを使用してトラックのオーディオ特徴を取得します。
+ * Spotifyトラックに関連するサービスを提供するクラス
+ * Spotify APIを使用してトラックのオーディオ特徴を取得する
  */
 @Service
 public class SpotifyTrackService {
@@ -28,7 +28,7 @@ public class SpotifyTrackService {
     private final SpotifyApi spotifyApi;
 
     /**
-     * SpotifyTrackServiceのコンストラクタ。
+     * SpotifyTrackServiceのコンストラクタ
      *
      * @param spotifyApi Spotify APIとの通信に使用するSpotifyApiインスタンス
      */
@@ -38,7 +38,7 @@ public class SpotifyTrackService {
     }
 
     /**
-     * 指定されたトラックIDに対応するオーディオ特徴を取得します。
+     * 指定されたトラックIDに対応するオーディオ特徴を取得する
      *
      * @param trackId 取得対象のトラックID
      * @return 指定されたトラックのAudioFeatures

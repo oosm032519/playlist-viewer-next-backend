@@ -6,13 +6,13 @@ import org.springframework.stereotype.Component;
 
 /**
  * ユーザー認証サービスクラス
- * OAuth2ユーザーのアクセストークンを取得するメソッドを提供します。
+ * OAuth2ユーザーのアクセストークンを取得するメソッドを提供する
  */
 @Component
 public class UserAuthenticationService {
 
     /**
-     * 現在認証されているユーザーのアクセストークンを取得します。
+     * 現在認証されているユーザーのアクセストークンを取得する
      *
      * @param principal 認証されたOAuth2ユーザー
      * @return アクセストークン、または認証されていない場合はnull
@@ -25,7 +25,7 @@ public class UserAuthenticationService {
     }
 
     /**
-     * principalがnullかどうかをチェックします。
+     * principalがnullかどうかをチェックする
      *
      * @param principal 認証されたOAuth2ユーザー
      * @return principalがnullの場合はtrue、それ以外はfalse
@@ -35,7 +35,7 @@ public class UserAuthenticationService {
     }
 
     /**
-     * principalの属性からアクセストークンを取得します。
+     * principalの属性からアクセストークンを取得する
      *
      * @param principal 認証されたOAuth2ユーザー
      * @return アクセストークン

@@ -22,9 +22,8 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import java.util.List;
 
 /**
- * Spotifyのプレイリスト検索機能を提供するRESTコントローラー
- * このクラスは、クライアントからのプレイリスト検索リクエストを処理し、
- * SpotifyAPIを使用して検索結果を返します。
+ * プレイリスト検索機能を提供するRESTコントローラ
+ * クライアントからのプレイリスト検索リクエストを処理し、SpotifyAPIを使用して検索結果を返す
  */
 @RestController
 @RequestMapping("/api/playlists/search")
@@ -44,7 +43,7 @@ public class PlaylistSearchController {
      * PlaylistSearchControllerのコンストラクタ
      *
      * @param playlistSearchService Spotifyプレイリスト検索サービス
-     * @param authController        Spotify認証コントローラー
+     * @param authController        Spotify認証コントローラ
      * @param request               HTTPリクエスト
      */
     public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService,
@@ -117,7 +116,7 @@ public class PlaylistSearchController {
                     return new ResponseEntity<>(errorResponse, status);
                 }
             } catch (Exception e) {
-                // 予期しないエラーを処理
+                // 予期しないエラーの処理
                 HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
                 String errorCode = "SYSTEM_UNEXPECTED_ERROR";
                 String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";

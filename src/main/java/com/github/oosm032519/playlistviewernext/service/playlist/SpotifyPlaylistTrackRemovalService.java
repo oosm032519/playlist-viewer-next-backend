@@ -19,8 +19,8 @@ import se.michaelthelin.spotify.requests.data.playlists.RemoveItemsFromPlaylistR
 import java.util.Map;
 
 /**
- * Spotifyのプレイリストからトラックを削除するサービスクラス。
- * このクラスはSpotify APIを使用してプレイリストの操作を行います。
+ * Spotifyのプレイリストからトラックを削除するサービスクラス
+ * このクラスはSpotify APIを使用してプレイリストの操作を行う
  */
 @Service
 public class SpotifyPlaylistTrackRemovalService {
@@ -31,7 +31,7 @@ public class SpotifyPlaylistTrackRemovalService {
     private SpotifyApi spotifyApi;
 
     /**
-     * プレイリストからトラックを削除します。
+     * プレイリストからトラックを削除する
      *
      * @param request   削除リクエスト情報を含むオブジェクト
      * @param principal 認証されたユーザー情報
@@ -78,7 +78,7 @@ public class SpotifyPlaylistTrackRemovalService {
     }
 
     /**
-     * OAuth2Userからアクセストークンを取得します。
+     * OAuth2Userからアクセストークンを取得する
      *
      * @param principal 認証されたユーザー情報
      * @return アクセストークン。トークンが見つからない場合はnull
@@ -95,7 +95,7 @@ public class SpotifyPlaylistTrackRemovalService {
     }
 
     /**
-     * トラックIDからJsonArrayを作成します。
+     * トラックIDからJsonArrayを作成する
      *
      * @param trackId トラックID
      * @return トラック情報を含むJsonArray
@@ -105,7 +105,7 @@ public class SpotifyPlaylistTrackRemovalService {
     }
 
     /**
-     * 成功レスポンスを生成します。
+     * 成功レスポンスを生成する
      *
      * @param snapshotResult 削除操作の結果
      * @return 成功メッセージを含むResponseEntity

@@ -10,8 +10,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリスト内の楽曲のオーディオ特徴量の最大値を計算するサービスクラス。
- * 外れ値を考慮した上限値を計算します。
+ * プレイリスト内の楽曲のオーディオ特徴量の最大値を計算するサービスクラス
+ * 外れ値を考慮した上限値を計算する
  */
 @Service
 public class MaxAudioFeaturesCalculator {
@@ -19,7 +19,7 @@ public class MaxAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MaxAudioFeaturesCalculator.class);
 
     /**
-     * 楽曲リストからオーディオ特徴量の最大値を計算します。
+     * 楽曲リストからオーディオ特徴量の最大値を計算する
      *
      * @param trackList オーディオ特徴量を含む楽曲データのリスト
      * @return 各オーディオ特徴量の最大値を含むマップ
@@ -47,7 +47,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオ特徴量の値を格納するマップを初期化します。
+     * オーディオ特徴量の値を格納するマップを初期化する
      *
      * @return 初期化されたオーディオ特徴量マップ
      */
@@ -60,7 +60,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 楽曲リストからオーディオ特徴量を収集します。
+     * 楽曲リストからオーディオ特徴量を収集する
      *
      * @param trackList          楽曲データのリスト
      * @param audioFeatureValues 収集したオーディオ特徴量を格納するマップ
@@ -75,7 +75,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 収集したオーディオ特徴量から上限値を計算します。
+     * 収集したオーディオ特徴量から上限値を計算する
      *
      * @param audioFeatureValues 収集したオーディオ特徴量
      * @return 各オーディオ特徴量の上限値を含むマップ
@@ -101,7 +101,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * 個々のAudioFeaturesオブジェクトからオーディオ特徴量を収集します。
+     * 個々のAudioFeaturesオブジェクトからオーディオ特徴量を収集する
      *
      * @param audioFeatureValues 収集したオーディオ特徴量を格納するマップ
      * @param audioFeatures      収集対象のAudioFeaturesオブジェクト
@@ -118,7 +118,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * ソートされた値のリストから指定された四分位数を計算します。
+     * ソートされた値のリストから指定された四分位数を計算する
      *
      * @param sortedValues ソートされた値のリスト
      * @param quartile     計算する四分位数（0.25 = 第1四分位数, 0.75 = 第3四分位数）
@@ -133,7 +133,7 @@ public class MaxAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオ特徴量の種類を表す列挙型。
+     * オーディオ特徴量の種類を表す列挙型
      */
     private enum AudioFeatureType {
         DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS

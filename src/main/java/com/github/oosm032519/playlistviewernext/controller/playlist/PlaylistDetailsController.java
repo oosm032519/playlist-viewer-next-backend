@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * プレイリストの詳細情報を提供するコントローラークラス。
- * このクラスは、プレイリストの詳細情報の取得、分析、および推奨トラックの提供を行います。
+ * プレイリストの詳細情報を提供するコントローラークラス
+ * プレイリストの詳細情報の取得、分析、および推奨トラックの提供を行う
  */
 @RestController
 @RequestMapping("/api/playlists")
@@ -37,8 +37,7 @@ public class PlaylistDetailsController {
     private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
-     * PlaylistDetailsControllerのコンストラクタ。
-     * 必要なサービスを注入します。
+     * PlaylistDetailsControllerのコンストラクタ
      *
      * @param playlistDetailsRetrievalService プレイリスト詳細取得サービス
      * @param playlistAnalyticsService        プレイリスト分析サービス
@@ -58,7 +57,7 @@ public class PlaylistDetailsController {
     }
 
     /**
-     * 指定されたプレイリストIDに基づいてプレイリストの詳細情報を取得します。
+     * 指定されたプレイリストIDに基づいてプレイリストの詳細情報を取得する
      *
      * @param id 取得するプレイリストのID
      * @return プレイリストの詳細情報を含むResponseEntity
@@ -92,7 +91,7 @@ public class PlaylistDetailsController {
     }
 
     /**
-     * プレイリストの詳細情報を取得し、分析結果と推奨トラックを含めて返します。
+     * プレイリストの詳細情報を取得し、分析結果と推奨トラックを含めて返す
      *
      * @param id プレイリストID
      * @return プレイリストの詳細情報、分析結果、推奨トラックを含むMap
@@ -128,7 +127,7 @@ public class PlaylistDetailsController {
     }
 
     /**
-     * プレイリストの詳細情報をログに記録します。
+     * プレイリストの詳細情報をログに記録する
      *
      * @param genreCounts         ジャンルごとの曲数
      * @param top5Genres          上位5つのジャンル

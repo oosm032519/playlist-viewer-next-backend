@@ -27,7 +27,7 @@ public class TrackDataRetriever {
     }
 
     /**
-     * プレイリストのトラック情報を取得し、リストとして返します。
+     * プレイリストのトラック情報を取得し、リストとして返す
      *
      * @param tracks プレイリストのトラック配列
      * @return トラック情報のリスト

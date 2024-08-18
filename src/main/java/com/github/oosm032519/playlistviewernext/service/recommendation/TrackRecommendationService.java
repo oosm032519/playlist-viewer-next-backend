@@ -23,7 +23,7 @@ public class TrackRecommendationService {
     }
 
     /**
-     * トラックの推薦リストを取得します。
+     * トラックの推薦リストを取得する
      *
      * @param genres              推薦に使用する上位5つのジャンルのリスト
      * @param maxAudioFeatures    オーディオ特徴量の最大値を含むマップ

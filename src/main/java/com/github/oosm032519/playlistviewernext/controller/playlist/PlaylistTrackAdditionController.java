@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * プレイリストトラック追加操作を処理するRESTコントローラー
- * このクラスはSpotify APIを使用してプレイリストにトラックを追加する機能を提供します。
+ * プレイリストトラック追加操作を処理するRESTコントローラ
+ * プレイリストにトラックを追加する機能を提供する
  */
 @RestController
 @RequestMapping("/api/playlist")

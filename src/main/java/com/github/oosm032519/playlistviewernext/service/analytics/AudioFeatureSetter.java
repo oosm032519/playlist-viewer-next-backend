@@ -10,7 +10,7 @@ import java.util.function.BiConsumer;
 public class AudioFeatureSetter {
 
     /**
-     * GetRecommendationsRequest.Builderに最大オーディオ特徴量を設定します。
+     * GetRecommendationsRequest.Builderに最大オーディオ特徴量を設定する
      *
      * @param builder          GetRecommendationsRequest.Builderオブジェクト
      * @param maxAudioFeatures 最大オーディオ特徴量のマップ
@@ -20,7 +20,7 @@ public class AudioFeatureSetter {
     }
 
     /**
-     * GetRecommendationsRequest.Builderに最小オーディオ特徴量を設定します。
+     * GetRecommendationsRequest.Builderに最小オーディオ特徴量を設定する
      *
      * @param builder          GetRecommendationsRequest.Builderオブジェクト
      * @param minAudioFeatures 最小オーディオ特徴量のマップ
@@ -30,7 +30,7 @@ public class AudioFeatureSetter {
     }
 
     /**
-     * GetRecommendationsRequest.Builderに中央値のオーディオ特徴量を設定します。
+     * GetRecommendationsRequest.Builderに中央値のオーディオ特徴量を設定する
      *
      * @param builder             GetRecommendationsRequest.Builderオブジェクト
      * @param medianAudioFeatures 中央値のオーディオ特徴量のマップ
@@ -40,7 +40,7 @@ public class AudioFeatureSetter {
     }
 
     /**
-     * GetRecommendationsRequest.Builderにモード値を設定します。
+     * GetRecommendationsRequest.Builderにモード値を設定する
      *
      * @param builder    GetRecommendationsRequest.Builderオブジェクト
      * @param modeValues モード値のマップ

@@ -17,7 +17,7 @@ public class SpotifyAuthService {
     private final SpotifyApi spotifyApi;
 
     /**
-     * SpotifyAuthServiceのコンストラクタ。
+     * SpotifyAuthServiceのコンストラクタ
      *
      * @param spotifyApi Spotify APIのインスタンス
      */
@@ -27,7 +27,7 @@ public class SpotifyAuthService {
     }
 
     /**
-     * クライアントクレデンシャルフローを使用してSpotify APIのアクセストークンを取得する。
+     * クライアントクレデンシャルフローを使用してSpotify APIのアクセストークンを取得する
      *
      * @throws SpotifyApiException アクセストークンの取得中にエラーが発生した場合
      */

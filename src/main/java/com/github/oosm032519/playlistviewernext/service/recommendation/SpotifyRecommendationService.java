@@ -19,8 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Spotifyの推奨トラックを取得するサービスクラス。
- * このクラスはSpotify APIを使用して、与えられたパラメータに基づいて音楽の推奨を提供します。
+ * 与えられたパラメータに基づいて推奨トラックを取得するサービスクラス
  */
 @Service
 public class SpotifyRecommendationService {

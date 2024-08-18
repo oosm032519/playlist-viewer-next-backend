@@ -10,8 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Spotifyのクライアントクレデンシャル認証を処理するコントローラークラス。
- * このクラスはSpotify APIとの認証プロセスを管理し、エラーハンドリングを行います。
+ * Spotifyのクライアントクレデンシャル認証を処理するコントローラークラス
+ * Spotify APIとの認証プロセスを管理し、エラーハンドリングを行う
  */
 @RestController
 public class SpotifyClientCredentialsAuthentication {
@@ -22,10 +22,10 @@ public class SpotifyClientCredentialsAuthentication {
     private final HttpServletRequest request;
 
     /**
-     * SpotifyClientCredentialsAuthenticationクラスのコンストラクタ。
+     * SpotifyClientCredentialsAuthenticationクラスのコンストラクタ
      *
-     * @param authService Spotifyの認証サービス。クライアントクレデンシャルトークンの取得に使用されます。
-     * @param request     HTTPリクエスト。エラー発生時のリクエストパラメータ取得に使用されます。
+     * @param authService Spotifyの認証サービス。クライアントクレデンシャルトークンの取得に使用される
+     * @param request     HTTPリクエスト。エラー発生時のリクエストパラメータ取得に使用される
      */
     @Autowired
     public SpotifyClientCredentialsAuthentication(SpotifyAuthService authService, HttpServletRequest request) {
@@ -34,8 +34,8 @@ public class SpotifyClientCredentialsAuthentication {
     }
 
     /**
-     * Spotifyのクライアントクレデンシャル認証を実行するメソッド。
-     * 認証に成功した場合はログを出力し、エラーが発生した場合は適切な例外をスローします。
+     * Spotifyのクライアントクレデンシャル認証を実行するメソッド
+     * 認証に成功した場合はログを出力し、エラーが発生した場合は適切な例外をスローする
      *
      * @throws SpotifyApiException 認証プロセス中にエラーが発生した場合
      */
@@ -61,7 +61,7 @@ public class SpotifyClientCredentialsAuthentication {
     }
 
     /**
-     * 現在のHTTPリクエストからすべてのパラメータを取得し、文字列として整形するヘルパーメソッド。
+     * 現在のHTTPリクエストからすべてのパラメータを取得し、文字列として整形するヘルパーメソッド
      *
      * @return リクエストパラメータを含む文字列
      */

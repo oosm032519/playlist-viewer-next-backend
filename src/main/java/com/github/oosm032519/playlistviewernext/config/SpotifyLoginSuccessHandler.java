@@ -23,8 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Spotify認証成功時の処理を行うハンドラークラス。
- * ユーザー情報の取得、JWTトークンの生成、一時トークンの発行などを行います。
+ * Spotify認証成功時の処理を行うハンドラークラス
+ * ユーザー情報の取得、JWTトークンの生成、一時トークンの発行などを行う
  */
 @Component
 public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -43,7 +43,7 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     private SpotifyApi spotifyApi;
 
     /**
-     * コンストラクタ。
+     * コンストラクタ
      *
      * @param jwtUtil JWTユーティリティクラス
      */
@@ -52,7 +52,7 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     }
 
     /**
-     * 認証成功時の処理を行います。
+     * 認証成功時の処理を行う
      *
      * @param request        HTTPリクエスト
      * @param response       HTTPレスポンス
@@ -89,7 +89,7 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     }
 
     /**
-     * SpotifyAPIを使用してユーザー名を取得します。
+     * SpotifyAPIを使用してユーザー名を取得する
      *
      * @param userId             ユーザーID
      * @param spotifyAccessToken Spotifyアクセストークン
@@ -102,7 +102,7 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
             return user.getDisplayName();
         } catch (IOException | SpotifyWebApiException | org.apache.hc.core5.http.ParseException e) {
             logger.error("Spotifyユーザー名の取得中にエラーが発生しました。 userId: {}, spotifyAccessToken: {}", userId, spotifyAccessToken, e);
-            // エラーが発生した場合は、デフォルトでuserIdを返す
+            // エラーが発生した場合はデフォルトでuserIdを返す
             return userId;
         }
     }

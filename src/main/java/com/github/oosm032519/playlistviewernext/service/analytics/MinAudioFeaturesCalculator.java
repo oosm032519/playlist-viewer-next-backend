@@ -10,8 +10,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリストの楽曲の最小オーディオフィーチャーを計算するサービスクラス。
- * このクラスは、与えられた楽曲リストから各オーディオフィーチャーの下限値を算出します。
+ * プレイリストの楽曲の最小オーディオフィーチャーを計算するサービスクラス
+ * 与えられた楽曲リストから各オーディオフィーチャーの下限値を算出する
  */
 @Service
 public class MinAudioFeaturesCalculator {
@@ -19,11 +19,11 @@ public class MinAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MinAudioFeaturesCalculator.class);
 
     /**
-     * 楽曲リストから最小オーディオフィーチャーを計算します。
+     * 楽曲リストから最小オーディオフィーチャーを計算する
      *
-     * @param trackList 楽曲データのリスト。各楽曲はMap形式で、"audioFeatures"キーにAudioFeaturesオブジェクトを含む。
-     * @return 各オーディオフィーチャーの下限値を含むMap。キーはフィーチャー名（小文字）、値は下限値。
-     * @throws PlaylistViewerNextException 計算中にエラーが発生した場合。
+     * @param trackList 楽曲データのリスト。各楽曲はMap形式で、"audioFeatures"キーにAudioFeaturesオブジェクトを含む
+     * @return 各オーディオフィーチャーの下限値を含むMap。キーはフィーチャー名（小文字）、値は下限値
+     * @throws PlaylistViewerNextException 計算中にエラーが発生した場合
      */
     public Map<String, Float> calculateMinAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateMinAudioFeatures: 計算開始");
@@ -57,7 +57,7 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * AudioFeaturesオブジェクトから各オーディオフィーチャーの値を収集します。
+     * AudioFeaturesオブジェクトから各オーディオフィーチャーの値を収集する
      *
      * @param audioFeatureValues 各フィーチャーの値を格納するMap
      * @param audioFeatures      楽曲のオーディオフィーチャー情報
@@ -74,8 +74,8 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * 各オーディオフィーチャーの下限値を計算します。
-     * 四分位数範囲（IQR）法を使用して外れ値を考慮した下限を算出します。
+     * 各オーディオフィーチャーの下限値を計算する
+     * 四分位数範囲（IQR）法を使用して外れ値を考慮した下限を算出する
      *
      * @param audioFeatureValues 各フィーチャーの値のリストを含むMap
      * @return 各フィーチャーの下限値を含むMap
@@ -101,7 +101,7 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * ソートされた値のリストから指定された四分位数を計算します。
+     * ソートされた値のリストから指定された四分位数を計算する
      *
      * @param sortedValues ソートされた値のリスト
      * @param quartile     計算する四分位数（0.25 for Q1, 0.75 for Q3）
@@ -116,7 +116,7 @@ public class MinAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオフィーチャーの種類を表す列挙型。
+     * オーディオフィーチャーの種類を表す列挙型
      */
     private enum AudioFeatureType {
         DANCEABILITY, ENERGY, VALENCE, TEMPO, ACOUSTICNESS, INSTRUMENTALNESS, LIVENESS, SPEECHINESS

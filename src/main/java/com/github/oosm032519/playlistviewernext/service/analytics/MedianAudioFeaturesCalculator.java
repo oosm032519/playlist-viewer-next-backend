@@ -10,8 +10,8 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import java.util.*;
 
 /**
- * プレイリストのオーディオフィーチャーの中央値を計算するサービスクラス。
- * このクラスは、トラックリストから各オーディオフィーチャーの中央値を算出します。
+ * プレイリストのオーディオフィーチャーの中央値を計算するサービスクラス
+ * トラックリストから各オーディオフィーチャーの中央値を算出する
  */
 @Service
 public class MedianAudioFeaturesCalculator {
@@ -19,8 +19,8 @@ public class MedianAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(MedianAudioFeaturesCalculator.class);
 
     /**
-     * 計算対象のオーディオフィーチャーのキーリスト。
-     * これらのフィーチャーの中央値が計算されます。
+     * 計算対象のオーディオフィーチャーのキーリスト
+     * これらのフィーチャーの中央値が計算される
      */
     private static final List<String> FEATURE_KEYS = Arrays.asList(
             "danceability", "energy", "valence", "tempo",
@@ -28,7 +28,7 @@ public class MedianAudioFeaturesCalculator {
     );
 
     /**
-     * トラックリストのオーディオフィーチャーの中央値を計算します。
+     * トラックリストのオーディオフィーチャーの中央値を計算する
      *
      * @param trackList 各トラックのオーディオフィーチャーを含むリスト
      * @return 各オーディオフィーチャーの中央値を含むマップ
@@ -65,7 +65,7 @@ public class MedianAudioFeaturesCalculator {
     }
 
     /**
-     * フィーチャー値を格納するマップを初期化します。
+     * フィーチャー値を格納するマップを初期化する
      *
      * @return 初期化されたフィーチャー値マップ
      */
@@ -78,7 +78,7 @@ public class MedianAudioFeaturesCalculator {
     }
 
     /**
-     * 指定されたオーディオフィーチャーの値をフィーチャー値マップに追加します。
+     * 指定されたオーディオフィーチャーの値をフィーチャー値マップに追加する
      *
      * @param featureValues フィーチャー値を格納するマップ
      * @param audioFeatures 追加するオーディオフィーチャー
@@ -95,7 +95,7 @@ public class MedianAudioFeaturesCalculator {
     }
 
     /**
-     * 各フィーチャーの中央値を計算します。
+     * 各フィーチャーの中央値を計算する
      *
      * @param featureValues 各フィーチャーの値リストを含むマップ
      * @return 各フィーチャーの中央値を含むマップ

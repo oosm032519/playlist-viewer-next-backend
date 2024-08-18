@@ -6,8 +6,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 /**
- * お気に入りプレイリストの応答を表すモデルクラス。
- * このクラスは、お気に入りプレイリストの詳細情報を保持します。
+ * お気に入りプレイリストの応答を表すモデルクラス
+ * お気に入りプレイリストの詳細情報を保持する
  */
 @Getter
 @Setter
@@ -39,7 +39,7 @@ public class FavoritePlaylistResponse {
     private LocalDateTime addedAt;
 
     /**
-     * FavoritePlaylistResponseオブジェクトを生成するコンストラクタ。
+     * FavoritePlaylistResponseオブジェクトを生成するコンストラクタ
      *
      * @param playlistId        プレイリストの一意識別子
      * @param playlistName      プレイリストの名前

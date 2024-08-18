@@ -21,7 +21,7 @@ public class SpotifyArtistService {
     private final SpotifyApi spotifyApi;
 
     /**
-     * SpotifyApiインスタンスを注入するコンストラクタ。
+     * SpotifyApiインスタンスを注入するコンストラクタ
      *
      * @param spotifyApi Spotify APIのインスタンス
      */
@@ -30,7 +30,7 @@ public class SpotifyArtistService {
     }
 
     /**
-     * 指定されたアーティストIDに基づいて、そのアーティストのジャンルを取得します。
+     * 指定されたアーティストIDに基づき、そのアーティストのジャンルを取得する
      *
      * @param artistId アーティストのID
      * @return アーティストのジャンルのリスト

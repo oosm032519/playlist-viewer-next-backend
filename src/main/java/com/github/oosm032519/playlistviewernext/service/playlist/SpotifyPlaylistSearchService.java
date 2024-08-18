@@ -27,7 +27,7 @@ public class SpotifyPlaylistSearchService {
     }
 
     /**
-     * 指定されたクエリに基づいてSpotifyのプレイリストを検索します。
+     * 指定されたクエリに基づいてSpotifyのプレイリストを検索する
      *
      * @param query  検索クエリ
      * @param offset 検索結果のオフセット

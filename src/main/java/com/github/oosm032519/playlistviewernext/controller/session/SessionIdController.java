@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 /**
- * セッションIDを管理するコントローラークラス。
- * 一時トークンを使用してセッションIDを取得し、Redisから削除する機能を提供します。
+ * セッションIDを管理するコントローラークラス
+ * 一時トークンを使用してセッションIDを取得し、Redisから削除する機能を提供する
  */
 @RestController
 @RequestMapping("/api/session")
@@ -34,12 +34,12 @@ public class SessionIdController {
     private RedisTemplate<String, String> redisTemplate;
 
     /**
-     * 一時トークンを使用してセッションIDを取得し、Redisから削除するエンドポイント。
+     * 一時トークンを使用してセッションIDを取得し、Redisから削除するエンドポイント
      *
-     * @param body リクエストボディ。"temporaryToken"キーを含むMap。
-     * @return セッションIDを含むResponseEntity。
-     * @throws InvalidRequestException 一時トークンが提供されていない場合。
-     * @throws DatabaseAccessException Redisアクセス中にエラーが発生した場合。
+     * @param body リクエストボディ。"temporaryToken"キーを含むMap
+     * @return セッションIDを含むResponseEntity
+     * @throws InvalidRequestException 一時トークンが提供されていない場合
+     * @throws DatabaseAccessException Redisアクセス中にエラーが発生した場合
      */
     @PostMapping("/sessionId")
     public ResponseEntity<?> getSessionId(@Valid @RequestBody Map<String, @NotBlank String> body) {

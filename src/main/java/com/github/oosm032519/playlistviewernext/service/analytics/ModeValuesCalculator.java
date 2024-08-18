@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * トラックリストの音楽特性の最頻値を計算するサービスクラス。
+ * トラックリストの音楽特性の最頻値を計算するサービスクラス
  */
 @Service
 public class ModeValuesCalculator {
@@ -22,7 +22,7 @@ public class ModeValuesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(ModeValuesCalculator.class);
 
     /**
-     * トラックリストから音楽特性の最頻値を計算します。
+     * トラックリストから音楽特性の最頻値を計算する
      *
      * @param trackList 音楽特性を含むトラックのリスト
      * @return 計算された最頻値のマップ
@@ -62,7 +62,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 数値特性の初期マップを作成します。
+     * 数値特性の初期マップを作成する
      *
      * @return 初期化された数値特性のマップ
      */
@@ -74,7 +74,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 文字列特性の初期マップを作成します。
+     * 文字列特性の初期マップを作成する
      *
      * @return 初期化された文字列特性のマップ
      */
@@ -85,7 +85,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 数値特性を収集します。
+     * 数値特性を収集する
      *
      * @param numericFeatureValues 数値特性を格納するマップ
      * @param audioFeatures        音楽特性オブジェクト
@@ -96,7 +96,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 文字列特性を収集します。
+     * 文字列特性を収集する
      *
      * @param stringFeatureValues 文字列特性を格納するマップ
      * @param audioFeatures       音楽特性オブジェクト
@@ -106,7 +106,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 特性値の最頻値を計算します。
+     * 特性値の最頻値を計算する
      *
      * @param featureValues 特性値のマップ
      * @param modeValues    結果を格納するマップ
@@ -122,7 +122,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 数値リストの最頻値を計算します。
+     * 数値リストの最頻値を計算する
      *
      * @param values 数値のリスト
      * @return 最頻値
@@ -138,7 +138,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 文字列リストの最頻値を計算します。
+     * 文字列リストの最頻値を計算する
      *
      * @param values 文字列のリスト
      * @return 最頻値
@@ -154,7 +154,7 @@ public class ModeValuesCalculator {
     }
 
     /**
-     * 最頻値計算のための関数インターフェース。
+     * 最頻値計算のための関数インターフェース
      *
      * @param <T> 特性値の型
      */

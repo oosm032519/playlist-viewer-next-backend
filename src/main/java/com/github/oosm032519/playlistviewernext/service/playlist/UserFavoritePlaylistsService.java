@@ -32,7 +32,7 @@ public class UserFavoritePlaylistsService {
     }
 
     /**
-     * 指定されたユーザーIDのお気に入りプレイリストを取得します。
+     * 指定されたユーザーIDのお気に入りプレイリストを取得する
      *
      * @param userId ユーザーID
      * @return お気に入りプレイリストのリスト
@@ -65,7 +65,7 @@ public class UserFavoritePlaylistsService {
     }
 
     /**
-     * UserFavoritePlaylistエンティティをFavoritePlaylistResponseモデルにマッピングします。
+     * UserFavoritePlaylistエンティティをFavoritePlaylistResponseモデルにマッピングする
      *
      * @param favoritePlaylist UserFavoritePlaylistエンティティ
      * @return FavoritePlaylistResponseモデル

@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * JWTを使用した認証フィルター。
- * リクエストごとにJWTトークンを検証し、認証情報をSecurityContextに設定します。
+ * JWTを使用した認証フィルター
+ * リクエストごとにJWTトークンを検証し、認証情報をSecurityContextに設定する
  */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private RedisTemplate<String, String> redisTemplate;
 
     /**
-     * コンストラクタ。
+     * コンストラクタ
      *
      * @param jwtUtil JWTユーティリティクラス
      */
@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * フィルター処理を実行します。
+     * フィルター処理を実行する
      *
      * @param request  HTTPリクエスト
      * @param response HTTPレスポンス
@@ -153,7 +153,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * リクエストからセッションIDを抽出します。
+     * リクエストからセッションIDを抽出する
      *
      * @param request HTTPリクエスト
      * @return セッションID、見つからない場合はnull
@@ -171,7 +171,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * JWTクレームを検証します。
+     * JWTクレームを検証する
      *
      * @param claims 検証するクレーム
      * @return 検証が成功した場合はtrue

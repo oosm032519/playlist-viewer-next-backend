@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * セッション管理を行うコントローラークラス。
+ * セッション管理を行うコントローラークラス
  */
 @RestController
 @RequestMapping("/api/session")
@@ -38,7 +38,7 @@ public class SessionCheckController {
     private RedisTemplate<String, String> redisTemplate;
 
     /**
-     * コンストラクタ。
+     * コンストラクタ
      *
      * @param jwtUtil JWTユーティリティクラス
      */
@@ -48,7 +48,7 @@ public class SessionCheckController {
     }
 
     /**
-     * セッションをチェックするエンドポイント。
+     * セッションをチェックするエンドポイント
      *
      * @param request HTTPリクエスト
      * @return セッションの状態を示すレスポンスエンティティ
@@ -76,7 +76,7 @@ public class SessionCheckController {
     }
 
     /**
-     * リクエストからセッションIDを抽出する。
+     * リクエストからセッションIDを抽出する
      *
      * @param request HTTPリクエスト
      * @return セッションID
@@ -94,7 +94,7 @@ public class SessionCheckController {
     }
 
     /**
-     * セッションの検証を行う。
+     * セッションの検証を行う
      *
      * @param sessionId セッションID
      * @param response  レスポンスマップ
@@ -146,7 +146,7 @@ public class SessionCheckController {
     }
 
     /**
-     * 成功レスポンスを作成する。
+     * 成功レスポンスを作成する
      *
      * @param response レスポンスマップ
      * @param claims   トークンクレーム
@@ -169,7 +169,7 @@ public class SessionCheckController {
     }
 
     /**
-     * ログアウト処理を行うエンドポイント。
+     * ログアウト処理を行うエンドポイント
      *
      * @param request  HTTPリクエスト
      * @param response HTTPレスポンス
@@ -197,7 +197,7 @@ public class SessionCheckController {
     }
 
     /**
-     * ログアウト処理を行う。
+     * ログアウト処理を行う
      *
      * @param sessionId    セッションID
      * @param response     HTTPレスポンス
@@ -252,7 +252,7 @@ public class SessionCheckController {
     }
 
     /**
-     * セッションIDのCookieをクリアする。
+     * セッションIDのCookieをクリアする
      *
      * @param response HTTPレスポンス
      */

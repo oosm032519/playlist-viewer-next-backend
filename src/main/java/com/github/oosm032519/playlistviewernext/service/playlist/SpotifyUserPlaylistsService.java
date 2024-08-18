@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Spotifyユーザーのプレイリスト情報を取得するサービスクラス。
- * このクラスはSpotify APIを使用して、現在認証されているユーザーのプレイリスト一覧を取得します。
+ * Spotifyユーザーのプレイリスト情報を取得するサービスクラス
+ * このクラスはSpotify APIを使用して、現在認証されているユーザーのプレイリスト一覧を取得する
  */
 @Service
 public class SpotifyUserPlaylistsService {
@@ -31,7 +31,7 @@ public class SpotifyUserPlaylistsService {
     private final SpotifyApi spotifyApi;
 
     /**
-     * コンストラクタ。SpotifyApiインスタンスを注入します。
+     * SpotifyApiインスタンスを注入するコンストラクタ
      *
      * @param spotifyApi Spotify APIクライアント
      */
@@ -41,7 +41,7 @@ public class SpotifyUserPlaylistsService {
     }
 
     /**
-     * 現在のユーザーのプレイリスト一覧を取得します。
+     * 現在のユーザーのプレイリスト一覧を取得する
      *
      * @return プレイリストの簡略情報のリスト
      * @throws AuthenticationException 認証エラーが発生した場合
@@ -78,7 +78,7 @@ public class SpotifyUserPlaylistsService {
     }
 
     /**
-     * Spotify APIを使用してプレイリスト一覧を取得します。
+     * Spotify APIを使用してプレイリスト一覧を取得する
      *
      * @return プレイリストの簡略情報のリスト
      * @throws Exception Spotify APIの呼び出し中にエラーが発生した場合

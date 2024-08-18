@@ -21,8 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
- * プレイリストのお気に入り機能を管理するコントローラークラス。
- * ユーザーのプレイリストのお気に入り登録、解除、一覧取得、お気に入り状態の確認を行う。
+ * プレイリストのお気に入り機能を管理するコントローラークラス
+ * ユーザーのプレイリストのお気に入り登録、解除、一覧取得、お気に入り状態の確認を行う
  */
 @RestController
 @RequestMapping("/api/playlists")
@@ -34,7 +34,7 @@ public class PlaylistFavoriteController {
     private final UserFavoritePlaylistRepository userFavoritePlaylistRepository;
 
     /**
-     * コンストラクタ。
+     * コンストラクタ
      *
      * @param userFavoritePlaylistRepository ユーザーのお気に入りプレイリストを管理するリポジトリ
      */
@@ -43,7 +43,7 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * プレイリストをお気に入りに登録する。
+     * プレイリストをお気に入りに登録する
      *
      * @param principal         認証されたユーザー情報
      * @param playlistId        プレイリストID
@@ -104,7 +104,7 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * ユーザーIDをハッシュ化する。
+     * ユーザーIDをハッシュ化する
      *
      * @param userId ハッシュ化するユーザーID
      * @return ハッシュ化されたユーザーID
@@ -121,7 +121,7 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * プレイリストのお気に入り登録を解除する。
+     * プレイリストのお気に入り登録を解除する
      *
      * @param principal  認証されたユーザー情報
      * @param playlistId 解除するプレイリストのID
@@ -169,7 +169,7 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * ユーザーのお気に入りプレイリスト一覧を取得する。
+     * ユーザーのお気に入りプレイリスト一覧を取得する
      *
      * @param principal 認証されたユーザー情報
      * @return お気に入りプレイリスト一覧を含むResponseEntity
@@ -212,7 +212,7 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * 指定されたプレイリストがお気に入りに登録されているかを確認する。
+     * 指定されたプレイリストがお気に入りに登録されているかを確認する
      *
      * @param principal  認証されたユーザー情報
      * @param playlistId 確認するプレイリストのID

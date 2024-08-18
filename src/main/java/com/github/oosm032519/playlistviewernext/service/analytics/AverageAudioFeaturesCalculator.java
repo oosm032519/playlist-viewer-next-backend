@@ -14,8 +14,8 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 /**
- * プレイリストのトラックのオーディオフィーチャーの平均値を計算するサービスクラス。
- * このクラスはSpring Bootのサービスとして機能し、トラックリストから各オーディオフィーチャーの平均値を算出します。
+ * プレイリストのトラックのオーディオフィーチャーの平均値を計算するサービスクラス
+ * トラックリストから各オーディオフィーチャーの平均値を算出する
  */
 @Service
 public class AverageAudioFeaturesCalculator {
@@ -23,7 +23,7 @@ public class AverageAudioFeaturesCalculator {
     private static final Logger logger = LoggerFactory.getLogger(AverageAudioFeaturesCalculator.class);
 
     /**
-     * トラックリストのオーディオフィーチャーの平均値を計算するメソッド。
+     * トラックリストのオーディオフィーチャーの平均値を計算するメソッド
      *
      * @param trackList トラックのリスト（各トラックはオーディオフィーチャーを含むマップ）
      * @return 各オーディオフィーチャーの平均値を含むマップ
@@ -88,8 +88,8 @@ public class AverageAudioFeaturesCalculator {
     }
 
     /**
-     * オーディオフィーチャーの種類を定義する列挙型。
-     * 各フィーチャーにはAudioFeaturesオブジェクトから値を抽出する関数が関連付けられています。
+     * オーディオフィーチャーの種類を定義する列挙型
+     * 各フィーチャーにはAudioFeaturesオブジェクトから値を抽出する関数が関連付けられている
      */
     private enum AudioFeature {
         DANCEABILITY(AudioFeatures::getDanceability),
@@ -104,7 +104,7 @@ public class AverageAudioFeaturesCalculator {
         private final ToDoubleFunction<AudioFeatures> extractor;
 
         /**
-         * AudioFeature列挙型のコンストラクタ。
+         * AudioFeature列挙型のコンストラクタ
          *
          * @param extractor AudioFeaturesオブジェクトから特定のフィーチャー値を抽出する関数
          */
@@ -113,7 +113,7 @@ public class AverageAudioFeaturesCalculator {
         }
 
         /**
-         * 指定されたAudioFeaturesオブジェクトから、このフィーチャーの値を抽出します。
+         * 指定されたAudioFeaturesオブジェクトから、このフィーチャーの値を抽出する
          *
          * @param audioFeatures 値を抽出するAudioFeaturesオブジェクト
          * @return 抽出されたフィーチャーの値

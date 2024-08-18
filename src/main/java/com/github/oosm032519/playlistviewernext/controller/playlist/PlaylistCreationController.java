@@ -24,8 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * プレイリスト作成のためのコントローラークラス。
- * このクラスはSpotify APIを使用してユーザーのプレイリストを作成するエンドポイントを提供します。
+ * プレイリスト作成のためのコントローラークラス
+ * ユーザーのプレイリストを作成するエンドポイントを提供する
  */
 @RestController
 @RequestMapping("/api/playlists")
@@ -41,7 +41,7 @@ public class PlaylistCreationController {
     private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
-     * PlaylistCreationControllerのコンストラクタ。
+     * PlaylistCreationControllerのコンストラクタ
      *
      * @param userAuthenticationService          ユーザー認証サービス
      * @param spotifyUserPlaylistCreationService Spotifyユーザープレイリスト作成サービス
@@ -56,8 +56,8 @@ public class PlaylistCreationController {
     }
 
     /**
-     * プレイリストを作成するエンドポイント。
-     * 指定されたトラックIDのリストを使用して新しいプレイリストを作成します。
+     * プレイリストを作成するエンドポイント
+     * 指定されたトラックIDのリストを使用して新しいプレイリストを作成する
      *
      * @param trackIds  プレイリストに追加するトラックIDのリスト
      * @param principal 認証されたユーザー情報
@@ -105,7 +105,7 @@ public class PlaylistCreationController {
     }
 
     /**
-     * プレイリスト名を生成するプライベートメソッド。
+     * プレイリスト名を生成するプライベートメソッド
      *
      * @param userName ユーザー名
      * @return 生成されたプレイリスト名

@@ -20,7 +20,7 @@ public class SpotifyPlaylistTrackAdditionService {
     }
 
     /**
-     * 指定されたプレイリストにトラックを追加します。
+     * 指定されたプレイリストにトラックを追加する
      *
      * @param accessToken Spotify APIにアクセスするためのアクセストークン
      * @param playlistId  トラックを追加するプレイリストのID

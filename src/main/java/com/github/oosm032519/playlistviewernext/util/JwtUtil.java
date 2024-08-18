@@ -29,8 +29,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * JWTトークンの生成、検証、暗号化を行うユーティリティクラス。
- * Spring Bootのコンポーネントとして機能し、アプリケーション全体でJWT操作を提供します。
+ * JWTトークンの生成、検証、暗号化を行うユーティリティクラス
  */
 @Component
 public class JwtUtil {
@@ -52,8 +51,8 @@ public class JwtUtil {
     private Aead aead;
 
     /**
-     * コンポーネントの初期化を行います。
-     * Ed25519キーペアの生成、署名者と検証者の設定、AEADの初期化を行います。
+     * コンポーネントの初期化を行う
+     * Ed25519キーペアの生成、署名者と検証者の設定、AEADの初期化を行う
      *
      * @throws AuthenticationException 初期化中にエラーが発生した場合
      */
@@ -92,7 +91,7 @@ public class JwtUtil {
     }
 
     /**
-     * 指定されたクレームからJWTトークンを生成します。
+     * 指定されたクレームからJWTトークンを生成する
      *
      * @param claims トークンに含めるクレーム
      * @return 生成された暗号化JWTトークン
@@ -137,7 +136,7 @@ public class JwtUtil {
     }
 
     /**
-     * JWTトークンを検証し、含まれるクレームを返します。
+     * JWTトークンを検証し、含まれるクレームを返す
      *
      * @param token 検証するJWTトークン
      * @return トークンに含まれるクレーム

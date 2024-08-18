@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Spotify APIを使用してユーザーのプレイリストを作成するサービスクラス。
+ * Spotify APIを使用してユーザーのプレイリストを作成するサービスクラス
  */
 @Service
 public class SpotifyUserPlaylistCreationService {
@@ -29,7 +29,7 @@ public class SpotifyUserPlaylistCreationService {
     }
 
     /**
-     * 新しいプレイリストを作成し、指定されたトラックを追加します。
+     * 新しいプレイリストを作成し、指定されたトラックを追加する
      *
      * @param accessToken  Spotify APIへのアクセスに使用するトークン
      * @param userId       プレイリストを作成するユーザーのID

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * プレイリストの分析サービスを提供するクラスです。
+ * プレイリストの分析サービスを提供するクラス
  */
 @Service
 public class PlaylistAnalyticsService {
@@ -21,7 +21,7 @@ public class PlaylistAnalyticsService {
     private final SpotifyPlaylistAnalyticsService analyticsService;
 
     /**
-     * コンストラクタを使用して依存性を注入します。
+     * コンストラクタを使用して依存性を注入する
      *
      * @param analyticsService SpotifyPlaylistAnalyticsServiceのインスタンス
      */
@@ -31,7 +31,7 @@ public class PlaylistAnalyticsService {
     }
 
     /**
-     * 指定されたプレイリストのジャンルごとの曲数を取得します。
+     * 指定されたプレイリストのジャンルごとの曲数を取得する
      *
      * @param id プレイリストのID
      * @return ジャンルごとの曲数を表すMap
@@ -52,7 +52,7 @@ public class PlaylistAnalyticsService {
     }
 
     /**
-     * 指定されたプレイリストのトップ5ジャンルを取得します。
+     * 指定されたプレイリストのトップ5ジャンルを取得する
      *
      * @param id プレイリストのID
      * @return トップ5ジャンルのリスト

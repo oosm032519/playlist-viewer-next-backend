@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 /**
- * SpotifyOAuth2UserService クラスは、Spotify の OAuth2 認証を処理するサービスです。
- * OAuth2UserService を拡張し、ユーザー情報のロードと拡張を行います。
+ * SpotifyOAuth2UserService クラスは、Spotify の OAuth2 認証を処理するサービス
+ * OAuth2UserService を拡張し、ユーザー情報のロードと拡張を行う
  */
 @Service
 public class SpotifyOAuth2UserService extends DefaultOAuth2UserService {
@@ -29,7 +29,7 @@ public class SpotifyOAuth2UserService extends DefaultOAuth2UserService {
     private static final String USER_NAME_ATTRIBUTE_KEY = "id";
 
     /**
-     * OAuth2UserRequest を使用してユーザー情報をロードし、拡張された OAuth2User を返します。
+     * OAuth2UserRequest を使用してユーザー情報をロードし、拡張された OAuth2User を返す
      *
      * @param userRequest OAuth2UserRequest オブジェクト
      * @return 拡張された OAuth2User オブジェクト

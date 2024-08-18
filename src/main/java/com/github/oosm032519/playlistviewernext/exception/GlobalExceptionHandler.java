@@ -30,7 +30,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * PlaylistViewerNextException を処理するハンドラー
+     * PlaylistViewerNextException を処理するハンドラ
      *
      * @param ex      発生した PlaylistViewerNextException
      * @param request リクエスト情報
@@ -69,7 +69,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * バリデーションエラーを処理するハンドラー
+     * バリデーションエラーを処理するハンドラ
      *
      * @param ex      発生した MethodArgumentNotValidException
      * @param headers HTTPヘッダー
@@ -110,7 +110,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * その他の例外を処理するハンドラー
+     * その他の例外を処理するハンドラ
      *
      * @param ex      発生した Exception
      * @param request リクエスト情報
