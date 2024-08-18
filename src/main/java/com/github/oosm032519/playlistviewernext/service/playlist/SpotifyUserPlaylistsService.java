@@ -19,6 +19,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Spotifyユーザーのプレイリスト情報を取得するサービスクラス。
+ * このクラスはSpotify APIを使用して、現在認証されているユーザーのプレイリスト一覧を取得します。
+ */
 @Service
 public class SpotifyUserPlaylistsService {
 
@@ -26,11 +30,23 @@ public class SpotifyUserPlaylistsService {
 
     private final SpotifyApi spotifyApi;
 
+    /**
+     * コンストラクタ。SpotifyApiインスタンスを注入します。
+     *
+     * @param spotifyApi Spotify APIクライアント
+     */
     @Autowired
     public SpotifyUserPlaylistsService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
 
+    /**
+     * 現在のユーザーのプレイリスト一覧を取得します。
+     *
+     * @return プレイリストの簡略情報のリスト
+     * @throws AuthenticationException 認証エラーが発生した場合
+     * @throws SpotifyApiException     Spotify APIの呼び出し中にエラーが発生した場合
+     */
     public List<PlaylistSimplified> getCurrentUsersPlaylists() {
         try {
             OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -44,6 +60,7 @@ public class SpotifyUserPlaylistsService {
                 );
             }
 
+            // アクセストークンをSpotifyApiインスタンスにセット
             spotifyApi.setAccessToken(spotifyAccessToken);
             return getPlaylists();
         } catch (AuthenticationException e) {
@@ -60,6 +77,12 @@ public class SpotifyUserPlaylistsService {
         }
     }
 
+    /**
+     * Spotify APIを使用してプレイリスト一覧を取得します。
+     *
+     * @return プレイリストの簡略情報のリスト
+     * @throws Exception Spotify APIの呼び出し中にエラーが発生した場合
+     */
     private List<PlaylistSimplified> getPlaylists() throws Exception {
         GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();

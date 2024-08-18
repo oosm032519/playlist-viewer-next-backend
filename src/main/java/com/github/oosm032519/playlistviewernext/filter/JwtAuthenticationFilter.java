@@ -26,6 +26,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * JWTを使用した認証フィルター。
+ * リクエストごとにJWTトークンを検証し、認証情報をSecurityContextに設定します。
+ */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
@@ -36,11 +40,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    /**
+     * コンストラクタ。
+     *
+     * @param jwtUtil JWTユーティリティクラス
+     */
     public JwtAuthenticationFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
         logger.info("JwtAuthenticationFilterが初期化されました");
     }
 
+    /**
+     * フィルター処理を実行します。
+     *
+     * @param request  HTTPリクエスト
+     * @param response HTTPレスポンス
+     * @param chain    フィルターチェーン
+     * @throws ServletException サーブレット例外
+     * @throws IOException      I/O例外
+     */
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
@@ -134,6 +152,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.debug("doFilterInternalメソッドが完了しました");
     }
 
+    /**
+     * リクエストからセッションIDを抽出します。
+     *
+     * @param request HTTPリクエスト
+     * @return セッションID、見つからない場合はnull
+     */
     private String extractSessionIdFromRequest(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -146,9 +170,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
+    /**
+     * JWTクレームを検証します。
+     *
+     * @param claims 検証するクレーム
+     * @return 検証が成功した場合はtrue
+     * @throws InvalidRequestException クレームが無効な場合
+     */
     private boolean validateClaims(Map<String, Object> claims) {
         logger.debug("クレームの検証を開始します: {}", claims);
         try {
+            // 発行者の検証
             String issuer = (String) claims.get("iss");
             logger.debug("発行者の検証: {}", issuer);
             if (!jwtUtil.getIssuer().equals(issuer)) {
@@ -160,6 +192,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
             }
 
+            // 対象者の検証
             String audience = claims.get("aud") instanceof List ?
                     ((List<?>) claims.get("aud")).get(0).toString() :
                     (String) claims.get("aud");
@@ -173,6 +206,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
             }
 
+            // 有効期限の検証
             Date expiration = (Date) claims.get("exp");
             logger.debug("有効期限の検証: {}", expiration);
             if (expiration.before(new Date())) {
@@ -184,6 +218,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
             }
 
+            // 必須クレームの確認
             logger.debug("必須クレームの確認");
             if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
                 logger.warn("必須クレームが不足しています");

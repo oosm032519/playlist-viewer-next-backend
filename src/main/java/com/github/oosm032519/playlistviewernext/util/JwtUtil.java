@@ -28,6 +28,10 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * JWTトークンの生成、検証、暗号化を行うユーティリティクラス。
+ * Spring Bootのコンポーネントとして機能し、アプリケーション全体でJWT操作を提供します。
+ */
 @Component
 public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
@@ -47,10 +51,17 @@ public class JwtUtil {
     private JWSVerifier verifier;
     private Aead aead;
 
+    /**
+     * コンポーネントの初期化を行います。
+     * Ed25519キーペアの生成、署名者と検証者の設定、AEADの初期化を行います。
+     *
+     * @throws AuthenticationException 初期化中にエラーが発生した場合
+     */
     @PostConstruct
     public void init() {
         logger.info("JwtUtil初期化開始");
         try {
+            // Ed25519キーペアの生成
             OctetKeyPair octetKeyPair = new OctetKeyPairGenerator(Curve.Ed25519)
                     .keyID(secret)
                     .generate();
@@ -58,6 +69,7 @@ public class JwtUtil {
             this.signer = new Ed25519Signer(octetKeyPair);
             this.verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
 
+            // AEADの初期化
             AeadConfig.register();
             KeysetHandle keysetHandle = KeysetHandle.generateNew(
                     KeyTemplates.get("XCHACHA20_POLY1305"));
@@ -79,12 +91,20 @@ public class JwtUtil {
         logger.info("JwtUtil初期化完了");
     }
 
+    /**
+     * 指定されたクレームからJWTトークンを生成します。
+     *
+     * @param claims トークンに含めるクレーム
+     * @return 生成された暗号化JWTトークン
+     * @throws AuthenticationException トークン生成中にエラーが発生した場合
+     */
     public String generateToken(Map<String, Object> claims) {
         logger.info("トークン生成開始");
         logger.debug("クレーム: {}", claims);
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + 3600000); // 1時間
+        Date expiration = new Date(now.getTime() + 3600000); // 1時間の有効期限
         try {
+            // JWTクレームセットの構築
             JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
                     .issuer(issuer)
                     .audience(audience)
@@ -93,9 +113,11 @@ public class JwtUtil {
 
             claims.forEach(claimsSetBuilder::claim);
 
+            // JWTの署名
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.EdDSA), claimsSetBuilder.build());
             signedJWT.sign(signer);
 
+            // JWTの暗号化
             byte[] associatedData = "JWT".getBytes();
             byte[] ciphertext = aead.encrypt(signedJWT.serialize().getBytes(), associatedData);
 
@@ -114,14 +136,24 @@ public class JwtUtil {
         }
     }
 
+    /**
+     * JWTトークンを検証し、含まれるクレームを返します。
+     *
+     * @param token 検証するJWTトークン
+     * @return トークンに含まれるクレーム
+     * @throws AuthenticationException トークンが無効または期限切れの場合
+     * @throws InvalidRequestException トークンの形式が不正な場合
+     */
     public Map<String, Object> validateToken(String token) {
         logger.info("トークン検証開始");
         logger.debug("検証対象トークン: {}", token);
         try {
+            // トークンの復号
             byte[] ciphertext = Hex.decode(token);
             byte[] associatedData = "JWT".getBytes();
             byte[] plaintext = aead.decrypt(ciphertext, associatedData);
 
+            // JWTの解析と検証
             SignedJWT signedJWT = SignedJWT.parse(new String(plaintext));
             if (!signedJWT.verify(verifier)) {
                 logger.warn("トークンの署名が無効です");
@@ -132,6 +164,7 @@ public class JwtUtil {
                 );
             }
 
+            // 有効期限のチェック
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
             Date expirationTime = claimsSet.getExpirationTime();
             if (expirationTime != null && expirationTime.before(new Date())) {
@@ -148,7 +181,7 @@ public class JwtUtil {
             logger.debug("検証されたクレーム: {}", claims);
             return claims;
         } catch (IllegalArgumentException e) {
-            // IllegalArgumentException を InvalidRequestException にラップ
+            // 不正なトークン形式の場合
             logger.error("トークン検証中にエラーが発生しました: 不正なトークン形式です。", e);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
@@ -157,6 +190,7 @@ public class JwtUtil {
                     e
             );
         } catch (JOSEException | ParseException | GeneralSecurityException e) {
+            // その他のエラーの場合
             logger.error("トークン検証中にエラーが発生しました", e);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,

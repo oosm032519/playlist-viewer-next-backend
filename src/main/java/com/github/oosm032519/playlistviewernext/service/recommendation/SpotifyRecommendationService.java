@@ -18,6 +18,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Spotifyの推奨トラックを取得するサービスクラス。
+ * このクラスはSpotify APIを使用して、与えられたパラメータに基づいて音楽の推奨を提供します。
+ */
 @Service
 public class SpotifyRecommendationService {
     private static final Logger logger = LoggerFactory.getLogger(SpotifyRecommendationService.class);
@@ -25,12 +29,29 @@ public class SpotifyRecommendationService {
     private final SpotifyApi spotifyApi;
     private final AudioFeatureSetter audioFeatureSetter;
 
+    /**
+     * SpotifyRecommendationServiceのコンストラクタ。
+     *
+     * @param spotifyApi         Spotify APIクライアント
+     * @param audioFeatureSetter オーディオ特徴を設定するユーティリティ
+     */
     @Autowired
     public SpotifyRecommendationService(SpotifyApi spotifyApi, AudioFeatureSetter audioFeatureSetter) {
         this.spotifyApi = spotifyApi;
         this.audioFeatureSetter = audioFeatureSetter;
     }
 
+    /**
+     * 指定されたパラメータに基づいて推奨トラックのリストを取得します。
+     *
+     * @param seedGenres          ジャンルのシードリスト
+     * @param maxAudioFeatures    最大オーディオ特徴値のマップ
+     * @param minAudioFeatures    最小オーディオ特徴値のマップ
+     * @param medianAudioFeatures 中央値のオーディオ特徴値のマップ
+     * @param modeValues          モード値のマップ
+     * @return 推奨トラックのリスト
+     * @throws SpotifyApiException Spotify APIの呼び出し中にエラーが発生した場合
+     */
     public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {
         logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}, modeValues: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
@@ -63,6 +84,16 @@ public class SpotifyRecommendationService {
         }
     }
 
+    /**
+     * 推奨リクエストを作成します。
+     *
+     * @param seedGenres          ジャンルのシードリスト
+     * @param maxAudioFeatures    最大オーディオ特徴値のマップ
+     * @param minAudioFeatures    最小オーディオ特徴値のマップ
+     * @param medianAudioFeatures 中央値のオーディオ特徴値のマップ
+     * @param modeValues          モード値のマップ
+     * @return 構築されたGetRecommendationsRequest
+     */
     private GetRecommendationsRequest createRecommendationsRequest(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {
         String genres = String.join(",", seedGenres);
 
@@ -70,6 +101,7 @@ public class SpotifyRecommendationService {
                 .seed_genres(genres)
                 .limit(20);
 
+        // オーディオ特徴とモード値を設定
         audioFeatureSetter.setMaxAudioFeatures(recommendationsRequestBuilder, maxAudioFeatures);
         audioFeatureSetter.setMinAudioFeatures(recommendationsRequestBuilder, minAudioFeatures);
         audioFeatureSetter.setMedianAudioFeatures(recommendationsRequestBuilder, medianAudioFeatures);

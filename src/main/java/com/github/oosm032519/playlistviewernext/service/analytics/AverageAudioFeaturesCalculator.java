@@ -13,42 +13,27 @@ import java.util.Map;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
+/**
+ * プレイリストのトラックのオーディオフィーチャーの平均値を計算するサービスクラス。
+ * このクラスはSpring Bootのサービスとして機能し、トラックリストから各オーディオフィーチャーの平均値を算出します。
+ */
 @Service
 public class AverageAudioFeaturesCalculator {
 
     private static final Logger logger = LoggerFactory.getLogger(AverageAudioFeaturesCalculator.class);
 
-    private enum AudioFeature {
-        DANCEABILITY(AudioFeatures::getDanceability),
-        ENERGY(AudioFeatures::getEnergy),
-        VALENCE(AudioFeatures::getValence),
-        TEMPO(AudioFeatures::getTempo),
-        ACOUSTICNESS(AudioFeatures::getAcousticness),
-        INSTRUMENTALNESS(AudioFeatures::getInstrumentalness),
-        LIVENESS(AudioFeatures::getLiveness),
-        SPEECHINESS(AudioFeatures::getSpeechiness);
-
-        private final ToDoubleFunction<AudioFeatures> extractor;
-
-        AudioFeature(ToDoubleFunction<AudioFeatures> extractor) {
-            this.extractor = extractor;
-        }
-
-        public double extract(AudioFeatures audioFeatures) {
-            return extractor.applyAsDouble(audioFeatures);
-        }
-    }
-
     /**
-     * トラックリストのオーディオフィーチャーの平均値を計算するメソッド
+     * トラックリストのオーディオフィーチャーの平均値を計算するメソッド。
      *
      * @param trackList トラックのリスト（各トラックはオーディオフィーチャーを含むマップ）
      * @return 各オーディオフィーチャーの平均値を含むマップ
      * @throws InvalidRequestException トラックリストが空、またはオーディオフィーチャーがnullの場合
+     * @throws RuntimeException        予期しないエラーが発生した場合
      */
     public Map<String, Float> calculateAverageAudioFeatures(List<Map<String, Object>> trackList) {
         logger.info("calculateAverageAudioFeatures: 計算開始");
 
+        // トラックリストの有効性チェック
         if (trackList == null || trackList.isEmpty()) {
             logger.warn("トラックリストが空です。");
             throw new InvalidRequestException(
@@ -59,11 +44,13 @@ public class AverageAudioFeaturesCalculator {
         }
 
         try {
+            // 各オーディオフィーチャーの合計値を格納するマップを初期化
             Map<AudioFeature, Double> audioFeaturesSum = new EnumMap<>(AudioFeature.class);
             for (AudioFeature feature : AudioFeature.values()) {
                 audioFeaturesSum.put(feature, 0.0);
             }
 
+            // 各トラックのオーディオフィーチャーを合計
             for (Map<String, Object> trackData : trackList) {
                 AudioFeatures audioFeatures = (AudioFeatures) trackData.get("audioFeatures");
                 if (audioFeatures == null) {
@@ -80,6 +67,7 @@ public class AverageAudioFeaturesCalculator {
                 }
             }
 
+            // 平均値を計算
             Map<String, Float> averageAudioFeatures = audioFeaturesSum.entrySet().stream()
                     .collect(Collectors.toMap(
                             entry -> entry.getKey().name().toLowerCase(),
@@ -96,6 +84,42 @@ public class AverageAudioFeaturesCalculator {
             // 予期しないエラーが発生した場合は、RuntimeExceptionをスロー
             logger.error("平均オーディオフィーチャーの計算中に予期しないエラーが発生しました。", e);
             throw new RuntimeException("平均オーディオフィーチャーの計算中にエラーが発生しました。", e);
+        }
+    }
+
+    /**
+     * オーディオフィーチャーの種類を定義する列挙型。
+     * 各フィーチャーにはAudioFeaturesオブジェクトから値を抽出する関数が関連付けられています。
+     */
+    private enum AudioFeature {
+        DANCEABILITY(AudioFeatures::getDanceability),
+        ENERGY(AudioFeatures::getEnergy),
+        VALENCE(AudioFeatures::getValence),
+        TEMPO(AudioFeatures::getTempo),
+        ACOUSTICNESS(AudioFeatures::getAcousticness),
+        INSTRUMENTALNESS(AudioFeatures::getInstrumentalness),
+        LIVENESS(AudioFeatures::getLiveness),
+        SPEECHINESS(AudioFeatures::getSpeechiness);
+
+        private final ToDoubleFunction<AudioFeatures> extractor;
+
+        /**
+         * AudioFeature列挙型のコンストラクタ。
+         *
+         * @param extractor AudioFeaturesオブジェクトから特定のフィーチャー値を抽出する関数
+         */
+        AudioFeature(ToDoubleFunction<AudioFeatures> extractor) {
+            this.extractor = extractor;
+        }
+
+        /**
+         * 指定されたAudioFeaturesオブジェクトから、このフィーチャーの値を抽出します。
+         *
+         * @param audioFeatures 値を抽出するAudioFeaturesオブジェクト
+         * @return 抽出されたフィーチャーの値
+         */
+        public double extract(AudioFeatures audioFeatures) {
+            return extractor.applyAsDouble(audioFeatures);
         }
     }
 }

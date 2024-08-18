@@ -22,6 +22,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Spotify認証成功時の処理を行うハンドラークラス。
+ * ユーザー情報の取得、JWTトークンの生成、一時トークンの発行などを行います。
+ */
 @Component
 public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler {
 
@@ -38,34 +42,59 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     @Autowired
     private SpotifyApi spotifyApi;
 
+    /**
+     * コンストラクタ。
+     *
+     * @param jwtUtil JWTユーティリティクラス
+     */
     public SpotifyLoginSuccessHandler(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * 認証成功時の処理を行います。
+     *
+     * @param request        HTTPリクエスト
+     * @param response       HTTPレスポンス
+     * @param authentication 認証情報
+     * @throws IOException リダイレクト時に発生する可能性がある例外
+     */
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
         String userId = oauth2User.getAttribute("id");
         String spotifyAccessToken = oauth2User.getAttribute("access_token");
 
+        // Spotifyユーザー名を取得
         String userName = getSpotifyUserName(userId, spotifyAccessToken);
 
+        // JWTトークンの生成
         Map<String, Object> fullSessionClaims = new HashMap<>();
         fullSessionClaims.put("sub", userId);
         fullSessionClaims.put("name", userName);
         fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
         String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
 
+        // 一時トークンとセッションIDの生成
         String temporaryToken = UUID.randomUUID().toString();
         String sessionId = UUID.randomUUID().toString();
 
+        // Redisに一時トークンとセッション情報を保存
         redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
         redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
         redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
 
+        // フロントエンドにリダイレクト
         response.sendRedirect(frontendUrl + "#token=" + temporaryToken);
     }
 
+    /**
+     * SpotifyAPIを使用してユーザー名を取得します。
+     *
+     * @param userId             ユーザーID
+     * @param spotifyAccessToken Spotifyアクセストークン
+     * @return ユーザー名（取得できない場合はユーザーID）
+     */
     private String getSpotifyUserName(String userId, String spotifyAccessToken) {
         try {
             spotifyApi.setAccessToken(spotifyAccessToken);

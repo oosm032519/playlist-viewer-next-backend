@@ -18,6 +18,10 @@ import se.michaelthelin.spotify.requests.data.playlists.RemoveItemsFromPlaylistR
 
 import java.util.Map;
 
+/**
+ * Spotifyのプレイリストからトラックを削除するサービスクラス。
+ * このクラスはSpotify APIを使用してプレイリストの操作を行います。
+ */
 @Service
 public class SpotifyPlaylistTrackRemovalService {
 
@@ -26,6 +30,15 @@ public class SpotifyPlaylistTrackRemovalService {
     @Autowired
     private SpotifyApi spotifyApi;
 
+    /**
+     * プレイリストからトラックを削除します。
+     *
+     * @param request   削除リクエスト情報を含むオブジェクト
+     * @param principal 認証されたユーザー情報
+     * @return 削除操作の結果を含むResponseEntity
+     * @throws AuthenticationException 認証エラーが発生した場合
+     * @throws SpotifyApiException     Spotify APIとの通信中にエラーが発生した場合
+     */
     public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
         String accessToken = getAccessToken(principal);
         if (accessToken == null) {
@@ -64,6 +77,12 @@ public class SpotifyPlaylistTrackRemovalService {
         }
     }
 
+    /**
+     * OAuth2Userからアクセストークンを取得します。
+     *
+     * @param principal 認証されたユーザー情報
+     * @return アクセストークン。トークンが見つからない場合はnull
+     */
     private String getAccessToken(OAuth2User principal) {
         Map<String, Object> attributes = principal.getAttributes();
         String accessToken = (String) attributes.get("spotify_access_token");
@@ -75,10 +94,22 @@ public class SpotifyPlaylistTrackRemovalService {
         return accessToken;
     }
 
+    /**
+     * トラックIDからJsonArrayを作成します。
+     *
+     * @param trackId トラックID
+     * @return トラック情報を含むJsonArray
+     */
     private JsonArray createTracksJsonArray(String trackId) {
         return JsonParser.parseString("[{\"uri\":\"spotify:track:" + trackId + "\"}]").getAsJsonArray();
     }
 
+    /**
+     * 成功レスポンスを生成します。
+     *
+     * @param snapshotResult 削除操作の結果
+     * @return 成功メッセージを含むResponseEntity
+     */
     private ResponseEntity<String> successResponse(SnapshotResult snapshotResult) {
         logger.info("Track successfully removed. Snapshot ID: {}", snapshotResult.getSnapshotId());
         return ResponseEntity.ok("トラックが正常に削除されました。Snapshot ID: " + snapshotResult.getSnapshotId());

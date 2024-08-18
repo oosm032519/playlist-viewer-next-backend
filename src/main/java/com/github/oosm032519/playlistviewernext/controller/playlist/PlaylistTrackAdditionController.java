@@ -23,6 +23,10 @@ import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * プレイリストトラック追加操作を処理するRESTコントローラー
+ * このクラスはSpotify APIを使用してプレイリストにトラックを追加する機能を提供します。
+ */
 @RestController
 @RequestMapping("/api/playlist")
 @Validated
@@ -32,8 +36,15 @@ public class PlaylistTrackAdditionController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyPlaylistTrackAdditionService spotifyService;
-    private final HttpServletRequest request; // リクエスト情報を取得
+    private final HttpServletRequest request;
 
+    /**
+     * PlaylistTrackAdditionControllerのコンストラクタ
+     *
+     * @param userAuthenticationService ユーザー認証サービス
+     * @param spotifyService            Spotifyプレイリストトラック追加サービス
+     * @param request                   HTTPサーブレットリクエスト
+     */
     public PlaylistTrackAdditionController(UserAuthenticationService userAuthenticationService,
                                            SpotifyPlaylistTrackAdditionService spotifyService,
                                            HttpServletRequest request) {
@@ -48,12 +59,15 @@ public class PlaylistTrackAdditionController {
      * @param request   プレイリストIDとトラックIDを含むリクエストボディ
      * @param principal 認証されたユーザー情報
      * @return トラック追加の結果を含むレスポンスエンティティ
+     * @throws AuthenticationException ユーザーが認証されていない場合
+     * @throws SpotifyApiException     Spotify APIでエラーが発生した場合
      */
     @PostMapping("/add-track")
     public ResponseEntity<Map<String, String>> addTrackToPlaylist(@Valid @RequestBody PlaylistTrackAdditionRequest request,
                                                                   @AuthenticationPrincipal OAuth2User principal) {
         logger.info("トラック追加リクエストを受信しました。プレイリストID: {}, トラックID: {}", request.getPlaylistId(), request.getTrackId());
 
+        // アクセストークンの取得と検証
         String accessToken = userAuthenticationService.getAccessToken(principal);
         if (accessToken == null) {
             throw new AuthenticationException(
@@ -64,9 +78,11 @@ public class PlaylistTrackAdditionController {
         }
 
         try {
+            // Spotify APIを使用してトラックを追加
             SnapshotResult snapshotResult = spotifyService.addTrackToPlaylist(accessToken, request.getPlaylistId(), request.getTrackId());
             logger.info("トラックが正常に追加されました。Snapshot ID: {}", snapshotResult.getSnapshotId());
 
+            // レスポンスの作成
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("message", "トラックが正常に追加されました。");
             responseBody.put("snapshot_id", snapshotResult.getSnapshotId());
@@ -76,7 +92,7 @@ public class PlaylistTrackAdditionController {
             // Spotify API エラーはそのまま再スロー
             throw e;
         } catch (Exception e) {
-            // トラックの追加中に予期しないエラーが発生した場合は SpotifyApiException をスロー
+            // 予期しないエラーの処理
             logger.error("トラックの追加中に予期しないエラーが発生しました。", e);
             String requestParams = getRequestParams();
             throw new SpotifyApiException(
@@ -89,7 +105,11 @@ public class PlaylistTrackAdditionController {
         }
     }
 
-    // リクエストパラメータを取得するヘルパーメソッド
+    /**
+     * リクエストパラメータを取得するヘルパーメソッド
+     *
+     * @return リクエストパラメータを文字列として
+     */
     private String getRequestParams() {
         StringBuilder params = new StringBuilder();
         request.getParameterMap().forEach((key, values) -> {

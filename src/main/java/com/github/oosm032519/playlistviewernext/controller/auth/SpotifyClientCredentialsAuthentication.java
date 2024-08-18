@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Spotifyのクライアントクレデンシャル認証を行うコントローラークラス。
+ * Spotifyのクライアントクレデンシャル認証を処理するコントローラークラス。
+ * このクラスはSpotify APIとの認証プロセスを管理し、エラーハンドリングを行います。
  */
 @RestController
 public class SpotifyClientCredentialsAuthentication {
@@ -18,13 +19,13 @@ public class SpotifyClientCredentialsAuthentication {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyClientCredentialsAuthentication.class);
 
     private final SpotifyAuthService authService;
-    private final HttpServletRequest request; // リクエスト情報を取得
+    private final HttpServletRequest request;
 
     /**
-     * コンストラクタでSpotifyAuthServiceをインジェクション。
+     * SpotifyClientCredentialsAuthenticationクラスのコンストラクタ。
      *
-     * @param authService Spotifyの認証サービス
-     * @param request     HTTPリクエスト
+     * @param authService Spotifyの認証サービス。クライアントクレデンシャルトークンの取得に使用されます。
+     * @param request     HTTPリクエスト。エラー発生時のリクエストパラメータ取得に使用されます。
      */
     @Autowired
     public SpotifyClientCredentialsAuthentication(SpotifyAuthService authService, HttpServletRequest request) {
@@ -33,19 +34,20 @@ public class SpotifyClientCredentialsAuthentication {
     }
 
     /**
-     * Spotifyのクライアントクレデンシャル認証を実行。
+     * Spotifyのクライアントクレデンシャル認証を実行するメソッド。
+     * 認証に成功した場合はログを出力し、エラーが発生した場合は適切な例外をスローします。
      *
-     * @throws SpotifyApiException 認証中にエラーが発生した場合
+     * @throws SpotifyApiException 認証プロセス中にエラーが発生した場合
      */
     public void authenticate() {
         try {
             authService.getClientCredentialsToken();
             LOGGER.info("クライアントクレデンシャル認証が成功しました。");
         } catch (SpotifyApiException e) {
-            // Spotify API エラーはそのまま再スロー
+            // Spotify API固有のエラーはそのまま再スロー
             throw e;
         } catch (Exception e) {
-            // 認証中に予期しないエラーが発生した場合は SpotifyApiException をスロー
+            // 予期しないエラーの場合、カスタムのSpotifyApiExceptionを生成してスロー
             LOGGER.error("クライアントクレデンシャル認証中に予期しないエラーが発生しました", e);
             String requestParams = getRequestParams();
             throw new SpotifyApiException(
@@ -58,12 +60,17 @@ public class SpotifyClientCredentialsAuthentication {
         }
     }
 
-    // リクエストパラメータを取得するヘルパーメソッド
+    /**
+     * 現在のHTTPリクエストからすべてのパラメータを取得し、文字列として整形するヘルパーメソッド。
+     *
+     * @return リクエストパラメータを含む文字列
+     */
     private String getRequestParams() {
         StringBuilder params = new StringBuilder();
         request.getParameterMap().forEach((key, values) -> {
             params.append(key).append("=").append(String.join(",", values)).append("&");
         });
+        // 最後の '&' を削除
         if (params.length() > 0) {
             params.deleteCharAt(params.length() - 1);
         }

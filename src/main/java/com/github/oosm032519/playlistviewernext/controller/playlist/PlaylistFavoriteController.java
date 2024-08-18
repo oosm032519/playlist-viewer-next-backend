@@ -20,6 +20,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
+/**
+ * プレイリストのお気に入り機能を管理するコントローラークラス。
+ * ユーザーのプレイリストのお気に入り登録、解除、一覧取得、お気に入り状態の確認を行う。
+ */
 @RestController
 @RequestMapping("/api/playlists")
 @Validated
@@ -29,10 +33,25 @@ public class PlaylistFavoriteController {
 
     private final UserFavoritePlaylistRepository userFavoritePlaylistRepository;
 
+    /**
+     * コンストラクタ。
+     *
+     * @param userFavoritePlaylistRepository ユーザーのお気に入りプレイリストを管理するリポジトリ
+     */
     public PlaylistFavoriteController(UserFavoritePlaylistRepository userFavoritePlaylistRepository) {
         this.userFavoritePlaylistRepository = userFavoritePlaylistRepository;
     }
 
+    /**
+     * プレイリストをお気に入りに登録する。
+     *
+     * @param principal         認証されたユーザー情報
+     * @param playlistId        プレイリストID
+     * @param playlistName      プレイリスト名
+     * @param totalTracks       プレイリストの総トラック数
+     * @param playlistOwnerName プレイリスト所有者名
+     * @return 登録結果を含むResponseEntity
+     */
     @PostMapping("/favorite")
     public ResponseEntity<Map<String, Object>> favoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
                                                                 @RequestParam @NotBlank String playlistId,
@@ -44,7 +63,7 @@ public class PlaylistFavoriteController {
 
         String userId = principal.getAttribute("id");
 
-        // ハッシュ値生成
+        // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
         // 既に登録されているかチェック
@@ -57,7 +76,7 @@ public class PlaylistFavoriteController {
             return ResponseEntity.ok(response);
         }
 
-        // 登録処理
+        // 新しいお気に入りプレイリストエンティティを作成
         UserFavoritePlaylist userFavoritePlaylist = new UserFavoritePlaylist();
         userFavoritePlaylist.setUserId(hashedUserId);
         userFavoritePlaylist.setPlaylistId(playlistId);
@@ -74,7 +93,6 @@ public class PlaylistFavoriteController {
             response.put("message", "プレイリストをお気に入りに登録しました。");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り登録中にエラーが発生しました。", e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -85,18 +103,30 @@ public class PlaylistFavoriteController {
         }
     }
 
+    /**
+     * ユーザーIDをハッシュ化する。
+     *
+     * @param userId ハッシュ化するユーザーID
+     * @return ハッシュ化されたユーザーID
+     */
     private String hashUserId(String userId) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hashedBytes = md.digest(userId.getBytes());
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
-            // ハッシュアルゴリズムが見つからない場合は IllegalStateException をスロー
             logger.error("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
             throw new IllegalStateException("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
         }
     }
 
+    /**
+     * プレイリストのお気に入り登録を解除する。
+     *
+     * @param principal  認証されたユーザー情報
+     * @param playlistId 解除するプレイリストのID
+     * @return 解除結果を含むResponseEntity
+     */
     @DeleteMapping("/favorite")
     @Transactional
     public ResponseEntity<Map<String, Object>> unfavoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
@@ -105,7 +135,7 @@ public class PlaylistFavoriteController {
 
         String userId = principal.getAttribute("id");
 
-        // ハッシュ値生成
+        // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
         try {
@@ -128,7 +158,6 @@ public class PlaylistFavoriteController {
                 return ResponseEntity.ok(response);
             }
         } catch (Exception e) {
-            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り解除中にエラーが発生しました。", e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -139,18 +168,24 @@ public class PlaylistFavoriteController {
         }
     }
 
+    /**
+     * ユーザーのお気に入りプレイリスト一覧を取得する。
+     *
+     * @param principal 認証されたユーザー情報
+     * @return お気に入りプレイリスト一覧を含むResponseEntity
+     */
     @GetMapping("/favorite")
     public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
         String userId = principal.getAttribute("id");
 
-        // ハッシュ値生成
+        // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
         try {
-            // お気に入りプレイリストID一覧を取得
-            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId); // ハッシュ化されたIDを使用
+            // お気に入りプレイリスト一覧を取得
+            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
 
             List<Map<String, Object>> response = favoritePlaylists.stream()
                     .map(favorite -> {
@@ -166,7 +201,6 @@ public class PlaylistFavoriteController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("お気に入りプレイリスト一覧の取得中にエラーが発生しました。", e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -177,6 +211,13 @@ public class PlaylistFavoriteController {
         }
     }
 
+    /**
+     * 指定されたプレイリストがお気に入りに登録されているかを確認する。
+     *
+     * @param principal  認証されたユーザー情報
+     * @param playlistId 確認するプレイリストのID
+     * @return お気に入り登録状態を含むResponseEntity
+     */
     @GetMapping("/favoriteCheck")
     public ResponseEntity<Boolean> checkFavorite(@AuthenticationPrincipal OAuth2User principal,
                                                  @RequestParam @NotBlank String playlistId) {
@@ -184,7 +225,7 @@ public class PlaylistFavoriteController {
 
         String userId = principal.getAttribute("id");
 
-        // ハッシュ値生成
+        // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
         try {
@@ -192,7 +233,6 @@ public class PlaylistFavoriteController {
             boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
             return ResponseEntity.ok(isFavorited);
         } catch (Exception e) {
-            // エラーが発生した場合は DatabaseAccessException をスロー
             logger.error("プレイリストのお気に入り確認中にエラーが発生しました。", e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
