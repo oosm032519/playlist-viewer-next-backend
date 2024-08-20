@@ -80,7 +80,7 @@ class JwtUtilTest {
         ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
         ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
 
-        doAnswer(invocation -> {
+        doAnswer(_ -> {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "JWT_UTIL_INIT_ERROR",
@@ -102,7 +102,7 @@ class JwtUtilTest {
         ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
         ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
 
-        doAnswer(invocation -> {
+        doAnswer(_ -> {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "JWT_UTIL_INIT_ERROR",
@@ -123,7 +123,7 @@ class JwtUtilTest {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", "123");
 
-        doAnswer(invocation -> {
+        doAnswer(_ -> {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TOKEN_GENERATION_ERROR",
@@ -144,7 +144,7 @@ class JwtUtilTest {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", "123");
 
-        doAnswer(invocation -> {
+        doAnswer(_ -> {
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "TOKEN_GENERATION_ERROR",
@@ -164,7 +164,7 @@ class JwtUtilTest {
         JwtUtil spyJwtUtil = spy(jwtUtil);
         String invalidToken = "invalidToken";
 
-        doAnswer(invocation -> {
+        doAnswer(_ -> {
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
                     "INVALID_TOKEN",
