@@ -1,11 +1,13 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.slf4j.Logger;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -27,6 +29,9 @@ class SessionIdControllerTest {
 
     @Mock
     private ValueOperations<String, String> valueOperations;
+
+    @Mock
+    private Logger logger;
 
     @InjectMocks
     private SessionIdController sessionIdController;
@@ -102,5 +107,53 @@ class SessionIdControllerTest {
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
                 .hasFieldOrPropertyWithValue("errorCode", "REDIS_ACCESS_ERROR")
                 .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
+    }
+
+    @Test
+    void getSessionId_DeleteFails_StillReturnsSessionId() {
+        // Arrange
+        String temporaryToken = "validToken";
+        String sessionId = "sessionId123";
+        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
+
+        when(valueOperations.get("temp:" + temporaryToken)).thenReturn(sessionId);
+        when(redisTemplate.delete("temp:" + temporaryToken)).thenReturn(false);
+
+        // Act
+        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
+
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isInstanceOf(Map.class);
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertThat(responseBody).containsEntry("sessionId", sessionId);
+
+        verify(valueOperations).get("temp:" + temporaryToken);
+        verify(redisTemplate).delete("temp:" + temporaryToken);
+    }
+
+    @Test
+    void getSessionId_DatabaseAccessException_ReturnsErrorResponse() {
+        // Arrange
+        String temporaryToken = "validToken";
+        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
+
+        when(valueOperations.get("temp:" + temporaryToken)).thenThrow(new DatabaseAccessException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "TEST_ERROR",
+                "Test error message",
+                new RuntimeException("Test exception")
+        ));
+
+        // Act
+        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
+
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
+        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
+        assertThat(errorResponse.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(errorResponse.getErrorCode()).isEqualTo("TEST_ERROR");
+        assertThat(errorResponse.getMessage()).isEqualTo("Test error message");
     }
 }
