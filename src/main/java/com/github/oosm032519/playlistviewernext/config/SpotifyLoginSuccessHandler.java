@@ -34,13 +34,13 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     private final JwtUtil jwtUtil;
 
     @Value("${frontend.url}")
-    private String frontendUrl;
+    public String frontendUrl;
 
     @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    public RedisTemplate<String, String> redisTemplate;
 
     @Autowired
-    private SpotifyApi spotifyApi;
+    public SpotifyApi spotifyApi;
 
     /**
      * コンストラクタ
