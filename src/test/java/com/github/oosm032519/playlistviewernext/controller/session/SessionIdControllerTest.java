@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.slf4j.Logger;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -15,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,9 +29,6 @@ class SessionIdControllerTest {
 
     @Mock
     private ValueOperations<String, String> valueOperations;
-
-    @Mock
-    private Logger logger;
 
     @InjectMocks
     private SessionIdController sessionIdController;
@@ -152,7 +149,7 @@ class SessionIdControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
         ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(errorResponse.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(Objects.requireNonNull(errorResponse).getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(errorResponse.getErrorCode()).isEqualTo("TEST_ERROR");
         assertThat(errorResponse.getMessage()).isEqualTo("Test error message");
     }
