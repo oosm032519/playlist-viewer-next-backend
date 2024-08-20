@@ -64,12 +64,15 @@ public class SessionCheckControllerTest {
         claims.put("spotify_access_token", "spotifyToken");
         when(jwtUtil.validateToken("validToken")).thenReturn(claims);
 
-        ResponseEntity<Map<String, Object>> responseEntity = (ResponseEntity<Map<String, Object>>) sessionCheckController.checkSession(request);
+        ResponseEntity<?> responseEntity = sessionCheckController.checkSession(request);
 
-        assertThat(responseEntity.getBody()).containsEntry("status", "success");
-        assertThat(responseEntity.getBody()).containsEntry("userId", "userId123");
-        assertThat(responseEntity.getBody()).containsEntry("userName", "John Doe");
-        assertThat(responseEntity.getBody()).containsEntry("spotifyAccessToken", "spotifyToken");
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody()).isInstanceOf(Map.class);
+        Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
+        assertThat(responseBody).containsEntry("status", "success");
+        assertThat(responseBody).containsEntry("userId", "userId123");
+        assertThat(responseBody).containsEntry("userName", "John Doe");
+        assertThat(responseBody).containsEntry("spotifyAccessToken", "spotifyToken");
 
         verify(jwtUtil).validateToken("validToken");
         verify(redisTemplate.opsForValue()).get("session:validSessionId");
@@ -96,11 +99,10 @@ public class SessionCheckControllerTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("session:invalidSessionId")).thenReturn(null);
 
-        // Act
         ResponseEntity<?> responseEntity = sessionCheckController.checkSession(request);
 
-        // Assert
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(responseEntity.getBody()).isInstanceOf(ErrorResponse.class);
         ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
         assertThat(errorResponse.getErrorCode()).isEqualTo("SESSION_NOT_FOUND");
 
@@ -132,10 +134,13 @@ public class SessionCheckControllerTest {
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         when(redisTemplate.delete("session:validSessionId")).thenReturn(true);
 
-        ResponseEntity<Map<String, Object>> responseEntity = (ResponseEntity<Map<String, Object>>) sessionCheckController.logout(request, response);
+        ResponseEntity<?> responseEntity = sessionCheckController.logout(request, response);
 
-        assertThat(responseEntity.getBody()).containsEntry("status", "success");
-        assertThat(responseEntity.getBody()).containsEntry("message", "ログアウトしました。");
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody()).isInstanceOf(Map.class);
+        Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
+        assertThat(responseBody).containsEntry("status", "success");
+        assertThat(responseBody).containsEntry("message", "ログアウトしました。");
 
         verify(redisTemplate).delete("session:validSessionId");
         verify(response).addCookie(any(Cookie.class));
@@ -159,12 +164,13 @@ public class SessionCheckControllerTest {
         when(request.getCookies()).thenReturn(new Cookie[]{cookie});
         when(redisTemplate.delete("session:validSessionId")).thenReturn(false);
 
-        DatabaseAccessException exception = assertThrows(DatabaseAccessException.class,
-                () -> sessionCheckController.logout(request, response));
+        ResponseEntity<?> responseEntity = sessionCheckController.logout(request, response);
 
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
-        assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。再度お試しください。");
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(responseEntity.getBody()).isInstanceOf(ErrorResponse.class);
+        ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("SESSION_NOT_FOUND");
+        assertThat(errorResponse.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。再度お試しください。");
 
         verify(redisTemplate).delete("session:validSessionId");
     }
@@ -181,5 +187,25 @@ public class SessionCheckControllerTest {
         assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(exception.getErrorCode()).isEqualTo("LOGOUT_ERROR");
         assertThat(exception.getMessage()).isEqualTo("ログアウト処理中にエラーが発生しました。再度お試しください。");
+    }
+
+    @Test
+    public void testCheckSession_authenticationException() throws Exception {
+        Cookie cookie = new Cookie("sessionId", "validSessionId");
+        when(request.getCookies()).thenReturn(new Cookie[]{cookie});
+
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("session:validSessionId")).thenReturn("validToken");
+
+        when(jwtUtil.validateToken("validToken")).thenThrow(new AuthenticationException(HttpStatus.UNAUTHORIZED, "TEST_ERROR", "Test error"));
+
+        ResponseEntity<?> responseEntity = sessionCheckController.checkSession(request);
+
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(responseEntity.getBody()).isInstanceOf(ErrorResponse.class);
+        ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("TEST_ERROR");
+        assertThat(errorResponse.getMessage()).isEqualTo("Test error");
     }
 }

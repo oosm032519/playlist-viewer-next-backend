@@ -222,8 +222,7 @@ public class SessionCheckController {
                 throw new DatabaseAccessException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "SESSION_NOT_FOUND",
-                        "ログアウト処理中にエラーが発生しました。再度お試しください。",
-                        null // DatabaseAccessException の原因はここでは特定できないため null を設定
+                        "ログアウト処理中にエラーが発生しました。再度お試しください。"
                 );
             }
         } catch (DatabaseAccessException e) {
