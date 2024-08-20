@@ -86,4 +86,94 @@ class SpotifyLoginSuccessHandlerTest {
         verify(valueOperations).set(anyString(), anyString(), eq(5L), eq(TimeUnit.MINUTES));
         verify(response).sendRedirect(startsWith(frontendUrl + "#token="));
     }
+
+    @Test
+    void testOnAuthenticationSuccessWithSpotifyApiException() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
+        when(authentication.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("id")).thenReturn("user123");
+        when(oauth2User.getAttribute("access_token")).thenReturn("accessToken");
+        when(jwtUtil.generateToken(any(Map.class))).thenReturn("jwtToken");
+
+        // Spotify APIのモック設定
+        GetCurrentUsersProfileRequest.Builder mockBuilder = mock(GetCurrentUsersProfileRequest.Builder.class);
+        GetCurrentUsersProfileRequest mockRequest = mock(GetCurrentUsersProfileRequest.class);
+        when(mockRequest.execute()).thenThrow(new SpotifyWebApiException("Spotify API error"));
+
+        when(mockBuilder.build()).thenReturn(mockRequest);
+        when(spotifyApi.getCurrentUsersProfile()).thenReturn(mockBuilder);
+
+        // RedisTemplateのモック設定
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // Act
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Assert
+        verify(spotifyApi).setAccessToken("accessToken");
+        verify(jwtUtil).generateToken(any(Map.class));
+        verify(valueOperations).set(anyString(), anyString(), eq(5L), eq(TimeUnit.MINUTES));
+        verify(response).sendRedirect(startsWith(frontendUrl + "#token="));
+    }
+
+    @Test
+    void testOnAuthenticationSuccessWithIOException() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
+        when(authentication.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("id")).thenReturn("user123");
+        when(oauth2User.getAttribute("access_token")).thenReturn("accessToken");
+        when(jwtUtil.generateToken(any(Map.class))).thenReturn("jwtToken");
+
+        // Spotify APIのモック設定
+        GetCurrentUsersProfileRequest.Builder mockBuilder = mock(GetCurrentUsersProfileRequest.Builder.class);
+        GetCurrentUsersProfileRequest mockRequest = mock(GetCurrentUsersProfileRequest.class);
+        when(mockRequest.execute()).thenThrow(new IOException("IO error"));
+
+        when(mockBuilder.build()).thenReturn(mockRequest);
+        when(spotifyApi.getCurrentUsersProfile()).thenReturn(mockBuilder);
+
+        // RedisTemplateのモック設定
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // Act
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Assert
+        verify(spotifyApi).setAccessToken("accessToken");
+        verify(jwtUtil).generateToken(any(Map.class));
+        verify(valueOperations).set(anyString(), anyString(), eq(5L), eq(TimeUnit.MINUTES));
+        verify(response).sendRedirect(startsWith(frontendUrl + "#token="));
+    }
+
+    @Test
+    void testOnAuthenticationSuccessWithParseException() throws IOException, ParseException, SpotifyWebApiException {
+        // Arrange
+        when(authentication.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("id")).thenReturn("user123");
+        when(oauth2User.getAttribute("access_token")).thenReturn("accessToken");
+        when(jwtUtil.generateToken(any(Map.class))).thenReturn("jwtToken");
+
+        // Spotify APIのモック設定
+        GetCurrentUsersProfileRequest.Builder mockBuilder = mock(GetCurrentUsersProfileRequest.Builder.class);
+        GetCurrentUsersProfileRequest mockRequest = mock(GetCurrentUsersProfileRequest.class);
+        when(mockRequest.execute()).thenThrow(new ParseException("Parse error"));
+
+        when(mockBuilder.build()).thenReturn(mockRequest);
+        when(spotifyApi.getCurrentUsersProfile()).thenReturn(mockBuilder);
+
+        // RedisTemplateのモック設定
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // Act
+        handler.onAuthenticationSuccess(request, response, authentication);
+
+        // Assert
+        verify(spotifyApi).setAccessToken("accessToken");
+        verify(jwtUtil).generateToken(any(Map.class));
+        verify(valueOperations).set(anyString(), anyString(), eq(5L), eq(TimeUnit.MINUTES));
+        verify(response).sendRedirect(startsWith(frontendUrl + "#token="));
+    }
 }
