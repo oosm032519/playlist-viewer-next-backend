@@ -80,6 +80,7 @@ class PlaylistSearchControllerTest {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
         assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
+        assertThat(errorResponse.getMessage()).isEqualTo("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。");
 
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
         verify(authController).authenticate();
@@ -102,6 +103,8 @@ class PlaylistSearchControllerTest {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
         assertThat(errorResponse.getErrorCode()).isEqualTo("SPOTIFY_API_ERROR");
+        assertThat(errorResponse.getMessage()).isEqualTo("Spotify API error");
+        assertThat(errorResponse.getDetails()).isEqualTo("Error details");
 
         verify(playlistSearchService).searchPlaylists(query, offset, limit);
         verify(authController).authenticate();
@@ -124,6 +127,7 @@ class PlaylistSearchControllerTest {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
         assertThat(errorResponse.getErrorCode()).isEqualTo("SPOTIFY_API_RATE_LIMIT_EXCEEDED");
+        assertThat(errorResponse.getMessage()).isEqualTo("Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。");
 
         verify(playlistSearchService, times(4)).searchPlaylists(query, offset, limit);
         verify(authController, times(4)).authenticate();
@@ -143,6 +147,18 @@ class PlaylistSearchControllerTest {
 
         // Assert
         assertThat(result).contains("query=test", "offset=0", "limit=20");
+    }
+
+    @Test
+    void givenEmptyRequestParameters_whenGetRequestParams_thenReturnsEmptyString() {
+        // Arrange
+        when(request.getParameterMap()).thenReturn(new HashMap<>());
+
+        // Act
+        String result = searchController.getRequestParams();
+
+        // Assert
+        assertThat(result).isEmpty();
     }
 
     private List<PlaylistSimplified> createMockPlaylists() {
