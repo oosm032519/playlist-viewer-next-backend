@@ -29,13 +29,13 @@ class SpotifyClientCredentialsAuthenticationTest {
     private SpotifyClientCredentialsAuthentication authController;
 
     @Test
-    void authenticate_Successfully() throws Exception {
+    void authenticate_Successfully() {
         authController.authenticate();
         verify(authService, times(1)).getClientCredentialsToken();
     }
 
     @Test
-    void authenticate_HandlesSpotifyApiExceptionGracefully() throws Exception {
+    void authenticate_HandlesSpotifyApiExceptionGracefully() {
         SpotifyApiException spotifyApiException = new SpotifyApiException(
                 HttpStatus.BAD_REQUEST,
                 "TEST_ERROR",
@@ -51,7 +51,7 @@ class SpotifyClientCredentialsAuthenticationTest {
     }
 
     @Test
-    void authenticate_HandlesGenericExceptionGracefully() throws Exception {
+    void authenticate_HandlesGenericExceptionGracefully() {
         doThrow(new RuntimeException("Auth error")).when(authService).getClientCredentialsToken();
 
         Map<String, String[]> parameterMap = new HashMap<>();
