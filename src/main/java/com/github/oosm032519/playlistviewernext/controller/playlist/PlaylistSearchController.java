@@ -140,7 +140,7 @@ public class PlaylistSearchController {
     }
 
     // リクエストパラメータを取得するヘルパーメソッド
-    private String getRequestParams() {
+    public String getRequestParams() {
         StringBuilder params = new StringBuilder();
         request.getParameterMap().forEach((key, values) -> {
             params.append(key).append("=").append(String.join(",", values)).append("&");
