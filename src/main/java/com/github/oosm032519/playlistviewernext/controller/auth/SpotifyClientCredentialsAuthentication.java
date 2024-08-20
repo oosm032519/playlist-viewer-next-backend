@@ -65,7 +65,7 @@ public class SpotifyClientCredentialsAuthentication {
      *
      * @return リクエストパラメータを含む文字列
      */
-    private String getRequestParams() {
+    public String getRequestParams() {
         StringBuilder params = new StringBuilder();
         request.getParameterMap().forEach((key, values) -> {
             params.append(key).append("=").append(String.join(",", values)).append("&");
