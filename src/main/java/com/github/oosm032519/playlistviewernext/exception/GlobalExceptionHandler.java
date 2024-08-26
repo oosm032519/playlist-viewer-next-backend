@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -107,6 +108,28 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             params.deleteCharAt(params.length() - 1);
         }
         return params.toString();
+    }
+
+    /**
+     * ConstraintViolationException を処理するハンドラ
+     *
+     * @param ex      発生した ConstraintViolationException
+     * @param request リクエスト情報
+     * @return エラーレスポンスを含む ResponseEntity
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
+        logger.warn("バリデーションエラーが発生しました: {}", ex.getMessage());
+
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String fieldName = violation.getPropertyPath().toString();
+            String errorMessage = violation.getMessage();
+            errors.put(fieldName, errorMessage);
+        });
+
+        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", "入力値が不正です。", errors.toString());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**

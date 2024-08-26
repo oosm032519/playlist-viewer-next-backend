@@ -67,6 +67,12 @@ public class PlaylistSearchController {
             @RequestParam @NotBlank String query,
             @RequestParam(defaultValue = "0") @Min(0) int offset,
             @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) {
+
+        if (query.isBlank()) {
+            ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "INVALID_QUERY", "検索クエリは必須です。");
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
 
         int retryCount = 0;
