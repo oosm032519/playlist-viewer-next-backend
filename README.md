@@ -48,6 +48,7 @@
     git clone https://github.com/oosm032519/playlist-viewer-next-backend.git
     ```
 3. **環境変数の設定**:
+    * `application.properties` ファイルをコピーして `application-development.properties` を作成します。
     * `application-development.properties` に以下の環境変数を設定します。
         * `SPOTIFY_CLIENT_ID`: Spotify API のクライアント ID
         * `SPOTIFY_CLIENT_SECRET`: Spotify API のクライアントシークレット
