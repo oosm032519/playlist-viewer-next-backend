@@ -30,15 +30,37 @@ jobs:
       - name: Build with Maven
         run: mvn clean test
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/playlist_viewer_next?serverTimezone=UTC
+          APPLICATION_NAME: ${{ secrets.APPLICATION_NAME }}
+          LOGGING_LEVEL_ROOT: ${{ secrets.LOGGING_LEVEL_ROOT }}
+          LOGGING_PATTERN_CONSOLE: ${{ secrets.LOGGING_PATTERN_CONSOLE }}
+
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          SPOTIFY_SCOPE: ${{ secrets.SPOTIFY_SCOPE }}
+          SPOTIFY_AUTHORIZATION_GRANT_TYPE: ${{ secrets.SPOTIFY_AUTHORIZATION_GRANT_TYPE }}
+          SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
+          SPOTIFY_AUTHORIZATION_URI: ${{ secrets.SPOTIFY_AUTHORIZATION_URI }}
+          SPOTIFY_TOKEN_URI: ${{ secrets.SPOTIFY_TOKEN_URI }}
+          SPOTIFY_USER_INFO_URI: ${{ secrets.SPOTIFY_USER_INFO_URI }}
+          SPOTIFY_USER_NAME_ATTRIBUTE: ${{ secrets.SPOTIFY_USER_NAME_ATTRIBUTE }}
+
+          SERVER_SERVLET_SESSION_TIMEOUT: ${{ secrets.SERVER_SERVLET_SESSION_TIMEOUT }}
+          SERVER_SERVLET_SESSION_COOKIE_SAME_SITE: ${{ secrets.SERVER_SERVLET_SESSION_COOKIE_SAME_SITE }}
+          SERVER_SERVLET_SESSION_COOKIE_SECURE: ${{ secrets.SERVER_SERVLET_SESSION_COOKIE_SECURE }}
+
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
-          JAWSDB_URL: ${{ secrets.JAWSDB_URL }}
+
+          JAWSDB_URL: jdbc:mysql://localhost:3306/playlist_viewer_next?serverTimezone=UTC
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-          PORT: ${{ secrets.PORT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${{ secrets.SPRING_DATASOURCE_DRIVER_CLASS_NAME }}
+
+          SPRING_JPA_HIBERNATE_DDL_AUTO: ${{ secrets.SPRING_JPA_HIBERNATE_DDL_AUTO }}
+          SPRING_JPA_SHOW_SQL: ${{ secrets.SPRING_JPA_SHOW_SQL }}
+          SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ${{ secrets.SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT }}
+
           REDIS_TLS_ENABLED: ${{ secrets.REDIS_TLS_ENABLED }}
           REDIS_TLS_URL: ${{ secrets.REDIS_TLS_URL }}
+
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
