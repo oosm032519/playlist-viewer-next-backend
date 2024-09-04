@@ -31,3 +31,14 @@ jobs:
         run: mvn clean test
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/playlist_viewer_next?serverTimezone=UTC
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          JAWSDB_URL: ${{ secrets.JAWSDB_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          PORT: ${{ secrets.PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          REDIS_TLS_ENABLED: ${{ secrets.REDIS_TLS_ENABLED }}
+          REDIS_TLS_URL: ${{ secrets.REDIS_TLS_URL }}
