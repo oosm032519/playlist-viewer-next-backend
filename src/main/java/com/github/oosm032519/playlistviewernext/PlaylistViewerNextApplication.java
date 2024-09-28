@@ -2,12 +2,14 @@ package com.github.oosm032519.playlistviewernext;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * PlaylistViewerNextアプリケーションのメインクラス。
  * このクラスはSpring Bootアプリケーションのエントリーポイントとして機能します。
  */
 @SpringBootApplication
+@EnableAspectJAutoProxy
 public class PlaylistViewerNextApplication {
 
     /**
