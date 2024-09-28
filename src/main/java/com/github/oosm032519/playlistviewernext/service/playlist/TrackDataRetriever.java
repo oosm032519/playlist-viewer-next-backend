@@ -9,10 +9,7 @@ import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,9 +34,23 @@ public class TrackDataRetriever {
         logger.info("getTrackListData: トラック数: {}", tracks.length);
 
         try {
-            List<Map<String, Object>> trackList = Arrays.stream(tracks)
-                    .map(this::getTrackData)
+            // 全てのトラックIDをリストアップ
+            List<String> trackIds = Arrays.stream(tracks)
+                    .map(track -> track.getTrack().getId())
                     .collect(Collectors.toList());
+
+            // 全てのトラックのAudioFeaturesを一度に取得
+            List<AudioFeatures> audioFeaturesList = trackService.getAudioFeaturesForTracks(trackIds);
+
+            // トラック情報とAudioFeaturesをマッピング
+            List<Map<String, Object>> trackList = new ArrayList<>();
+            for (int i = 0; i < tracks.length; i++) {
+                Map<String, Object> trackData = new HashMap<>();
+                Track fullTrack = (Track) tracks[i].getTrack();
+                trackData.put("track", fullTrack);
+                trackData.put("audioFeatures", audioFeaturesList.get(i));
+                trackList.add(trackData);
+            }
 
             logger.info("getTrackListData: トラックデータリスト作成完了");
             return trackList;
@@ -53,17 +64,5 @@ public class TrackDataRetriever {
                     e
             );
         }
-    }
-
-    private Map<String, Object> getTrackData(PlaylistTrack playlistTrack) {
-        Map<String, Object> trackData = new HashMap<>();
-        Track fullTrack = (Track) playlistTrack.getTrack();
-        trackData.put("track", fullTrack);
-
-        String trackId = fullTrack.getId();
-        AudioFeatures audioFeatures = trackService.getAudioFeaturesForTrack(trackId);
-        trackData.put("audioFeatures", audioFeatures);
-
-        return trackData;
     }
 }

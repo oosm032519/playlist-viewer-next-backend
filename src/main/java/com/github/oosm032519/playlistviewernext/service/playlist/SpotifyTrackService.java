@@ -8,52 +8,60 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
-import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForTrackRequest;
+import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForSeveralTracksRequest;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Spotifyトラックに関連するサービスを提供するクラス
- * トラックのAudioFeaturesを取得する
+ * 複数トラックのAudioFeaturesを一度に取得する
  */
 @Service
 public class SpotifyTrackService {
 
-    /**
-     * このクラスのロガーインスタンス
-     */
     private static final Logger logger = LoggerFactory.getLogger(SpotifyTrackService.class);
+    private static final int MAX_TRACKS_PER_REQUEST = 100; // Spotify APIの制限
 
-    /**
-     * Spotify APIとの通信に使用するSpotifyApiインスタンス
-     */
     private final SpotifyApi spotifyApi;
 
-    /**
-     * SpotifyTrackServiceのコンストラクタ
-     *
-     * @param spotifyApi Spotify APIとの通信に使用するSpotifyApiインスタンス
-     */
     @Autowired
     public SpotifyTrackService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
 
     /**
-     * 指定されたトラックIDに対応するAudioFeaturesを取得する
+     * 指定されたトラックIDリストに対応するAudioFeaturesを取得する
+     * 100曲を超える場合は内部で分割してリクエストする
      *
-     * @param trackId 取得対象のトラックID
-     * @return 指定されたトラックのAudioFeatures
+     * @param trackIds 取得対象のトラックIDリスト
+     * @return 指定されたトラックのAudioFeaturesリスト
      * @throws SpotifyApiException AudioFeaturesの取得中にエラーが発生した場合
      */
-    public AudioFeatures getAudioFeaturesForTrack(String trackId) {
+    public List<AudioFeatures> getAudioFeaturesForTracks(List<String> trackIds) {
+        logger.info("getAudioFeaturesForTracks: トラック数: {}", trackIds.size());
+
         try {
-            // Spotify APIを使用してAudioFeaturesのリクエストを構築
-            GetAudioFeaturesForTrackRequest audioFeaturesRequest = spotifyApi.getAudioFeaturesForTrack(trackId).build();
-            // リクエストを実行し、結果を返す
-            return audioFeaturesRequest.execute();
+            List<AudioFeatures> allAudioFeatures = new ArrayList<>();
+
+            // 100曲ずつ分割してリクエスト
+            for (int i = 0; i < trackIds.size(); i += MAX_TRACKS_PER_REQUEST) {
+                int endIndex = Math.min(i + MAX_TRACKS_PER_REQUEST, trackIds.size());
+                List<String> trackIdsChunk = trackIds.subList(i, endIndex);
+
+                // APIリクエスト
+                String ids = String.join(",", trackIdsChunk);
+                GetAudioFeaturesForSeveralTracksRequest request = spotifyApi.getAudioFeaturesForSeveralTracks(ids).build();
+                AudioFeatures[] audioFeaturesArray = request.execute();
+
+                allAudioFeatures.addAll(Arrays.asList(audioFeaturesArray));
+            }
+
+            logger.info("getAudioFeaturesForTracks: AudioFeatures取得完了");
+            return allAudioFeatures;
         } catch (Exception e) {
-            // エラーログを記録
-            logger.error("Error retrieving audio features for track ID: " + trackId, e);
-            // カスタム例外をスローして、エラーを上位層に伝播
+            logger.error("AudioFeaturesの取得中にエラーが発生しました。 trackIds: {}", trackIds, e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "AUDIO_FEATURES_RETRIEVAL_ERROR",
