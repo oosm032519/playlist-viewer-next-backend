@@ -10,10 +10,7 @@ import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class SpotifyPlaylistSearchService {
@@ -32,14 +29,22 @@ public class SpotifyPlaylistSearchService {
      * @param query  検索クエリ
      * @param offset 検索結果のオフセット
      * @param limit  検索結果の最大数
-     * @return 検索結果のプレイリストのリスト
+     * @return 検索結果のプレイリストと総数を含むマップ
      * @throws SpotifyApiException プレイリストの検索中にエラーが発生した場合
      */
-    public List<PlaylistSimplified> searchPlaylists(String query, int offset, int limit) {
+    public Map<String, Object> searchPlaylists(String query, int offset, int limit) {
         try {
             SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
             Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
-            return getPlaylistsFromResult(searchResult);
+
+            List<PlaylistSimplified> playlists = getPlaylistsFromResult(searchResult);
+
+            Map<String, Object> resultMap = new HashMap<>();
+            resultMap.put("playlists", playlists);
+            resultMap.put("total", searchResult.getTotal());
+
+            return resultMap;
+
         } catch (Exception e) {
             // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("Spotifyプレイリストの検索中にエラーが発生しました。 query: {}, offset: {}, limit: {}", query, offset, limit, e);

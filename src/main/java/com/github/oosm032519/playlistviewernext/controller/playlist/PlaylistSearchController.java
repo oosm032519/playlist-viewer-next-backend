@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * プレイリスト検索機能を提供するRESTコントローラ
@@ -81,11 +80,11 @@ public class PlaylistSearchController {
                 // Spotify APIの認証を行う
                 authController.authenticate();
 
-                // プレイリストの検索を実行
-                List<PlaylistSimplified> playlists = playlistSearchService.searchPlaylists(query, offset, limit);
+                // プレイリストの検索を実行し、検索結果と総数を取得
+                Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
 
                 // 検索結果を返す
-                return ResponseEntity.ok(playlists);
+                return ResponseEntity.ok(searchResult);
             } catch (SpotifyApiException e) {
                 // Spotify API エラーを処理
                 HttpStatus status = e.getHttpStatus();
