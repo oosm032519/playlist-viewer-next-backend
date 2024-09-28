@@ -2,9 +2,9 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -35,7 +35,6 @@ public class SpotifyUserPlaylistsService {
      *
      * @param spotifyApi Spotify APIクライアント
      */
-    @Autowired
     public SpotifyUserPlaylistsService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
@@ -48,33 +47,35 @@ public class SpotifyUserPlaylistsService {
      * @throws SpotifyApiException     Spotify APIの呼び出し中にエラーが発生した場合
      */
     public List<PlaylistSimplified> getCurrentUsersPlaylists() {
-        try {
-            OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            String spotifyAccessToken = oauth2User.getAttribute("spotify_access_token");
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                String spotifyAccessToken = oauth2User.getAttribute("spotify_access_token");
 
-            if (spotifyAccessToken == null) {
-                throw new AuthenticationException(
-                        HttpStatus.UNAUTHORIZED,
-                        "AUTHENTICATION_ERROR",
-                        "Spotify access token is missing"
+                if (spotifyAccessToken == null) {
+                    throw new AuthenticationException(
+                            HttpStatus.UNAUTHORIZED,
+                            "AUTHENTICATION_ERROR",
+                            "Spotify access token is missing"
+                    );
+                }
+
+                // アクセストークンをSpotifyApiインスタンスにセット
+                spotifyApi.setAccessToken(spotifyAccessToken);
+                return getPlaylists();
+            } catch (AuthenticationException e) {
+                // AuthenticationException はそのまま再スロー
+                throw e;
+            } catch (Exception e) {
+                logger.error("Error occurred while retrieving playlists", e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "PLAYLISTS_RETRIEVAL_ERROR",
+                        "Error occurred while retrieving playlists",
+                        e
                 );
             }
-
-            // アクセストークンをSpotifyApiインスタンスにセット
-            spotifyApi.setAccessToken(spotifyAccessToken);
-            return getPlaylists();
-        } catch (AuthenticationException e) {
-            // AuthenticationException はそのまま再スロー
-            throw e;
-        } catch (Exception e) {
-            logger.error("Error occurred while retrieving playlists", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLISTS_RETRIEVAL_ERROR",
-                    "Error occurred while retrieving playlists",
-                    e
-            );
-        }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     /**

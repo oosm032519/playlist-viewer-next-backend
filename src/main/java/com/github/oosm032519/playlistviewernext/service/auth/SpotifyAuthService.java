@@ -1,9 +1,9 @@
 package com.github.oosm032519.playlistviewernext.service.auth;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -21,7 +21,6 @@ public class SpotifyAuthService {
      *
      * @param spotifyApi Spotify APIのインスタンス
      */
-    @Autowired
     public SpotifyAuthService(SpotifyApi spotifyApi) {
         this.spotifyApi = spotifyApi;
     }
@@ -32,20 +31,23 @@ public class SpotifyAuthService {
      * @throws SpotifyApiException アクセストークンの取得中にエラーが発生した場合
      */
     public void getClientCredentialsToken() {
-        ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();
-        try {
-            ClientCredentials clientCredentials = clientCredentialsRequest.execute();
-            spotifyApi.setAccessToken(clientCredentials.getAccessToken());
-            logger.info("クライアントクレデンシャルトークンが正常に取得されました");
-        } catch (Exception e) {
-            // アクセストークンの取得中にエラーが発生した場合は SpotifyApiException をスロー
-            logger.error("クライアントクレデンシャルトークンの取得中にエラーが発生しました", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "CLIENT_CREDENTIALS_AUTH_ERROR",
-                    "クライアントクレデンシャルトークンの取得中にエラーが発生しました。",
-                    e
-            );
-        }
+        RetryUtil.executeWithRetry(() -> {
+            try {
+                ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();
+                ClientCredentials clientCredentials = clientCredentialsRequest.execute();
+                spotifyApi.setAccessToken(clientCredentials.getAccessToken());
+                logger.info("クライアントクレデンシャルトークンが正常に取得されました");
+                return null; // void メソッドなので null を返す
+            } catch (Exception e) {
+                // アクセストークンの取得中にエラーが発生した場合は SpotifyApiException をスロー
+                logger.error("クライアントクレデンシャルトークンの取得中にエラーが発生しました", e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "CLIENT_CREDENTIALS_AUTH_ERROR",
+                        "クライアントクレデンシャルトークンの取得中にエラーが発生しました。",
+                        e
+                );
+            }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 }

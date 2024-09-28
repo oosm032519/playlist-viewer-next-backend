@@ -2,6 +2,7 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -46,39 +47,41 @@ public class SpotifyPlaylistDetailsService {
      * @throws SpotifyApiException       トラック情報の取得中にエラーが発生した場合
      */
     public PlaylistTrack[] getPlaylistTracks(String playlistId) {
-        try {
-            Playlist playlist = getPlaylist(playlistId);
-            if (playlist == null) {
-                throw new ResourceNotFoundException(
-                        HttpStatus.NOT_FOUND,
-                        "PLAYLIST_NOT_FOUND",
-                        "指定されたプレイリストが見つかりません。"
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                Playlist playlist = getPlaylist(playlistId);
+                if (playlist == null) {
+                    throw new ResourceNotFoundException(
+                            HttpStatus.NOT_FOUND,
+                            "PLAYLIST_NOT_FOUND",
+                            "指定されたプレイリストが見つかりません。"
+                    );
+                }
+
+                List<PlaylistTrack> allTracks = new ArrayList<>();
+                Paging<PlaylistTrack> playlistTracks = playlist.getTracks();
+                allTracks.addAll(Arrays.asList(playlistTracks.getItems()));
+
+                // 全曲取得するまで繰り返す
+                while (playlistTracks.getNext() != null) {
+                    playlistTracks = getNextPlaylistTracks(playlistId, playlistTracks.getNext());
+                    allTracks.addAll(Arrays.asList(playlistTracks.getItems()));
+                }
+
+                return allTracks.toArray(new PlaylistTrack[0]);
+            } catch (ResourceNotFoundException e) {
+                // ResourceNotFoundException はそのまま再スロー
+                throw e;
+            } catch (Exception e) {
+                logger.error("トラック情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "TRACKS_RETRIEVAL_ERROR",
+                        "トラック情報の取得中にエラーが発生しました。",
+                        e
                 );
             }
-
-            List<PlaylistTrack> allTracks = new ArrayList<>();
-            Paging<PlaylistTrack> playlistTracks = playlist.getTracks();
-            allTracks.addAll(Arrays.asList(playlistTracks.getItems()));
-
-            // 全曲取得するまで繰り返す
-            while (playlistTracks.getNext() != null) {
-                playlistTracks = getNextPlaylistTracks(playlistId, playlistTracks.getNext());
-                allTracks.addAll(Arrays.asList(playlistTracks.getItems()));
-            }
-
-            return allTracks.toArray(new PlaylistTrack[0]);
-        } catch (ResourceNotFoundException e) {
-            // ResourceNotFoundException はそのまま再スロー
-            throw e;
-        } catch (Exception e) {
-            logger.error("トラック情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TRACKS_RETRIEVAL_ERROR",
-                    "トラック情報の取得中にエラーが発生しました。",
-                    e
-            );
-        }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     /**
@@ -135,29 +138,31 @@ public class SpotifyPlaylistDetailsService {
      * @throws SpotifyApiException       プレイリスト情報の取得中にエラーが発生した場合
      */
     private Playlist getPlaylist(String playlistId) {
-        try {
-            GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
-            Playlist playlist = getPlaylistRequest.execute();
-            if (playlist == null) {
-                throw new ResourceNotFoundException(
-                        HttpStatus.NOT_FOUND,
-                        "PLAYLIST_NOT_FOUND",
-                        "指定されたプレイリストが見つかりません。"
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
+                Playlist playlist = getPlaylistRequest.execute();
+                if (playlist == null) {
+                    throw new ResourceNotFoundException(
+                            HttpStatus.NOT_FOUND,
+                            "PLAYLIST_NOT_FOUND",
+                            "指定されたプレイリストが見つかりません。"
+                    );
+                }
+                return playlist;
+            } catch (ResourceNotFoundException e) {
+                // ResourceNotFoundException はそのまま再スロー
+                throw e;
+            } catch (Exception e) {
+                logger.error("プレイリスト情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "PLAYLIST_INFO_RETRIEVAL_ERROR",
+                        "プレイリスト情報の取得中にエラーが発生しました。",
+                        e
                 );
             }
-            return playlist;
-        } catch (ResourceNotFoundException e) {
-            // ResourceNotFoundException はそのまま再スロー
-            throw e;
-        } catch (Exception e) {
-            logger.error("プレイリスト情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_INFO_RETRIEVAL_ERROR",
-                    "プレイリスト情報の取得中にエラーが発生しました。",
-                    e
-            );
-        }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     /**

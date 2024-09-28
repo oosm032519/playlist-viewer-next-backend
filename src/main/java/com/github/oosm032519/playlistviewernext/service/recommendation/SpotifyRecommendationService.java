@@ -2,9 +2,9 @@ package com.github.oosm032519.playlistviewernext.service.recommendation;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -34,7 +34,6 @@ public class SpotifyRecommendationService {
      * @param spotifyApi         Spotify APIクライアント
      * @param audioFeatureSetter AudioFeaturesを設定するユーティリティ
      */
-    @Autowired
     public SpotifyRecommendationService(SpotifyApi spotifyApi, AudioFeatureSetter audioFeatureSetter) {
         this.spotifyApi = spotifyApi;
         this.audioFeatureSetter = audioFeatureSetter;
@@ -58,29 +57,31 @@ public class SpotifyRecommendationService {
             return Collections.emptyList();
         }
 
-        try {
-            GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
 
-            Recommendations recommendations = recommendationsRequest.execute();
+                Recommendations recommendations = recommendationsRequest.execute();
 
-            if (recommendations == null || recommendations.getTracks() == null) {
-                logger.info("getRecommendations: 推奨トラックが見つかりませんでした");
-                return Collections.emptyList();
+                if (recommendations == null || recommendations.getTracks() == null) {
+                    logger.info("getRecommendations: 推奨トラックが見つかりませんでした");
+                    return Collections.emptyList();
+                }
+
+                logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
+
+                return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
+            } catch (Exception e) {
+                // 推奨トラックの取得中にエラーが発生した場合は SpotifyApiException をスロー
+                logger.error("推奨トラックの取得中にエラーが発生しました。", e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "RECOMMENDATIONS_RETRIEVAL_ERROR",
+                        "推奨トラックの取得中にエラーが発生しました。",
+                        e
+                );
             }
-
-            logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
-
-            return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
-        } catch (Exception e) {
-            // 推奨トラックの取得中にエラーが発生した場合は SpotifyApiException をスロー
-            logger.error("推奨トラックの取得中にエラーが発生しました。", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "RECOMMENDATIONS_RETRIEVAL_ERROR",
-                    "推奨トラックの取得中にエラーが発生しました。",
-                    e
-            );
-        }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     /**

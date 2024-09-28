@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -33,28 +34,29 @@ public class SpotifyPlaylistSearchService {
      * @throws SpotifyApiException プレイリストの検索中にエラーが発生した場合
      */
     public Map<String, Object> searchPlaylists(String query, int offset, int limit) {
-        try {
-            SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
-            Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);
+                Paging<PlaylistSimplified> searchResult = executeSearch(searchRequest);
 
-            List<PlaylistSimplified> playlists = getPlaylistsFromResult(searchResult);
+                List<PlaylistSimplified> playlists = getPlaylistsFromResult(searchResult);
 
-            Map<String, Object> resultMap = new HashMap<>();
-            resultMap.put("playlists", playlists);
-            resultMap.put("total", searchResult.getTotal());
+                Map<String, Object> resultMap = new HashMap<>();
+                resultMap.put("playlists", playlists);
+                resultMap.put("total", searchResult.getTotal());
 
-            return resultMap;
-
-        } catch (Exception e) {
-            // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
-            logger.error("Spotifyプレイリストの検索中にエラーが発生しました。 query: {}, offset: {}, limit: {}", query, offset, limit, e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "SPOTIFY_API_ERROR",
-                    "Spotifyプレイリストの検索中にエラーが発生しました。",
-                    e
-            );
-        }
+                return resultMap;
+            } catch (Exception e) {
+                // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
+                logger.error("Spotifyプレイリストの検索中にエラーが発生しました。 query: {}, offset: {}, limit: {}", query, offset, limit, e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "SPOTIFY_API_ERROR",
+                        "Spotifyプレイリストの検索中にエラーが発生しました。",
+                        e
+                );
+            }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     private SearchPlaylistsRequest buildSearchRequest(String query, int offset, int limit) {

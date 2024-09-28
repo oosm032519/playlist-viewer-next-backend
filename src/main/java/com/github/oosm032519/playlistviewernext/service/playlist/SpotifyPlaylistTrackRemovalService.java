@@ -3,6 +3,7 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
@@ -59,22 +60,24 @@ public class SpotifyPlaylistTrackRemovalService {
 
         JsonArray tracks = createTracksJsonArray(trackId);
 
-        try {
-            RemoveItemsFromPlaylistRequest removeItemsFromPlaylistRequest = spotifyApi
-                    .removeItemsFromPlaylist(playlistId, tracks)
-                    .build();
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                RemoveItemsFromPlaylistRequest removeItemsFromPlaylistRequest = spotifyApi
+                        .removeItemsFromPlaylist(playlistId, tracks)
+                        .build();
 
-            SnapshotResult snapshotResult = removeItemsFromPlaylistRequest.execute();
-            return successResponse(snapshotResult);
-        } catch (Exception e) {
-            logger.error("Error occurred while removing track from playlist.", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TRACK_REMOVAL_ERROR",
-                    "トラックの削除中にエラーが発生しました。",
-                    e
-            );
-        }
+                SnapshotResult snapshotResult = removeItemsFromPlaylistRequest.execute();
+                return successResponse(snapshotResult);
+            } catch (Exception e) {
+                logger.error("Error occurred while removing track from playlist.", e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "TRACK_REMOVAL_ERROR",
+                        "トラックの削除中にエラーが発生しました。",
+                        e
+                );
+            }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,21 +44,23 @@ public class SpotifyUserPlaylistCreationService {
 
         spotifyApi.setAccessToken(accessToken);
 
-        try {
-            String playlistId = createSpotifyPlaylist(userId, playlistName);
-            addTracksToPlaylist(playlistId, trackIds);
+        return RetryUtil.executeWithRetry(() -> {
+            try {
+                String playlistId = createSpotifyPlaylist(userId, playlistName);
+                addTracksToPlaylist(playlistId, trackIds);
 
-            logger.info("プレイリストの作成が完了しました。");
-            return playlistId;
-        } catch (Exception e) {
-            logger.error("プレイリストの作成中にエラーが発生しました。", e);
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_CREATION_ERROR",
-                    "プレイリストの作成中にエラーが発生しました。",
-                    e
-            );
-        }
+                logger.info("プレイリストの作成が完了しました。");
+                return playlistId;
+            } catch (Exception e) {
+                logger.error("プレイリストの作成中にエラーが発生しました。", e);
+                throw new SpotifyApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "PLAYLIST_CREATION_ERROR",
+                        "プレイリストの作成中にエラーが発生しました。",
+                        e
+                );
+            }
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
     private void logMethodCall(String accessToken, String userId, String playlistName, List<String> trackIds) {
