@@ -31,9 +31,6 @@ public class PlaylistSearchController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistSearchController.class);
 
-    private static final int MAX_RETRY_COUNT = 3; // 最大リトライ回数
-    private static final long RETRY_INTERVAL_MS = 5000; // リトライ間隔（ミリ秒）
-
     private final SpotifyPlaylistSearchService playlistSearchService;
     private final SpotifyClientCredentialsAuthentication authController;
     private final HttpServletRequest request; // リクエスト情報を取得
@@ -74,83 +71,49 @@ public class PlaylistSearchController {
 
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
 
-        int retryCount = 0;
-        while (retryCount <= MAX_RETRY_COUNT) {
-            try {
-                // Spotify APIの認証を行う
-                authController.authenticate();
+        try {
+            // Spotify APIの認証を行う
+            authController.authenticate();
 
-                // プレイリストの検索を実行し、検索結果と総数を取得
-                Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
+            // プレイリストの検索を実行し、検索結果と総数を取得
+            Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
 
-                // 検索結果を返す
-                return ResponseEntity.ok(searchResult);
-            } catch (SpotifyApiException e) {
-                // Spotify API エラーを処理
-                HttpStatus status = e.getHttpStatus();
-                String errorCode = e.getErrorCode();
-                String message = e.getMessage();
-                String details = e.getDetails();
+            // 検索結果を返す
+            return ResponseEntity.ok(searchResult);
 
-                // レート制限を超過した場合の処理
-                if (errorCode.equals("SPOTIFY_API_RATE_LIMIT_EXCEEDED")) {
-                    retryCount++;
-                    if (retryCount <= MAX_RETRY_COUNT) {
-                        logger.warn("Spotify API のレート制限を超過しました。{} 回目のリトライを行います。", retryCount);
-                        try {
-                            Thread.sleep(RETRY_INTERVAL_MS);
-                        } catch (InterruptedException ex) {
-                            logger.error("リトライ待機中に割り込みが発生しました。", ex);
-                            Thread.currentThread().interrupt();
-                            // エラーレスポンスを返す
-                            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-                            return new ResponseEntity<>(errorResponse, status);
-                        }
-                    } else {
-                        message = "Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。";
-                        logger.error("Spotify API error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
-                        // エラーレスポンスを返す
-                        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-                        return new ResponseEntity<>(errorResponse, status);
-                    }
-                } else {
-                    // その他の Spotify API エラー
-                    logger.error("Spotify API error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
-                    // エラーレスポンスを返す
-                    ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-                    return new ResponseEntity<>(errorResponse, status);
-                }
-            } catch (Exception e) {
-                // 予期しないエラーの処理
-                HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-                String errorCode = "SYSTEM_UNEXPECTED_ERROR";
-                String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
-                String requestParams = getRequestParams(); // リクエストパラメータを取得
+        } catch (SpotifyApiException e) {
+            // Spotify API エラーを処理
+            HttpStatus status = e.getHttpStatus();
+            String errorCode = e.getErrorCode();
+            String message = e.getMessage();
+            String details = e.getDetails();
 
-                // エラーログに記録
-                logger.error("Unexpected error occurred while searching playlists: {} - {} - {} - リクエストパラメータ: {}", status, errorCode, message, requestParams, e);
+            logger.error("Spotify API error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+            return new ResponseEntity<>(errorResponse, status);
 
-                // エラーレスポンスを返す
-                ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, "リクエストパラメータ: " + requestParams);
-                return new ResponseEntity<>(errorResponse, status);
-            }
+        } catch (Exception e) {
+            // 予期しないエラーの処理
+            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+            String errorCode = "SYSTEM_UNEXPECTED_ERROR";
+            String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
+            String requestParams = getRequestParams(); // リクエストパラメータを取得
+
+            // エラーログに記録
+            logger.error("Unexpected error occurred while searching playlists: {} - {} - {} - リクエストパラメータ: {}", status, errorCode, message, requestParams, e);
+
+            // エラーレスポンスを返す
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, "リクエストパラメータ: " + requestParams);
+            return new ResponseEntity<>(errorResponse, status);
         }
-
-        // リトライ回数を超過した場合
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        String errorCode = "SPOTIFY_API_RATE_LIMIT_EXCEEDED";
-        String message = "Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。";
-        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
-        return new ResponseEntity<>(errorResponse, status);
     }
 
     // リクエストパラメータを取得するヘルパーメソッド
     public String getRequestParams() {
         StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
+        request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
+        if (!params.isEmpty()) {
             params.deleteCharAt(params.length() - 1);
         }
         return params.toString();

@@ -20,11 +20,10 @@ public class RetryUtil {
                 return operation.execute();
             } catch (SpotifyApiException e) {
                 if (e.getCause() instanceof final HttpClientErrorException httpException &&
-                        ((HttpClientErrorException) e.getCause()).getStatusCode() == HttpStatus.TOO_MANY_REQUESTS &&
                         retryCount < maxRetries) {
 
+                    // Retry-Afterヘッダーがあればその値を使用
                     String retryAfterHeader = httpException.getResponseHeaders().getFirst("Retry-After");
-
                     if (retryAfterHeader != null) {
                         try {
                             intervalMillis = Long.parseLong(retryAfterHeader) * 1000; // 秒をミリ秒に変換
@@ -36,7 +35,7 @@ public class RetryUtil {
                         intervalMillis = DEFAULT_RETRY_INTERVAL_MILLIS; // Retry-After ヘッダーがない場合はデフォルトを使用
                     }
 
-                    logger.warn("レート制限を超過しました。{}秒後に再試行します... (試行回数: {})", intervalMillis / 1000, retryCount + 1);
+                    logger.warn("Spotify APIエラーが発生しました。{}秒後に再試行します... (試行回数: {})", intervalMillis / 1000, retryCount + 1);
                     try {
                         Thread.sleep(intervalMillis);
                     } catch (InterruptedException ex) {
