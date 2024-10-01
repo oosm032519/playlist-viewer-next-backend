@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
@@ -33,7 +34,6 @@ public class PlaylistDetailsRetrievalService {
     @Autowired
     public PlaylistDetailsRetrievalService(
             SpotifyPlaylistDetailsService playlistDetailsService,
-            SpotifyTrackService trackService,
             SpotifyClientCredentialsAuthentication authController,
             MaxAudioFeaturesCalculator maxAudioFeaturesCalculator,
             MinAudioFeaturesCalculator minAudioFeaturesCalculator,
@@ -64,10 +64,22 @@ public class PlaylistDetailsRetrievalService {
         try {
             authController.authenticate();
 
+            // getPlaylist で Playlist オブジェクトを取得
+            Playlist playlist = playlistDetailsService.getPlaylist(id);
+            if (playlist == null) {
+                throw new ResourceNotFoundException(
+                        HttpStatus.NOT_FOUND,
+                        "PLAYLIST_NOT_FOUND",
+                        "指定されたプレイリストが見つかりません。"
+                );
+            }
+
+            // Playlist オブジェクトから名前とオーナー情報を取得
+            String playlistName = playlist.getName();
+            User owner = playlist.getOwner();
+
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
-            String playlistName = playlistDetailsService.getPlaylistName(id);
-            User owner = playlistDetailsService.getPlaylistOwner(id);
 
             Map<String, Float> maxAudioFeatures = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
             Map<String, Float> minAudioFeatures = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
