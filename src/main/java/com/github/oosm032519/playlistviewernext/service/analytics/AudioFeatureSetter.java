@@ -29,33 +29,7 @@ public class AudioFeatureSetter {
         setAudioFeatures(builder, minAudioFeatures, this::setMinFeature);
     }
 
-    /**
-     * GetRecommendationsRequest.Builderに中央値のAudioFeaturesを設定する
-     *
-     * @param builder             GetRecommendationsRequest.Builderオブジェクト
-     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
-     */
-    public void setMedianAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> medianAudioFeatures) {
-        setAudioFeatures(builder, medianAudioFeatures, this::setMedianFeature);
-    }
-
-    /**
-     * GetRecommendationsRequest.Builderにモード値を設定する
-     *
-     * @param builder    GetRecommendationsRequest.Builderオブジェクト
-     * @param modeValues モード値のマップ
-     */
-    public void setModeValues(GetRecommendationsRequest.Builder builder, Map<String, Object> modeValues) {
-        if (modeValues.containsKey("key")) {
-            builder.target_key((Integer) modeValues.get("key"));
-        }
-        if (modeValues.containsKey("mode")) {
-            builder.target_mode("MAJOR".equals(modeValues.get("mode")) ? 1 : 0);
-        }
-        if (modeValues.containsKey("time_signature")) {
-            builder.target_time_signature((Integer) modeValues.get("time_signature"));
-        }
-    }
+    // setMedianAudioFeaturesメソッドとsetModeValuesメソッドを削除
 
     private void setAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> audioFeatures, BiConsumer<GetRecommendationsRequest.Builder, Map.Entry<String, Float>> featureSetter) {
         for (Map.Entry<String, Float> entry : audioFeatures.entrySet()) {
@@ -117,35 +91,6 @@ public class AudioFeatureSetter {
                 break;
             case "speechiness":
                 builder.min_speechiness(entry.getValue());
-                break;
-        }
-    }
-
-    private void setMedianFeature(GetRecommendationsRequest.Builder builder, Map.Entry<String, Float> entry) {
-        switch (entry.getKey()) {
-            case "danceability":
-                builder.target_danceability(entry.getValue());
-                break;
-            case "energy":
-                builder.target_energy(entry.getValue());
-                break;
-            case "valence":
-                builder.target_valence(entry.getValue());
-                break;
-            case "tempo":
-                builder.target_tempo(entry.getValue());
-                break;
-            case "acousticness":
-                builder.target_acousticness(entry.getValue());
-                break;
-            case "instrumentalness":
-                builder.target_instrumentalness(entry.getValue());
-                break;
-            case "liveness":
-                builder.target_liveness(entry.getValue());
-                break;
-            case "speechiness":
-                builder.target_speechiness(entry.getValue());
                 break;
         }
     }

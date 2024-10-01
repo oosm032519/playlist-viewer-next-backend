@@ -42,16 +42,14 @@ public class SpotifyRecommendationService {
     /**
      * 指定されたパラメータに基づいて推奨トラックのリストを取得します。
      *
-     * @param seedGenres          ジャンルのシードリスト
-     * @param maxAudioFeatures    最大AudioFeaturesのマップ
-     * @param minAudioFeatures    最小AudioFeaturesのマップ
-     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
-     * @param modeValues          モード値のマップ
+     * @param seedGenres       ジャンルのシードリスト
+     * @param maxAudioFeatures 最大AudioFeaturesのマップ
+     * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 推奨トラックのリスト
      * @throws SpotifyApiException Spotify APIの呼び出し中にエラーが発生した場合
      */
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {
-        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}, medianAudioFeatures: {}, modeValues: {}", seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
+        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures);
 
         if (seedGenres.isEmpty()) {
             return Collections.emptyList();
@@ -59,7 +57,7 @@ public class SpotifyRecommendationService {
 
         return RetryUtil.executeWithRetry(() -> {
             try {
-                GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+                GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures);
 
                 Recommendations recommendations = recommendationsRequest.execute();
 
@@ -87,25 +85,21 @@ public class SpotifyRecommendationService {
     /**
      * 推奨リクエストを作成します。
      *
-     * @param seedGenres          ジャンルのシードリスト
-     * @param maxAudioFeatures    最大AudioFeaturesのマップ
-     * @param minAudioFeatures    最小AudioFeaturesのマップ
-     * @param medianAudioFeatures 中央値のAudioFeaturesのマップ
-     * @param modeValues          モード値のマップ
+     * @param seedGenres       ジャンルのシードリスト
+     * @param maxAudioFeatures 最大AudioFeaturesのマップ
+     * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 構築されたGetRecommendationsRequest
      */
-    private GetRecommendationsRequest createRecommendationsRequest(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues) {
+    private GetRecommendationsRequest createRecommendationsRequest(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
         String genres = String.join(",", seedGenres);
 
         GetRecommendationsRequest.Builder recommendationsRequestBuilder = spotifyApi.getRecommendations()
                 .seed_genres(genres)
                 .limit(20);
 
-        // AudioFeaturesとモード値を設定
+        // AudioFeaturesを設定
         audioFeatureSetter.setMaxAudioFeatures(recommendationsRequestBuilder, maxAudioFeatures);
         audioFeatureSetter.setMinAudioFeatures(recommendationsRequestBuilder, minAudioFeatures);
-        audioFeatureSetter.setMedianAudioFeatures(recommendationsRequestBuilder, medianAudioFeatures);
-        audioFeatureSetter.setModeValues(recommendationsRequestBuilder, modeValues);
 
         return recommendationsRequestBuilder.build();
     }

@@ -108,20 +108,17 @@ public class PlaylistDetailsController {
         // AudioFeaturesの統計情報を取得
         Map<String, Float> maxAudioFeatures = (Map<String, Float>) response.get("maxAudioFeatures");
         Map<String, Float> minAudioFeatures = (Map<String, Float>) response.get("minAudioFeatures");
-        Map<String, Float> medianAudioFeatures = (Map<String, Float>) response.get("medianAudioFeatures");
-        Map<String, Object> modeValues = (Map<String, Object>) response.get("modeValues");
 
         // 推奨トラックを取得
         List<Track> recommendations = trackRecommendationService.getRecommendations(
-                top5Genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+                top5Genres, maxAudioFeatures, minAudioFeatures);
 
         // レスポンスに追加情報を設定
         response.put("genreCounts", genreCounts);
         response.put("recommendations", recommendations);
 
         // 詳細情報をログに記録
-        logPlaylistDetails(genreCounts, top5Genres, maxAudioFeatures, minAudioFeatures,
-                medianAudioFeatures, modeValues, recommendations);
+        logPlaylistDetails(genreCounts, top5Genres, maxAudioFeatures, minAudioFeatures, recommendations);
 
         return response;
     }
@@ -129,24 +126,19 @@ public class PlaylistDetailsController {
     /**
      * プレイリストの詳細情報をログに記録する
      *
-     * @param genreCounts         ジャンルごとの曲数
-     * @param top5Genres          上位5つのジャンル
-     * @param maxAudioFeatures    最大AudioFeatures
-     * @param minAudioFeatures    最小AudioFeatures
-     * @param medianAudioFeatures 中央値のAudioFeatures
-     * @param modeValues          最頻値のAudioFeatures
-     * @param recommendations     推奨トラックリスト
+     * @param genreCounts      ジャンルごとの曲数
+     * @param top5Genres       上位5つのジャンル
+     * @param maxAudioFeatures 最大AudioFeatures
+     * @param minAudioFeatures 最小AudioFeatures
+     * @param recommendations  推奨トラックリスト
      */
     private void logPlaylistDetails(Map<String, Integer> genreCounts, List<String> top5Genres,
                                     Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures,
-                                    Map<String, Float> medianAudioFeatures, Map<String, Object> modeValues,
                                     List<Track> recommendations) {
         logger.info("ジャンル数: {}", genreCounts);
         logger.info("トップ5ジャンル: {}", top5Genres);
         logger.info("最大AudioFeatures: {}", maxAudioFeatures);
         logger.info("最小AudioFeatures: {}", minAudioFeatures);
-        logger.info("中央AudioFeatures: {}", medianAudioFeatures);
-        logger.info("最頻値: {}", modeValues);
         logger.info("推奨トラック数: {}", recommendations.size());
     }
 
