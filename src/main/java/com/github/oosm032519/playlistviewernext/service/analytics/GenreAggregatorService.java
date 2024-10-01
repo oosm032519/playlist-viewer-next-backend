@@ -6,6 +6,7 @@ import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistSe
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
@@ -36,6 +37,26 @@ public class GenreAggregatorService {
     public Map<String, Integer> aggregateGenres(PlaylistTrack[] tracks) {
         try {
             Map<String, Integer> genreCount = new HashMap<>();
+            Map<String, Integer> artistCount = new HashMap<>(); // アーティストごとの出現回数をカウントするマップ
+
+            // アーティストIDのリストを作成 (重複削除は行わない)
+            List<String> artistIds = Arrays.stream(tracks)
+                    .filter(Objects::nonNull)
+                    .map(PlaylistTrack::getTrack)
+                    .filter(Objects::nonNull)
+                    .map(Track.class::cast)
+                    .flatMap(track -> Arrays.stream(track.getArtists()))
+                    .map(ArtistSimplified::getId)
+                    .toList();
+
+            // アーティストごとの出現回数をカウント
+            artistIds.forEach(artistId -> artistCount.merge(artistId, 1, Integer::sum));
+
+            // 重複しないアーティストIDのリストを作成
+            List<String> uniqueArtistIds = new ArrayList<>(artistCount.keySet());
+
+            // アーティストIDのリストを使用してジャンル情報を取得
+            Map<String, List<String>> artistGenresMap = artistService.getArtistGenres(uniqueArtistIds);
 
             Arrays.stream(tracks)
                     .filter(Objects::nonNull)
@@ -43,20 +64,13 @@ public class GenreAggregatorService {
                     .filter(Objects::nonNull)
                     .map(Track.class::cast)
                     .flatMap(track -> Arrays.stream(track.getArtists()))
-                    .flatMap(artist -> {
-                        try {
-                            return artistService.getArtistGenres(artist.getId()).stream();
-                        } catch (Exception e) {
-                            // Spotify API 関連のエラーは SpotifyApiException でラップ
-                            throw new SpotifyApiException(
-                                    HttpStatus.INTERNAL_SERVER_ERROR,
-                                    "SPOTIFY_API_ERROR",
-                                    "Spotify API からのデータ取得中にエラーが発生しました。",
-                                    e
-                            );
+                    .forEach(artist -> {
+                        List<String> genres = artistGenresMap.get(artist.getId());
+                        if (genres != null) {
+                            int weight = artistCount.get(artist.getId()); // アーティストの出現回数で重み付け
+                            genres.forEach(genre -> genreCount.merge(genre, weight, Integer::sum));
                         }
-                    })
-                    .forEach(genre -> genreCount.merge(genre, 1, Integer::sum));
+                    });
 
             return genreCount.entrySet()
                     .stream()

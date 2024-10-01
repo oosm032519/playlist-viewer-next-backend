@@ -9,11 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.requests.data.artists.GetArtistRequest;
+import se.michaelthelin.spotify.requests.data.artists.GetSeveralArtistsRequest;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SpotifyArtistService {
@@ -32,23 +31,34 @@ public class SpotifyArtistService {
     }
 
     /**
-     * 指定されたアーティストIDに基づき、そのアーティストのジャンルを取得する
+     * 指定されたアーティストIDのリストに基づき、各アーティストのジャンルを取得する
      *
-     * @param artistId アーティストのID
-     * @return アーティストのジャンルのリスト
+     * @param artistIds アーティストIDのリスト
+     * @return アーティストIDとジャンルのリストのマップ
      * @throws SpotifyApiException アーティスト情報の取得中にエラーが発生した場合
      */
-    @Cacheable(value = "artistGenres", key = "#artistId")
-    public List<String> getArtistGenres(String artistId) {
+    @Cacheable(value = "artistGenres", key = "#artistIds")
+    public Map<String, List<String>> getArtistGenres(List<String> artistIds) {
         return RetryUtil.executeWithRetry(() -> {
             try {
-                return Optional.ofNullable(getArtist(artistId))
-                        .map(Artist::getGenres)
-                        .map(List::of)
-                        .orElse(Collections.emptyList());
+                // アーティストIDのリストを50個以下のチャンクに分割
+                List<List<String>> artistIdChunks = new ArrayList<>();
+                for (int i = 0; i < artistIds.size(); i += 50) {
+                    artistIdChunks.add(artistIds.subList(i, Math.min(i + 50, artistIds.size())));
+                }
+
+                // 各チャンクに対して GetSeveralArtistsRequest を実行
+                Map<String, List<String>> artistGenresMap = new HashMap<>();
+                for (List<String> chunk : artistIdChunks) {
+                    Artist[] artists = getArtists(chunk);
+                    artistGenresMap.putAll(Arrays.stream(artists)
+                            .collect(Collectors.toMap(Artist::getId, artist -> List.of(artist.getGenres()))));
+                }
+
+                return artistGenresMap;
             } catch (Exception e) {
                 // Spotify API 関連のエラーの場合は SpotifyApiException をスロー
-                logger.error("アーティスト情報の取得中にエラーが発生しました。 artistId: {}", artistId, e);
+                logger.error("アーティスト情報の取得中にエラーが発生しました。 artistIds: {}", artistIds, e);
                 throw new SpotifyApiException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
                         "ARTIST_INFO_RETRIEVAL_ERROR",
@@ -59,8 +69,8 @@ public class SpotifyArtistService {
         }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
     }
 
-    private Artist getArtist(String artistId) throws Exception {
-        GetArtistRequest getArtistRequest = spotifyApi.getArtist(artistId).build();
-        return getArtistRequest.execute();
+    private Artist[] getArtists(List<String> artistIds) throws Exception {
+        GetSeveralArtistsRequest getSeveralArtistsRequest = spotifyApi.getSeveralArtists(artistIds.toArray(new String[0])).build();
+        return getSeveralArtistsRequest.execute();
     }
 }
