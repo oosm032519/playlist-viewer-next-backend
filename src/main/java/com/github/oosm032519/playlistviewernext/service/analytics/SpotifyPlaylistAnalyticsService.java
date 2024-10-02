@@ -7,11 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SpotifyPlaylistAnalyticsService {
@@ -94,6 +94,71 @@ public class SpotifyPlaylistAnalyticsService {
         } catch (Exception e) {
             logger.error("プレイリストID: {} のトラック取得中にエラーが発生しました。", playlistId, e);
             throw e;
+        }
+    }
+
+    /**
+     * プレイリストのアーティスト出現頻度上位5つを取得するメソッド
+     *
+     * @param playlistId プレイリストのID
+     * @return アーティスト出現頻度上位5つのリスト
+     * @throws PlaylistViewerNextException アーティスト出現頻度上位5つの取得中にエラーが発生した場合
+     */
+    public List<String> getTop5ArtistsForPlaylist(String playlistId) {
+        logger.info("プレイリストのアーティスト出現頻度上位5つの取得を開始します。プレイリストID: {}", playlistId);
+
+        try {
+            Map<String, Integer> artistCounts = getArtistCountsForPlaylist(playlistId);
+            return genreAggregatorService.getTopArtists(artistCounts, 5);
+        } catch (Exception e) {
+            logger.error("プレイリストID: {} のアーティスト出現頻度上位5つの取得中にエラーが発生しました。", playlistId, e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "TOP_ARTISTS_RETRIEVAL_ERROR",
+                    "プレイリストのアーティスト出現頻度上位5つの取得中にエラーが発生しました。",
+                    e
+            );
+        }
+    }
+
+    /**
+     * プレイリストに含まれるアーティストの出現回数をカウントする
+     *
+     * @param playlistId プレイリストID
+     * @return アーティストIDと出現回数のマップ
+     */
+    public Map<String, Integer> getArtistCountsForPlaylist(String playlistId) {
+        logger.info("プレイリストのアーティスト集計を開始します。プレイリストID: {}", playlistId);
+
+        try {
+            PlaylistTrack[] tracks = fetchPlaylistTracks(playlistId);
+            if (tracks == null) {
+                logger.warn("プレイリストID: {} に対するトラックが見つかりませんでした。", playlistId);
+                return Collections.emptyMap();
+            }
+
+            Map<String, Integer> artistCount = new HashMap<>();
+
+            List<String> artistIds = Arrays.stream(tracks)
+                    .filter(Objects::nonNull)
+                    .map(PlaylistTrack::getTrack)
+                    .filter(Objects::nonNull)
+                    .map(Track.class::cast)
+                    .flatMap(track -> Arrays.stream(track.getArtists()))
+                    .map(ArtistSimplified::getId)
+                    .toList();
+
+            artistIds.forEach(artistId -> artistCount.merge(artistId, 1, Integer::sum));
+
+            return artistCount;
+        } catch (Exception e) {
+            logger.error("プレイリストID: {} のアーティスト数の取得中にエラーが発生しました。", playlistId, e);
+            throw new PlaylistViewerNextException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "ARTIST_COUNTS_RETRIEVAL_ERROR",
+                    "プレイリストのアーティスト数の取得中にエラーが発生しました。",
+                    e
+            );
         }
     }
 }

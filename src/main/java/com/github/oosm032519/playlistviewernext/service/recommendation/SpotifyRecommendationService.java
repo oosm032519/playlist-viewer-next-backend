@@ -42,23 +42,23 @@ public class SpotifyRecommendationService {
     /**
      * 指定されたパラメータに基づいて推奨トラックのリストを取得します。
      *
-     * @param seedGenres       ジャンルのシードリスト
+     * @param seedArtists      アーティストIDのシードリスト
      * @param maxAudioFeatures 最大AudioFeaturesのマップ
      * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 推奨トラックのリスト
      * @throws SpotifyApiException Spotify APIの呼び出し中にエラーが発生した場合
      */
-    public List<Track> getRecommendations(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
-        logger.info("getRecommendations: seedGenres: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedGenres, maxAudioFeatures, minAudioFeatures);
+    public List<Track> getRecommendations(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
+        logger.info("getRecommendations: seedArtists: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedArtists, maxAudioFeatures, minAudioFeatures);
 
-        if (seedGenres.isEmpty()) {
+        if (seedArtists == null || seedArtists.isEmpty()) {
+            logger.warn("seedArtistsがnullまたは空です。");
             return Collections.emptyList();
         }
 
         return RetryUtil.executeWithRetry(() -> {
             try {
-                GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedGenres, maxAudioFeatures, minAudioFeatures);
-
+                GetRecommendationsRequest recommendationsRequest = createRecommendationsRequest(seedArtists, maxAudioFeatures, minAudioFeatures);
                 Recommendations recommendations = recommendationsRequest.execute();
 
                 if (recommendations == null || recommendations.getTracks() == null) {
@@ -67,10 +67,8 @@ public class SpotifyRecommendationService {
                 }
 
                 logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
-
                 return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
             } catch (Exception e) {
-                // 推奨トラックの取得中にエラーが発生した場合は SpotifyApiException をスロー
                 logger.error("推奨トラックの取得中にエラーが発生しました。", e);
                 throw new SpotifyApiException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -79,28 +77,29 @@ public class SpotifyRecommendationService {
                         e
                 );
             }
-        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS); // 最大3回再試行、初期間隔は RetryUtil のデフォルト値
+        }, 3, RetryUtil.DEFAULT_RETRY_INTERVAL_MILLIS);
     }
 
     /**
      * 推奨リクエストを作成します。
      *
-     * @param seedGenres       ジャンルのシードリスト
+     * @param seedArtists      アーティストのシードリスト
      * @param maxAudioFeatures 最大AudioFeaturesのマップ
      * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 構築されたGetRecommendationsRequest
      */
-    private GetRecommendationsRequest createRecommendationsRequest(List<String> seedGenres, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
-        String genres = String.join(",", seedGenres);
+    private GetRecommendationsRequest createRecommendationsRequest(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
+        String artists = String.join(",", seedArtists);
 
         GetRecommendationsRequest.Builder recommendationsRequestBuilder = spotifyApi.getRecommendations()
-                .seed_genres(genres)
+                .seed_artists(artists)
                 .limit(20);
 
-        // AudioFeaturesを設定
         audioFeatureSetter.setMaxAudioFeatures(recommendationsRequestBuilder, maxAudioFeatures);
         audioFeatureSetter.setMinAudioFeatures(recommendationsRequestBuilder, minAudioFeatures);
 
-        return recommendationsRequestBuilder.build();
+        GetRecommendationsRequest request = recommendationsRequestBuilder.build();
+        logger.debug("Recommendation Request Parameters: {}", request.getBodyParameters());
+        return request;
     }
 }

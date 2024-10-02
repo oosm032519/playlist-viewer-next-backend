@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCre
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
+import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
+import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
 import java.util.HashMap;
@@ -30,6 +32,8 @@ public class PlaylistDetailsRetrievalService {
     private final AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
     private final TrackDataRetriever trackDataRetriever;
     private final ModeValuesCalculator modeValuesCalculator;
+    private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
+    private final SpotifyRecommendationService trackRecommendationService;
 
     @Autowired
     public PlaylistDetailsRetrievalService(
@@ -40,7 +44,9 @@ public class PlaylistDetailsRetrievalService {
             MedianAudioFeaturesCalculator medianAudioFeaturesCalculator,
             AverageAudioFeaturesCalculator averageAudioFeaturesCalculator,
             TrackDataRetriever trackDataRetriever,
-            ModeValuesCalculator modeValuesCalculator) {
+            ModeValuesCalculator modeValuesCalculator,
+            SpotifyPlaylistAnalyticsService playlistAnalyticsService,
+            SpotifyRecommendationService trackRecommendationService) {
         this.playlistDetailsService = playlistDetailsService;
         this.authController = authController;
         this.maxAudioFeaturesCalculator = maxAudioFeaturesCalculator;
@@ -49,6 +55,8 @@ public class PlaylistDetailsRetrievalService {
         this.averageAudioFeaturesCalculator = averageAudioFeaturesCalculator;
         this.trackDataRetriever = trackDataRetriever;
         this.modeValuesCalculator = modeValuesCalculator;
+        this.playlistAnalyticsService = playlistAnalyticsService;
+        this.trackRecommendationService = trackRecommendationService;
     }
 
     /**
@@ -64,7 +72,6 @@ public class PlaylistDetailsRetrievalService {
         try {
             authController.authenticate();
 
-            // getPlaylist で Playlist オブジェクトを取得
             Playlist playlist = playlistDetailsService.getPlaylist(id);
             if (playlist == null) {
                 throw new ResourceNotFoundException(
@@ -74,7 +81,6 @@ public class PlaylistDetailsRetrievalService {
                 );
             }
 
-            // Playlist オブジェクトから名前とオーナー情報を取得
             String playlistName = playlist.getName();
             User owner = playlist.getOwner();
 
@@ -87,18 +93,25 @@ public class PlaylistDetailsRetrievalService {
             Map<String, Float> averageAudioFeatures = averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
             Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
 
+            // アーティスト出現頻度上位5件を取得
+            List<String> top5Artists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
+
             logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
 
             long totalDuration = calculateTotalDuration(tracks);
 
-            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+
+            // top5Artists をrecommendationsメソッドに渡す
+            List<Track> recommendations = trackRecommendationService.getRecommendations(
+                    top5Artists, maxAudioFeatures, minAudioFeatures);
+
+            Map<String, Object> response = createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
+            response.put("recommendations", recommendations); // レスポンスに推奨トラックを追加
+            return response;
 
         } catch (ResourceNotFoundException e) {
-            // リソースが見つからないエラーはそのまま再スロー
-            logger.error("リソースが見つかりません。", e);
             throw e;
         } catch (Exception e) {
-            // その他のエラー
             logger.error("プレイリストの詳細情報の取得中に予期しないエラーが発生しました。", e);
             throw new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "PLAYLIST_DETAILS_RETRIEVAL_ERROR", "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
         }

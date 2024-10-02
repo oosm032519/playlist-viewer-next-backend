@@ -37,9 +37,8 @@ public class GenreAggregatorService {
     public Map<String, Integer> aggregateGenres(PlaylistTrack[] tracks) {
         try {
             Map<String, Integer> genreCount = new HashMap<>();
-            Map<String, Integer> artistCount = new HashMap<>(); // アーティストごとの出現回数をカウントするマップ
+            Map<String, Integer> artistCount = new HashMap<>();
 
-            // アーティストIDのリストを作成 (重複削除は行わない)
             List<String> artistIds = Arrays.stream(tracks)
                     .filter(Objects::nonNull)
                     .map(PlaylistTrack::getTrack)
@@ -49,13 +48,10 @@ public class GenreAggregatorService {
                     .map(ArtistSimplified::getId)
                     .toList();
 
-            // アーティストごとの出現回数をカウント
             artistIds.forEach(artistId -> artistCount.merge(artistId, 1, Integer::sum));
 
-            // 重複しないアーティストIDのリストを作成
             List<String> uniqueArtistIds = new ArrayList<>(artistCount.keySet());
 
-            // アーティストIDのリストを使用してジャンル情報を取得
             Map<String, List<String>> artistGenresMap = artistService.getArtistGenres(uniqueArtistIds);
 
             Arrays.stream(tracks)
@@ -67,7 +63,7 @@ public class GenreAggregatorService {
                     .forEach(artist -> {
                         List<String> genres = artistGenresMap.get(artist.getId());
                         if (genres != null) {
-                            int weight = artistCount.get(artist.getId()); // アーティストの出現回数で重み付け
+                            int weight = artistCount.get(artist.getId());
                             genres.forEach(genre -> genreCount.merge(genre, weight, Integer::sum));
                         }
                     });
@@ -82,10 +78,8 @@ public class GenreAggregatorService {
                             LinkedHashMap::new
                     ));
         } catch (SpotifyApiException e) {
-            // SpotifyApiException はそのままスロー
             throw e;
         } catch (Exception e) {
-            // 予期せぬエラーは PlaylistViewerNextException でラップ
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "GENRE_AGGREGATION_ERROR",
@@ -108,5 +102,44 @@ public class GenreAggregatorService {
                 .limit(limit)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+    }
+
+
+    /**
+     * 集計されたアーティストIDの上位を取得するメソッド
+     *
+     * @param artistCounts アーティストIDとその出現回数のマップ
+     * @param limit        取得する上位アーティストIDの数
+     * @return 上位アーティストIDのリスト
+     */
+    public List<String> getTopArtists(Map<String, Integer> artistCounts, int limit) {
+        Random random = new Random();
+
+        List<Map.Entry<String, Integer>> sortedEntries = artistCounts.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+
+
+        Map<Integer, List<String>> groupedArtists = sortedEntries.stream()
+                .collect(Collectors.groupingBy(Map.Entry::getValue, Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+
+        List<String> topArtists = new ArrayList<>();
+        int count = 0;
+
+        for (List<String> artists : groupedArtists.values()) {
+            if (count + artists.size() <= limit) {
+                topArtists.addAll(artists);
+                count += artists.size();
+            } else {
+
+                Collections.shuffle(artists, random);
+                topArtists.addAll(artists.subList(0, limit - count));
+                count = limit;
+                break;
+            }
+        }
+
+        return topArtists;
     }
 }

@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextExce
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,8 @@ public class PlaylistDetailsController {
     private final PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
     private final PlaylistAnalyticsService playlistAnalyticsService;
     private final TrackRecommendationService trackRecommendationService;
-    private final HttpServletRequest request; // リクエスト情報を取得
+    private final HttpServletRequest request;
+    private final SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
     /**
      * PlaylistDetailsControllerのコンストラクタ
@@ -48,12 +50,14 @@ public class PlaylistDetailsController {
             PlaylistDetailsRetrievalService playlistDetailsRetrievalService,
             PlaylistAnalyticsService playlistAnalyticsService,
             TrackRecommendationService trackRecommendationService,
-            HttpServletRequest request
+            HttpServletRequest request,
+            SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService
     ) {
         this.playlistDetailsRetrievalService = playlistDetailsRetrievalService;
         this.playlistAnalyticsService = playlistAnalyticsService;
         this.trackRecommendationService = trackRecommendationService;
         this.request = request;
+        this.spotifyPlaylistAnalyticsService = spotifyPlaylistAnalyticsService;
     }
 
     /**
@@ -103,7 +107,9 @@ public class PlaylistDetailsController {
 
         // ジャンル分析を実行
         Map<String, Integer> genreCounts = playlistAnalyticsService.getGenreCountsForPlaylist(id);
-        List<String> top5Genres = playlistAnalyticsService.getTop5GenresForPlaylist(id);
+
+        // アーティスト分析を実行
+        List<String> top5Artists = spotifyPlaylistAnalyticsService.getTop5ArtistsForPlaylist(id);
 
         // AudioFeaturesの統計情報を取得
         Map<String, Float> maxAudioFeatures = (Map<String, Float>) response.get("maxAudioFeatures");
@@ -111,14 +117,14 @@ public class PlaylistDetailsController {
 
         // 推奨トラックを取得
         List<Track> recommendations = trackRecommendationService.getRecommendations(
-                top5Genres, maxAudioFeatures, minAudioFeatures);
+                top5Artists, maxAudioFeatures, minAudioFeatures);
 
         // レスポンスに追加情報を設定
         response.put("genreCounts", genreCounts);
         response.put("recommendations", recommendations);
 
         // 詳細情報をログに記録
-        logPlaylistDetails(genreCounts, top5Genres, maxAudioFeatures, minAudioFeatures, recommendations);
+        logPlaylistDetails(genreCounts, top5Artists, maxAudioFeatures, minAudioFeatures, recommendations);
 
         return response;
     }
@@ -127,16 +133,16 @@ public class PlaylistDetailsController {
      * プレイリストの詳細情報をログに記録する
      *
      * @param genreCounts      ジャンルごとの曲数
-     * @param top5Genres       上位5つのジャンル
+     * @param top5Artists       上位5つのアーティスト
      * @param maxAudioFeatures 最大AudioFeatures
      * @param minAudioFeatures 最小AudioFeatures
      * @param recommendations  推奨トラックリスト
      */
-    private void logPlaylistDetails(Map<String, Integer> genreCounts, List<String> top5Genres,
+    private void logPlaylistDetails(Map<String, Integer> genreCounts, List<String> top5Artists,
                                     Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures,
                                     List<Track> recommendations) {
         logger.info("ジャンル数: {}", genreCounts);
-        logger.info("トップ5ジャンル: {}", top5Genres);
+        logger.info("トップ5アーティスト: {}", top5Artists);
         logger.info("最大AudioFeatures: {}", maxAudioFeatures);
         logger.info("最小AudioFeatures: {}", minAudioFeatures);
         logger.info("推奨トラック数: {}", recommendations.size());

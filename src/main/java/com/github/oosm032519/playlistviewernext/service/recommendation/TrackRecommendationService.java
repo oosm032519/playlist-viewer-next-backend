@@ -25,24 +25,23 @@ public class TrackRecommendationService {
     /**
      * トラックの推薦リストを取得する
      *
-     * @param genres           推薦に使用する上位5つのジャンルのリスト
+     * @param artists          推薦に使用する上位5つのアーティストのリスト
      * @param maxAudioFeatures AudioFeaturesの最大値を含むマップ
      * @param minAudioFeatures AudioFeaturesの最小値を含むマップ
      * @return 推薦されたトラックのリスト
      * @throws SpotifyApiException トラックの推薦中にエラーが発生した場合
      */
-    public List<Track> getRecommendations(List<String> genres,
+    public List<Track> getRecommendations(List<String> artists,
                                           Map<String, Float> maxAudioFeatures,
                                           Map<String, Float> minAudioFeatures) {
-        if (genres.isEmpty()) {
-            LOGGER.warn("ジャンルリストが空です。推薦を生成できません。");
+        if (artists == null || artists.isEmpty()) {
+            LOGGER.warn("アーティストリストが空です。推薦を生成できません。");
             return Collections.emptyList();
         }
 
         try {
-            return recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures);
+            return recommendationService.getRecommendations(artists, maxAudioFeatures, minAudioFeatures);
         } catch (Exception e) {
-            // トラックの推薦中にエラーが発生した場合は SpotifyApiException をスロー
             LOGGER.error("Spotify APIの呼び出し中にエラーが発生しました。", e);
             throw new SpotifyApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
