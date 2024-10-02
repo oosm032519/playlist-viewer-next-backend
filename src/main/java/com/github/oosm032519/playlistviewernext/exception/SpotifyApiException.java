@@ -15,4 +15,16 @@ public class SpotifyApiException extends PlaylistViewerNextException {
     public SpotifyApiException(HttpStatus httpStatus, String errorCode, String message, String details, Throwable cause) {
         super(httpStatus, errorCode, message, details, cause);
     }
+
+    public SpotifyApiException(int status, String errorCode, String message, Throwable cause) {
+        super(convertStatusToHttpStatus(status), errorCode, message, cause);
+    }
+
+    private static HttpStatus convertStatusToHttpStatus(int status) {
+        try {
+            return HttpStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+    }
 }
