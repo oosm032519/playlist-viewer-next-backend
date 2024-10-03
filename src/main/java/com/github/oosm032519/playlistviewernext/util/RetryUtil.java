@@ -14,7 +14,7 @@ public class RetryUtil {
     public static final long DEFAULT_RETRY_INTERVAL_MILLIS = 5000; // デフォルトの再試行間隔（ミリ秒）
     private static final Logger logger = LoggerFactory.getLogger(RetryUtil.class);
 
-    public static <T> T executeWithRetry(RetryableOperation<T> operation, int maxRetries, long initialIntervalMillis) {
+    public static <T> T executeWithRetry(RetryableOperation<T> operation, int maxRetries, long initialIntervalMillis) throws SpotifyWebApiException {
         int retryCount = 0;
         long intervalMillis = initialIntervalMillis;
 
