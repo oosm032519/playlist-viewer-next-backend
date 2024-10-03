@@ -137,7 +137,6 @@ class SessionIdControllerTest {
 
         when(valueOperations.get("temp:" + temporaryToken)).thenThrow(new DatabaseAccessException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "TEST_ERROR",
                 "Test error message",
                 new RuntimeException("Test exception")
         ));

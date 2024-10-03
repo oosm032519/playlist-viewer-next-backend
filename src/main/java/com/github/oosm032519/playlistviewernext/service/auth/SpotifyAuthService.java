@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.auth;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +41,8 @@ public class SpotifyAuthService {
             } catch (Exception e) {
                 // アクセストークンの取得中にエラーが発生した場合は SpotifyApiException をスロー
                 logger.error("クライアントクレデンシャルトークンの取得中にエラーが発生しました", e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "CLIENT_CREDENTIALS_AUTH_ERROR",
                         "クライアントクレデンシャルトークンの取得中にエラーが発生しました。",
                         e
                 );

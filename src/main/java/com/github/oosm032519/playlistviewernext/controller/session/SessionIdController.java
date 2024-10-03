@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -50,53 +49,29 @@ public class SessionIdController {
             logger.warn("一時トークンが提供されていません。リクエストボディ: {}", body);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
-                    "TEMPORARY_TOKEN_MISSING",
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。"
             );
         }
 
-        try {
-            logger.debug("Redisから一時トークンに対応するセッションIDを取得します。一時トークン: {}", temporaryToken);
-            String sessionId = redisTemplate.opsForValue().get("temp:" + temporaryToken);
+        logger.debug("Redisから一時トークンに対応するセッションIDを取得します。一時トークン: {}", temporaryToken);
+        String sessionId = redisTemplate.opsForValue().get("temp:" + temporaryToken);
 
-            if (sessionId == null) {
-                logger.warn("セッションIDが見つかりません。一時トークン: {}", temporaryToken);
-                throw new DatabaseAccessException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "SESSION_ID_NOT_FOUND",
-                        "ログイン処理中にエラーが発生しました。再度ログインしてください。",
-                        null
-                );
-            }
-
-            logger.info("セッションIDが正常に取得されました。セッションID: {}", sessionId);
-
-            logger.debug("Redisから一時トークンを削除します。一時トークン: {}", temporaryToken);
-            Boolean deleteResult = redisTemplate.delete("temp:" + temporaryToken);
-            logger.info("一時トークンの削除結果: {}", deleteResult);
-
-            logger.info("セッションID取得処理が完了しました。セッションID: {}", sessionId);
-            return ResponseEntity.ok(Map.of("sessionId", sessionId));
-        } catch (DatabaseAccessException e) {
-            // DatabaseAccessExceptionの処理
-            HttpStatus status = e.getHttpStatus();
-            String errorCode = e.getErrorCode();
-            String message = e.getMessage();
-            String details = e.getDetails();
-
-            logger.error("Database access error occurred while retrieving session ID: {} - {} - {}", status, errorCode, message, e);
-
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, status);
-        } catch (Exception e) {
-            // 予期しないエラーの処理
-            logger.error("Redisアクセス中に予期しないエラーが発生しました。", e);
+        if (sessionId == null) {
+            logger.warn("セッションIDが見つかりません。一時トークン: {}", temporaryToken);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "REDIS_ACCESS_ERROR",
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。",
-                    e
+                    null
             );
         }
+
+        logger.info("セッションIDが正常に取得されました。セッションID: {}", sessionId);
+
+        logger.debug("Redisから一時トークンを削除します。一時トークン: {}", temporaryToken);
+        Boolean deleteResult = redisTemplate.delete("temp:" + temporaryToken);
+        logger.info("一時トークンの削除結果: {}", deleteResult);
+
+        logger.info("セッションID取得処理が完了しました。セッションID: {}", sessionId);
+        return ResponseEntity.ok(Map.of("sessionId", sessionId));
     }
 }

@@ -57,7 +57,6 @@ public class UserFavoritePlaylistsService {
             LOGGER.error("お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。 userId: {}", userId, e);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
                     "お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。",
                     e
             );

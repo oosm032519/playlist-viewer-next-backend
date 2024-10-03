@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -77,12 +76,9 @@ public class GenreAggregatorService {
                             (e1, _) -> e1,
                             LinkedHashMap::new
                     ));
-        } catch (SpotifyApiException e) {
-            throw e;
         } catch (Exception e) {
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "GENRE_AGGREGATION_ERROR",
                     "ジャンルの集計中にエラーが発生しました。",
                     e
             );

@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,6 @@ public class SpotifyPlaylistDetailsService {
                 if (playlist == null) {
                     throw new ResourceNotFoundException(
                             HttpStatus.NOT_FOUND,
-                            "PLAYLIST_NOT_FOUND",
                             "指定されたプレイリストが見つかりません。"
                     );
                 }
@@ -83,9 +82,8 @@ public class SpotifyPlaylistDetailsService {
                 throw e;
             } catch (Exception e) {
                 logger.error("トラック情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "TRACKS_RETRIEVAL_ERROR",
                         "トラック情報の取得中にエラーが発生しました。",
                         e
                 );
@@ -108,9 +106,8 @@ public class SpotifyPlaylistDetailsService {
                 return getPlaylistRequest.execute();
             } catch (Exception e) {
                 logger.error("プレイリスト情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "PLAYLIST_INFO_RETRIEVAL_ERROR",
                         "プレイリスト情報の取得中にエラーが発生しました。",
                         e
                 );

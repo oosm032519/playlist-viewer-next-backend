@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +53,8 @@ public class SpotifyUserPlaylistCreationService {
                 return playlistId;
             } catch (Exception e) {
                 logger.error("プレイリストの作成中にエラーが発生しました。", e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "PLAYLIST_CREATION_ERROR",
                         "プレイリストの作成中にエラーが発生しました。",
                         e
                 );

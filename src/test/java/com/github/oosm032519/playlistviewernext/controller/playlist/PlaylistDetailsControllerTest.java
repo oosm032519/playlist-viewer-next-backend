@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;

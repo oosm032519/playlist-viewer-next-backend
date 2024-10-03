@@ -38,7 +38,6 @@ public class AverageAudioFeaturesCalculator {
             logger.warn("トラックリストが空です。");
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
-                    "EMPTY_TRACK_LIST",
                     "トラックリストが空です。"
             );
         }
@@ -57,7 +56,6 @@ public class AverageAudioFeaturesCalculator {
                     logger.warn("トラックデータにAudioFeaturesが含まれていません。 trackData: {}", trackData);
                     throw new InvalidRequestException(
                             HttpStatus.BAD_REQUEST,
-                            "NULL_AUDIO_FEATURES",
                             "AudioFeaturesがnullです。"
                     );
                 }

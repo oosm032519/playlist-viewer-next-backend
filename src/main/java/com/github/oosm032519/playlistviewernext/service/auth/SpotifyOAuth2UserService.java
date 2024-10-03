@@ -69,7 +69,6 @@ public class SpotifyOAuth2UserService extends DefaultOAuth2UserService {
             logger.error("OAuth2 認証中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "OAUTH2_AUTH_ERROR",
                     "Spotifyへのログイン中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );

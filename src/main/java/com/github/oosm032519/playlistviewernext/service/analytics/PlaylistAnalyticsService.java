@@ -44,7 +44,6 @@ public class PlaylistAnalyticsService {
             logger.error("プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。 id: {}", id, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "GENRE_COUNTS_RETRIEVAL_ERROR",
                     "プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。",
                     e
             );
@@ -65,7 +64,6 @@ public class PlaylistAnalyticsService {
             logger.error("プレイリストのトップ5ジャンルの取得中にエラーが発生しました。 id: {}", id, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOP_GENRES_RETRIEVAL_ERROR",
                     "プレイリストのトップ5ジャンルの取得中にエラーが発生しました。",
                     e
             );

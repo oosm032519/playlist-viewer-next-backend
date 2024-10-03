@@ -43,7 +43,7 @@ class GlobalExceptionHandlerTest {
         ResourceNotFoundException ex = new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "Resource not found");
         when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody()).isNotNull();
@@ -56,7 +56,7 @@ class GlobalExceptionHandlerTest {
         AuthenticationException ex = new AuthenticationException(HttpStatus.UNAUTHORIZED, "AUTH_FAILED", "Authentication failed");
         when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNotNull();
@@ -66,12 +66,12 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handlePlaylistViewerNextException_OtherException() {
-        PlaylistViewerNextException ex = new PlaylistViewerNextException(HttpStatus.BAD_REQUEST, "OTHER_ERROR", "Other error", "Other details");
+        PlaylistViewerNextException ex = new PlaylistViewerNextException(HttpStatus.BAD_REQUEST, "Other error", "Other details");
         Map<String, String[]> paramMap = new HashMap<>();
         paramMap.put("param1", new String[]{"value1"});
         when(mockRequest.getParameterMap()).thenReturn(paramMap);
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
@@ -85,7 +85,7 @@ class GlobalExceptionHandlerTest {
         Exception ex = new Exception("Unexpected error");
         when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
@@ -139,7 +139,7 @@ class GlobalExceptionHandlerTest {
         paramMap.put("param2", new String[]{"value2"});
         when(mockRequest.getParameterMap()).thenReturn(paramMap);
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleGenericException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
@@ -152,13 +152,13 @@ class GlobalExceptionHandlerTest {
     @Test
     void handlePlaylistViewerNextException_WithNullDetails() {
         // Arrange
-        PlaylistViewerNextException ex = new PlaylistViewerNextException(HttpStatus.BAD_REQUEST, "TEST_ERROR", "Test error", (String) null);
+        PlaylistViewerNextException ex = new PlaylistViewerNextException(HttpStatus.BAD_REQUEST, "Test error", (String) null);
         Map<String, String[]> paramMap = new HashMap<>();
         paramMap.put("param1", new String[]{"value1"});
         when(mockRequest.getParameterMap()).thenReturn(paramMap);
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -174,7 +174,7 @@ class GlobalExceptionHandlerTest {
         when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
@@ -190,7 +190,7 @@ class GlobalExceptionHandlerTest {
         when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
 
         // Act
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex, mockWebRequest);
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

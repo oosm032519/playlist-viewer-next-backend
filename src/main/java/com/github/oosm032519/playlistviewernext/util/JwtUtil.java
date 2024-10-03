@@ -65,14 +65,14 @@ public class JwtUtil {
                     .keyID(secret)
                     .generate();
 
-            this.signer = new Ed25519Signer(octetKeyPair);
-            this.verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
+            signer = new Ed25519Signer(octetKeyPair);
+            verifier = new Ed25519Verifier(octetKeyPair.toPublicJWK());
 
             // AEADの初期化
             AeadConfig.register();
             KeysetHandle keysetHandle = KeysetHandle.generateNew(
                     KeyTemplates.get("XCHACHA20_POLY1305"));
-            this.aead = keysetHandle.getPrimitive(Aead.class);
+            aead = keysetHandle.getPrimitive(Aead.class);
 
             logger.debug("署名者、検証者、暗号化器の生成に成功しました。");
         } catch (JOSEException | GeneralSecurityException e) {
@@ -82,7 +82,6 @@ public class JwtUtil {
             }
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "JWT_UTIL_INIT_ERROR",
                     "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
@@ -128,7 +127,6 @@ public class JwtUtil {
             logger.error("トークン生成中にエラーが発生しました", e);
             throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOKEN_GENERATION_ERROR",
                     "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e
             );
@@ -184,7 +182,6 @@ public class JwtUtil {
             logger.error("トークン検証中にエラーが発生しました: 不正なトークン形式です。", e);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
-                    "TOKEN_VALIDATION_ERROR",
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                     e
             );
@@ -193,7 +190,6 @@ public class JwtUtil {
             logger.error("トークン検証中にエラーが発生しました", e);
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
-                    "TOKEN_VALIDATION_ERROR",
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                     e
             );

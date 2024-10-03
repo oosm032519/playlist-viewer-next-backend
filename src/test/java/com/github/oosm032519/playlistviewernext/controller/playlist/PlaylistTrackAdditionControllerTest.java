@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;

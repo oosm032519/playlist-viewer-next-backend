@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -46,7 +45,7 @@ public class PlaylistSearchIntegrationTest {
         // Arrange: 検索クエリとモックの検索結果を設定
         String query = "classical music";
         PlaylistSimplified[] mockPlaylists = {mock(PlaylistSimplified.class)};
-        when(playlistSearchService.searchPlaylists(query, 0, 20)).thenReturn(Arrays.asList(mockPlaylists));
+        when(playlistSearchService.searchPlaylists(query, 0, 20)).thenReturn(List.of(mockPlaylists));
 
         // Act: プレイリスト検索リクエストを実行
         mockMvc.perform(get("/api/playlists/search")

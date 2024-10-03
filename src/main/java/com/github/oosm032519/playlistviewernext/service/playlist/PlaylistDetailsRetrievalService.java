@@ -76,7 +76,6 @@ public class PlaylistDetailsRetrievalService {
             if (playlist == null) {
                 throw new ResourceNotFoundException(
                         HttpStatus.NOT_FOUND,
-                        "PLAYLIST_NOT_FOUND",
                         "指定されたプレイリストが見つかりません。"
                 );
             }
@@ -113,7 +112,7 @@ public class PlaylistDetailsRetrievalService {
             throw e;
         } catch (Exception e) {
             logger.error("プレイリストの詳細情報の取得中に予期しないエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "PLAYLIST_DETAILS_RETRIEVAL_ERROR", "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
+            throw new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
         }
     }
 

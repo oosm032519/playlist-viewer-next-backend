@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyArtistService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

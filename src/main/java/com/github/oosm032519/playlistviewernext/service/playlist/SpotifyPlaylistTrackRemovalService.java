@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import com.google.gson.JsonArray;
@@ -70,9 +70,8 @@ public class SpotifyPlaylistTrackRemovalService {
                 return successResponse(snapshotResult);
             } catch (Exception e) {
                 logger.error("Error occurred while removing track from playlist.", e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "TRACK_REMOVAL_ERROR",
                         "トラックの削除中にエラーが発生しました。",
                         e
                 );

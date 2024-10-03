@@ -57,7 +57,6 @@ public class MedianAudioFeaturesCalculator {
             logger.error("中央AudioFeaturesの計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "MEDIAN_AUDIO_FEATURES_CALCULATION_ERROR",
                     "中央AudioFeaturesの計算中にエラーが発生しました。",
                     e
             );

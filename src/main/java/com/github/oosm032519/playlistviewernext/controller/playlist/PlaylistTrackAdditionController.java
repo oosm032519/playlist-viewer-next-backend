@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
@@ -77,47 +76,15 @@ public class PlaylistTrackAdditionController {
             );
         }
 
-        try {
-            // Spotify APIを使用してトラックを追加
-            SnapshotResult snapshotResult = spotifyService.addTrackToPlaylist(accessToken, request.getPlaylistId(), request.getTrackId());
-            logger.info("トラックが正常に追加されました。Snapshot ID: {}", snapshotResult.getSnapshotId());
+        // Spotify APIを使用してトラックを追加
+        SnapshotResult snapshotResult = spotifyService.addTrackToPlaylist(accessToken, request.getPlaylistId(), request.getTrackId());
+        logger.info("トラックが正常に追加されました。Snapshot ID: {}", snapshotResult.getSnapshotId());
 
-            // レスポンスの作成
-            Map<String, String> responseBody = new HashMap<>();
-            responseBody.put("message", "トラックが正常に追加されました。");
-            responseBody.put("snapshot_id", snapshotResult.getSnapshotId());
+        // レスポンスの作成
+        Map<String, String> responseBody = new HashMap<>();
+        responseBody.put("message", "トラックが正常に追加されました。");
+        responseBody.put("snapshot_id", snapshotResult.getSnapshotId());
 
-            return ResponseEntity.ok(responseBody);
-        } catch (SpotifyApiException e) {
-            // Spotify API エラーはそのまま再スロー
-            throw e;
-        } catch (Exception e) {
-            // 予期しないエラーの処理
-            logger.error("トラックの追加中に予期しないエラーが発生しました。", e);
-            String requestParams = getRequestParams();
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TRACK_ADDITION_ERROR",
-                    "Spotify APIでトラックの追加中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    "リクエストパラメータ: " + requestParams,
-                    e
-            );
-        }
-    }
-
-    /**
-     * リクエストパラメータを取得するヘルパーメソッド
-     *
-     * @return リクエストパラメータを文字列として
-     */
-    private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
+        return ResponseEntity.ok(responseBody);
     }
 }

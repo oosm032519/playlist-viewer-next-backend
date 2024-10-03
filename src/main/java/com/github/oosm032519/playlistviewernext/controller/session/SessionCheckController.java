@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -102,45 +101,21 @@ public class SessionCheckController {
      */
     private ResponseEntity<?> handleSessionValidation(String sessionId, Map<String, Object> response) {
         logger.info("セッションIDが存在します。Redisからセッション情報を取得します。");
-        try {
             String redisKey = "session:" + sessionId;
             String fullSessionToken = redisTemplate.opsForValue().get(redisKey);
             logger.debug("Redisキー: {}, 取得されたトークン: {}", redisKey, fullSessionToken != null ? "存在" : "なし");
 
-            if (fullSessionToken != null) {
-                logger.info("Redisからセッショントークンを取得しました。トークンの検証を開始します。");
-                Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
-                return createSuccessResponse(response, fullSessionClaims);
-            } else {
-                // Redisにセッション情報がない場合は AuthenticationException をスロー
-                logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                throw new AuthenticationException(
-                        HttpStatus.UNAUTHORIZED,
-                        "SESSION_NOT_FOUND",
-                        "セッションが有効期限切れか、無効です。再度ログインしてください。"
-                );
-            }
-        } catch (AuthenticationException e) {
-            // AuthenticationException はそのまま再スロー
-            HttpStatus status = e.getHttpStatus();
-            String errorCode = e.getErrorCode();
-            String message = e.getMessage();
-            String details = e.getDetails();
-
-            // エラーログに記録
-            logger.error("Authentication error occurred while validating session: {} - {} - {}", status, errorCode, message, e);
-
-            // エラーレスポンスを返す
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, status);
-        } catch (Exception e) {
-            // セッション情報の検証中に予期しないエラーが発生した場合は AuthenticationException をスロー
-            logger.error("セッション情報の検証中に予期しないエラーが発生しました。エラー詳細: ", e);
+        if (fullSessionToken != null) {
+            logger.info("Redisからセッショントークンを取得しました。トークンの検証を開始します。");
+            Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
+            return createSuccessResponse(response, fullSessionClaims);
+        } else {
+            // Redisにセッション情報がない場合は AuthenticationException をスロー
+            logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "SESSION_VALIDATION_ERROR",
-                    "セッションの検証中にエラーが発生しました。再度ログインしてください。",
-                    e
+                    "SESSION_NOT_FOUND",
+                    "セッションが有効期限切れか、無効です。再度ログインしてください。"
             );
         }
     }
@@ -205,47 +180,22 @@ public class SessionCheckController {
      * @return レスポンスエンティティ
      */
     private ResponseEntity<?> handleLogout(String sessionId, HttpServletResponse response, Map<String, Object> responseBody) {
-        try {
-            String redisKey = "session:" + sessionId;
-            Boolean deleteResult = redisTemplate.delete(redisKey);
-            logger.debug("Redisキー: {}, 削除結果: {}", redisKey, deleteResult);
+        String redisKey = "session:" + sessionId;
+        Boolean deleteResult = redisTemplate.delete(redisKey);
+        logger.debug("Redisキー: {}, 削除結果: {}", redisKey, deleteResult);
 
-            if (Boolean.TRUE.equals(deleteResult)) {
-                logger.info("Redisからセッション情報を削除しました。セッションID: {}", sessionId);
-                clearSessionCookie(response);
-                responseBody.put("status", "success");
-                responseBody.put("message", "ログアウトしました。");
-                return ResponseEntity.ok(responseBody);
-            } else {
-                // Redisにセッション情報がない場合は DatabaseAccessException をスロー
-                logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
-                throw new DatabaseAccessException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "SESSION_NOT_FOUND",
-                        "ログアウト処理中にエラーが発生しました。再度お試しください。"
-                );
-            }
-        } catch (DatabaseAccessException e) {
-            // DatabaseAccessException はそのまま再スロー
-            HttpStatus status = e.getHttpStatus();
-            String errorCode = e.getErrorCode();
-            String message = e.getMessage();
-            String details = e.getDetails();
-
-            // エラーログに記録
-            logger.error("Database access error occurred while logging out: {} - {} - {}", status, errorCode, message, e);
-
-            // エラーレスポンスを返す
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, status);
-        } catch (Exception e) {
-            // ログアウト処理中に予期しないエラーが発生した場合は DatabaseAccessException をスロー
-            logger.error("ログアウト処理中に予期しないエラーが発生しました。エラー詳細: ", e);
+        if (Boolean.TRUE.equals(deleteResult)) {
+            logger.info("Redisからセッション情報を削除しました。セッションID: {}", sessionId);
+            clearSessionCookie(response);
+            responseBody.put("status", "success");
+            responseBody.put("message", "ログアウトしました。");
+            return ResponseEntity.ok(responseBody);
+        } else {
+            // Redisにセッション情報がない場合は DatabaseAccessException をスロー
+            logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "LOGOUT_ERROR",
-                    "ログアウト処理中にエラーが発生しました。再度お試しください。",
-                    e
+                    "ログアウト処理中にエラーが発生しました。再度お試しください。"
             );
         }
     }

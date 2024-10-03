@@ -96,7 +96,6 @@ class UserFavoritePlaylistsControllerTest {
         UserFavoritePlaylistsController spyController = spy(controller);
         doThrow(new DatabaseAccessException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "HASHING_ALGORITHM_ERROR",
                 "ハッシュアルゴリズムが見つかりません。",
                 new Exception()))
                 .when(spyController).hashUserId(anyString());

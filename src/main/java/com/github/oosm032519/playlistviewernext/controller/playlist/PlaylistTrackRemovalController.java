@@ -1,8 +1,7 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,54 +60,15 @@ public class PlaylistTrackRemovalController {
             );
         }
 
-        try {
-            ResponseEntity<String> response = spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                return ResponseEntity.ok(Map.of("message", "トラックが正常に削除されました。"));
-            } else {
-                throw new SpotifyApiException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "TRACK_REMOVAL_ERROR",
-                        "Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                        "Spotify APIからのエラーレスポンス: " + response.getBody()
-                );
-            }
-        } catch (SpotifyApiException e) {
-            // SpotifyApiException はそのまま再スロー
-            HttpStatus status = e.getHttpStatus();
-            String errorCode = e.getErrorCode();
-            String message = e.getMessage();
-            String details = e.getDetails();
-
-            // エラーログに記録
-            LOGGER.error("Spotify API error occurred while removing track from playlist: {} - {} - {}", status, errorCode, message, e);
-
-            // エラーレスポンスを返す
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, status);
-        } catch (Exception e) {
-            // 予期しない例外が発生した場合は、一般的な SpotifyApiException をスロー
-            LOGGER.error("トラックの削除中に予期しないエラーが発生しました。", e);
-            String requestParams = getRequestParams(); // リクエストパラメータを取得
-            throw new SpotifyApiException(
+        ResponseEntity<String> response = spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return ResponseEntity.ok(Map.of("message", "トラックが正常に削除されました。"));
+        } else {
+            throw new InternalServerException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TRACK_REMOVAL_ERROR",
-                    "トラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    "リクエストパラメータ: " + requestParams,
-                    e
+                    "Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
+                    "Spotify APIからのエラーレスポンス: " + response.getBody()
             );
         }
-    }
-
-    // リクエストパラメータを取得するヘルパーメソッド
-    private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
     }
 }

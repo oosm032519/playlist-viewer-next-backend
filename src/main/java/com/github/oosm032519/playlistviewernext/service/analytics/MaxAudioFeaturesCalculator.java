@@ -39,7 +39,6 @@ public class MaxAudioFeaturesCalculator {
             logger.error("最大AudioFeaturesの計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "MAX_AUDIO_FEATURES_CALCULATION_ERROR",
                     "最大AudioFeaturesの計算中にエラーが発生しました。",
                     e
             );

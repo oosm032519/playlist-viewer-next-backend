@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSetter;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
@@ -70,9 +70,8 @@ public class SpotifyRecommendationService {
                 return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
             } catch (Exception e) {
                 logger.error("推奨トラックの取得中にエラーが発生しました。", e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "RECOMMENDATIONS_RETRIEVAL_ERROR",
                         "推奨トラックの取得中にエラーが発生しました。",
                         e
                 );

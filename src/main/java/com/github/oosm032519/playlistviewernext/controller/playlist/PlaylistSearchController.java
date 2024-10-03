@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
@@ -71,42 +70,14 @@ public class PlaylistSearchController {
 
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
 
-        try {
-            // Spotify APIの認証を行う
-            authController.authenticate();
+        // Spotify APIの認証を行う
+        authController.authenticate();
 
-            // プレイリストの検索を実行し、検索結果と総数を取得
-            Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
+        // プレイリストの検索を実行し、検索結果と総数を取得
+        Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
 
-            // 検索結果を返す
-            return ResponseEntity.ok(searchResult);
-
-        } catch (SpotifyApiException e) {
-            // Spotify API エラーを処理
-            HttpStatus status = e.getHttpStatus();
-            String errorCode = e.getErrorCode();
-            String message = e.getMessage();
-            String details = e.getDetails();
-
-            logger.error("Spotify API error occurred while searching playlists: {} - {} - {}", status, errorCode, message, e);
-            // エラーレスポンスを返す
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, status);
-
-        } catch (Exception e) {
-            // 予期しないエラーの処理
-            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-            String errorCode = "SYSTEM_UNEXPECTED_ERROR";
-            String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
-            String requestParams = getRequestParams(); // リクエストパラメータを取得
-
-            // エラーログに記録
-            logger.error("Unexpected error occurred while searching playlists: {} - {} - {} - リクエストパラメータ: {}", status, errorCode, message, requestParams, e);
-
-            // エラーレスポンスを返す
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, "リクエストパラメータ: " + requestParams);
-            return new ResponseEntity<>(errorResponse, status);
-        }
+        // 検索結果を返す
+        return ResponseEntity.ok(searchResult);
     }
 
     // リクエストパラメータを取得するヘルパーメソッド

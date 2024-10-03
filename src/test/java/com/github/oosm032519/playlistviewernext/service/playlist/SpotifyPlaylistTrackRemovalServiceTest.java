@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.google.gson.JsonArray;
 import org.junit.jupiter.api.BeforeEach;

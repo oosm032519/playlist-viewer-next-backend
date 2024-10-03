@@ -44,7 +44,6 @@ public class SpotifyPlaylistAnalyticsService {
             logger.error("プレイリストID: {} のジャンル出現頻度上位5つの取得中にエラーが発生しました。", playlistId, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOP_GENRES_RETRIEVAL_ERROR",
                     "プレイリストのジャンル出現頻度上位5つの取得中にエラーが発生しました。",
                     e
             );
@@ -74,7 +73,6 @@ public class SpotifyPlaylistAnalyticsService {
             logger.error("プレイリストID: {} のジャンルごとのトラック数の取得中にエラーが発生しました。", playlistId, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "GENRE_COUNTS_RETRIEVAL_ERROR",
                     "プレイリストのジャンルごとのトラック数の取得中にエラーが発生しました。",
                     e
             );
@@ -114,7 +112,6 @@ public class SpotifyPlaylistAnalyticsService {
             logger.error("プレイリストID: {} のアーティスト出現頻度上位5つの取得中にエラーが発生しました。", playlistId, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOP_ARTISTS_RETRIEVAL_ERROR",
                     "プレイリストのアーティスト出現頻度上位5つの取得中にエラーが発生しました。",
                     e
             );
@@ -155,7 +152,6 @@ public class SpotifyPlaylistAnalyticsService {
             logger.error("プレイリストID: {} のアーティスト数の取得中にエラーが発生しました。", playlistId, e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "ARTIST_COUNTS_RETRIEVAL_ERROR",
                     "プレイリストのアーティスト数の取得中にエラーが発生しました。",
                     e
             );

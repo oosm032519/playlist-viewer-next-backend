@@ -54,7 +54,6 @@ public class ModeValuesCalculator {
             logger.error("最頻値の計算中にエラーが発生しました。", e);
             throw new PlaylistViewerNextException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "MODE_VALUES_CALCULATION_ERROR",
                     "最頻値の計算中にエラーが発生しました。",
                     e
             );

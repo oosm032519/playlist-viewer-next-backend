@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -57,9 +57,8 @@ public class TrackDataRetriever {
         } catch (Exception e) {
             // トラックデータの取得中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("トラックデータの取得中にエラーが発生しました。", e);
-            throw new SpotifyApiException(
+            throw new InternalServerException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TRACK_DATA_RETRIEVAL_ERROR",
                     "トラックデータの取得中にエラーが発生しました。",
                     e
             );

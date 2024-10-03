@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
 import jakarta.servlet.http.HttpServletRequest;

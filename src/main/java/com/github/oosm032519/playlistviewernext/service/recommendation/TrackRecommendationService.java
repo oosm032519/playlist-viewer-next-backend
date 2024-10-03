@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,9 +43,8 @@ public class TrackRecommendationService {
             return recommendationService.getRecommendations(artists, maxAudioFeatures, minAudioFeatures);
         } catch (Exception e) {
             LOGGER.error("Spotify APIの呼び出し中にエラーが発生しました。", e);
-            throw new SpotifyApiException(
+            throw new InternalServerException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "SPOTIFY_API_ERROR",
                     "トラックの推薦中にエラーが発生しました。",
                     e
             );

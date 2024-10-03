@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,9 +49,8 @@ public class SpotifyPlaylistSearchService {
             } catch (Exception e) {
                 // プレイリストの検索中にエラーが発生した場合は SpotifyApiException をスロー
                 logger.error("Spotifyプレイリストの検索中にエラーが発生しました。 query: {}, offset: {}, limit: {}", query, offset, limit, e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "SPOTIFY_API_ERROR",
                         "Spotifyプレイリストの検索中にエラーが発生しました。",
                         e
                 );

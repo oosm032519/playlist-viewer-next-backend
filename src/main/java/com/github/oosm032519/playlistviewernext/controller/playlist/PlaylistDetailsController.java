@@ -1,8 +1,5 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
-import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
@@ -10,7 +7,6 @@ import com.github.oosm032519.playlistviewernext.service.recommendation.TrackReco
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,31 +63,10 @@ public class PlaylistDetailsController {
      * @return プレイリストの詳細情報を含むResponseEntity
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) {
+    public ResponseEntity<Map<String, Object>> getPlaylistById(@PathVariable String id) throws Exception {
         logger.info("プレイリストID: {} の詳細情報を取得中", id);
-        try {
-            Map<String, Object> response = fetchPlaylistDetails(id);
-            return ResponseEntity.ok(response);
-        } catch (ResourceNotFoundException e) {
-            // リソースが見つからない場合はそのまま例外をスロー
-            logger.error("プレイリストが見つかりませんでした: {}", e.getMessage(), e);
-            throw e;
-        } catch (SpotifyApiException e) {
-            // Spotify APIのエラーはそのまま例外をスロー
-            logger.error("Spotify APIとの通信中にエラーが発生しました: {}", e.getMessage(), e);
-            throw e;
-        } catch (Exception e) {
-            // 予期しないエラーが発生した場合は PlaylistViewerNextException をスロー
-            logger.error("プレイリストの取得中に予期しないエラーが発生しました: {}", e.getMessage(), e);
-            String requestParams = getRequestParams();
-            throw new PlaylistViewerNextException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_DETAILS_ERROR",
-                    "プレイリスト情報の取得中にエラーが発生しました。URLが正しいか確認し、しばらく時間をおいてから再度お試しください。",
-                    "リクエストパラメータ: " + requestParams,
-                    e
-            );
-        }
+        Map<String, Object> response = fetchPlaylistDetails(id);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -146,17 +121,5 @@ public class PlaylistDetailsController {
         logger.info("最大AudioFeatures: {}", maxAudioFeatures);
         logger.info("最小AudioFeatures: {}", minAudioFeatures);
         logger.info("推奨トラック数: {}", recommendations.size());
-    }
-
-    // リクエストパラメータを取得するヘルパーメソッド
-    private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
     }
 }

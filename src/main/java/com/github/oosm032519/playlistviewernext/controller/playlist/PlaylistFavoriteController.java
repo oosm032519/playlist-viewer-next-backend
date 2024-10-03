@@ -1,14 +1,12 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
-import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -58,7 +56,7 @@ public class PlaylistFavoriteController {
                                                                 @RequestParam @NotBlank String playlistName,
                                                                 @RequestParam @NotNull @PositiveOrZero int totalTracks,
                                                                 @RequestParam @NotBlank String playlistOwnerName
-    ) {
+    ) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
         String userId = principal.getAttribute("id");
@@ -84,23 +82,13 @@ public class PlaylistFavoriteController {
         userFavoritePlaylist.setTotalTracks(totalTracks);
         userFavoritePlaylist.setPlaylistOwnerName(playlistOwnerName);
 
-        try {
-            userFavoritePlaylistRepository.save(userFavoritePlaylist);
-            logger.info("プレイリストをお気に入りに登録しました。ユーザーID: {}, プレイリストID: {}, プレイリスト名: {}", userId, playlistId, playlistName);
+        userFavoritePlaylistRepository.save(userFavoritePlaylist);
+        logger.info("プレイリストをお気に入りに登録しました。ユーザーID: {}, プレイリストID: {}, プレイリスト名: {}", userId, playlistId, playlistName);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", "success");
-            response.put("message", "プレイリストをお気に入りに登録しました。");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("プレイリストのお気に入り登録中にエラーが発生しました。", e);
-            throw new DatabaseAccessException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_FAVORITE_ERROR",
-                    "プレイリストをお気に入りに登録できませんでした。しばらく時間をおいてから再度お試しください。",
-                    e
-            );
-        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "success");
+        response.put("message", "プレイリストをお気に入りに登録しました。");
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -109,15 +97,10 @@ public class PlaylistFavoriteController {
      * @param userId ハッシュ化するユーザーID
      * @return ハッシュ化されたユーザーID
      */
-    private String hashUserId(String userId) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = md.digest(userId.getBytes());
-            return Base64.getEncoder().encodeToString(hashedBytes);
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
-            throw new IllegalStateException("SHA-256 ハッシュアルゴリズムが見つかりません。", e);
-        }
+    private String hashUserId(String userId) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        byte[] hashedBytes = md.digest(userId.getBytes());
+        return Base64.getEncoder().encodeToString(hashedBytes);
     }
 
     /**
@@ -130,7 +113,7 @@ public class PlaylistFavoriteController {
     @DeleteMapping("/favorite")
     @Transactional
     public ResponseEntity<Map<String, Object>> unfavoritePlaylist(@AuthenticationPrincipal OAuth2User principal,
-                                                                  @RequestParam @NotBlank String playlistId) {
+                                                                  @RequestParam @NotBlank String playlistId) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り解除リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = principal.getAttribute("id");
@@ -138,33 +121,23 @@ public class PlaylistFavoriteController {
         // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
-        try {
-            // お気に入り解除処理
-            boolean deleted = userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(hashedUserId, playlistId) > 0;
+        // お気に入り解除処理
+        boolean deleted = userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(hashedUserId, playlistId) > 0;
 
-            if (deleted) {
-                logger.info("プレイリストをお気に入りから解除しました。ユーザーID: {}, プレイリストID: {}", userId, playlistId);
+        if (deleted) {
+            logger.info("プレイリストをお気に入りから解除しました。ユーザーID: {}, プレイリストID: {}", userId, playlistId);
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", "success");
-                response.put("message", "プレイリストをお気に入りから解除しました。");
-                return ResponseEntity.ok(response);
-            } else {
-                logger.info("プレイリストはお気に入りに登録されていませんでした。ユーザーID: {}, プレイリストID: {}", userId, playlistId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "プレイリストをお気に入りから解除しました。");
+            return ResponseEntity.ok(response);
+        } else {
+            logger.info("プレイリストはお気に入りに登録されていませんでした。ユーザーID: {}, プレイリストID: {}", userId, playlistId);
 
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", "warning");
-                response.put("message", "このプレイリストはお気に入りに登録されていません。");
-                return ResponseEntity.ok(response);
-            }
-        } catch (Exception e) {
-            logger.error("プレイリストのお気に入り解除中にエラーが発生しました。", e);
-            throw new DatabaseAccessException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_UNFAVORITE_ERROR",
-                    "プレイリストをお気に入りから解除できませんでした。しばらく時間をおいてから再度お試しください。",
-                    e
-            );
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "warning");
+            response.put("message", "このプレイリストはお気に入りに登録されていません。");
+            return ResponseEntity.ok(response);
         }
     }
 
@@ -175,7 +148,7 @@ public class PlaylistFavoriteController {
      * @return お気に入りプレイリスト一覧を含むResponseEntity
      */
     @GetMapping("/favorite")
-    public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) throws NoSuchAlgorithmException {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
         String userId = principal.getAttribute("id");
@@ -183,32 +156,22 @@ public class PlaylistFavoriteController {
         // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
-        try {
-            // お気に入りプレイリスト一覧を取得
-            List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
+        // お気に入りプレイリスト一覧を取得
+        List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
 
-            List<Map<String, Object>> response = favoritePlaylists.stream()
-                    .map(favorite -> {
-                        Map<String, Object> playlistData = new HashMap<>();
-                        playlistData.put("playlistId", favorite.getPlaylistId());
-                        playlistData.put("playlistName", favorite.getPlaylistName());
-                        playlistData.put("totalTracks", favorite.getTotalTracks());
-                        playlistData.put("addedAt", favorite.getAddedAt());
-                        playlistData.put("playlistOwnerName", favorite.getPlaylistOwnerName());
-                        return playlistData;
-                    })
-                    .toList();
+        List<Map<String, Object>> response = favoritePlaylists.stream()
+                .map(favorite -> {
+                    Map<String, Object> playlistData = new HashMap<>();
+                    playlistData.put("playlistId", favorite.getPlaylistId());
+                    playlistData.put("playlistName", favorite.getPlaylistName());
+                    playlistData.put("totalTracks", favorite.getTotalTracks());
+                    playlistData.put("addedAt", favorite.getAddedAt());
+                    playlistData.put("playlistOwnerName", favorite.getPlaylistOwnerName());
+                    return playlistData;
+                })
+                .toList();
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("お気に入りプレイリスト一覧の取得中にエラーが発生しました。", e);
-            throw new DatabaseAccessException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR",
-                    "お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。",
-                    e
-            );
-        }
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -220,7 +183,7 @@ public class PlaylistFavoriteController {
      */
     @GetMapping("/favoriteCheck")
     public ResponseEntity<Boolean> checkFavorite(@AuthenticationPrincipal OAuth2User principal,
-                                                 @RequestParam @NotBlank String playlistId) {
+                                                 @RequestParam @NotBlank String playlistId) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り確認リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = principal.getAttribute("id");
@@ -228,18 +191,8 @@ public class PlaylistFavoriteController {
         // ユーザーIDをハッシュ化
         String hashedUserId = hashUserId(Objects.requireNonNull(userId));
 
-        try {
-            // お気に入り登録状況を確認
-            boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
-            return ResponseEntity.ok(isFavorited);
-        } catch (Exception e) {
-            logger.error("プレイリストのお気に入り確認中にエラーが発生しました。", e);
-            throw new DatabaseAccessException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_FAVORITE_CHECK_ERROR",
-                    "プレイリストのお気に入り状態を確認できませんでした。しばらく時間をおいてから再度お試しください。",
-                    e
-            );
-        }
+        // お気に入り登録状況を確認
+        boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
+        return ResponseEntity.ok(isFavorited);
     }
 }

@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +62,8 @@ public class SpotifyTrackService {
                 return allAudioFeatures;
             } catch (Exception e) {
                 logger.error("AudioFeaturesの取得中にエラーが発生しました。 trackIds: {}", trackIds, e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "AUDIO_FEATURES_RETRIEVAL_ERROR",
                         "AudioFeaturesの取得中にエラーが発生しました。",
                         e
                 );

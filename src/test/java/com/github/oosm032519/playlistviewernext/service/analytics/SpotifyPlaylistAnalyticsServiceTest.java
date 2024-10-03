@@ -80,7 +80,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
-                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API_ERROR", "API error"));
+                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId))
@@ -165,7 +165,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
-                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API_ERROR", "API error"));
+                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId))

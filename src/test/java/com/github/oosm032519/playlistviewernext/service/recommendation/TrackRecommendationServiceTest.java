@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.service.recommendation;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

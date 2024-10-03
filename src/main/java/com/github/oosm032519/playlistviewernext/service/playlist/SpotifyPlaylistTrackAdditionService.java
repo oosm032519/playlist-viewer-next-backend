@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +40,8 @@ public class SpotifyPlaylistTrackAdditionService {
             } catch (Exception e) {
                 // トラックの追加中にエラーが発生した場合は SpotifyApiException をスロー
                 logger.error("トラックの追加中にエラーが発生しました。 accessToken: {}, playlistId: {}, trackId: {}", accessToken, playlistId, trackId, e);
-                throw new SpotifyApiException(
+                throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "TRACK_ADDITION_ERROR",
                         "トラックの追加中にエラーが発生しました。",
                         e
                 );

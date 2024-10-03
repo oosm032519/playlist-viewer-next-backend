@@ -167,7 +167,6 @@ class JwtUtilTest {
         doAnswer(_ -> {
             throw new InvalidRequestException(
                     HttpStatus.BAD_REQUEST,
-                    "INVALID_TOKEN",
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                     new JOSEException("Invalid signature")
             );

@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.exceptions.detailed.TooManyRequestsException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private final HttpServletRequest request; // リクエスト情報を取得
+    private final HttpServletRequest request;
 
     public GlobalExceptionHandler(HttpServletRequest request) {
         this.request = request;
@@ -33,16 +35,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /**
      * PlaylistViewerNextException を処理するハンドラ
      *
-     * @param ex      発生した PlaylistViewerNextException
-     * @param request リクエスト情報
+     * @param ex 発生した PlaylistViewerNextException
      * @return エラーレスポンスを含む ResponseEntity
      */
     @ExceptionHandler(PlaylistViewerNextException.class)
-    public ResponseEntity<ErrorResponse> handlePlaylistViewerNextException(PlaylistViewerNextException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handlePlaylistViewerNextException(PlaylistViewerNextException ex) {
         logger.error("PlaylistViewerNextException が発生しました: {} - 詳細: {}", ex.getMessage(), ex.getDetails(), ex);
 
         HttpStatus status = ex.getHttpStatus();
-        String errorCode = ex.getErrorCode();
         String message = ex.getMessage();
         String details = ex.getDetails();
 
@@ -51,10 +51,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             details = "リクエストされたリソースは存在しません。";
         } else if (ex instanceof AuthenticationException) {
             details = "認証に失敗しました。";
-        } else if (ex instanceof SpotifyApiException && ex.getErrorCode().equals("SPOTIFY_API_RATE_LIMIT_EXCEEDED")) {
-            // レート制限を超過した場合の処理
-            message = "Spotify API のレート制限を超過しました。しばらく時間をおいてから再度お試しください。";
-            details = "リクエストが頻繁に行われています。しばらく時間をおいてから再度お試しください。";
         }
 
         // リクエストパラメータを詳細情報に追加
@@ -65,8 +61,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             details += " リクエストパラメータ: " + requestParams;
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+        ErrorResponse errorResponse = new ErrorResponse(status, message, details);
         return new ResponseEntity<>(errorResponse, status);
+    }
+
+    // リクエストパラメータを取得するヘルパーメソッド
+    private String getRequestParams() {
+        StringBuilder params = new StringBuilder();
+        request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
+        if (!params.isEmpty()) {
+            params.deleteCharAt(params.length() - 1);
+        }
+        return params.toString();
     }
 
     /**
@@ -98,27 +104,41 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // リクエストパラメータを取得するヘルパーメソッド
-    private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
-            params.deleteCharAt(params.length() - 1);
+    /**
+     * SpotifyWebApiException を処理するハンドラ
+     *
+     * @param ex 発生した SpotifyWebApiException
+     * @return エラーレスポンスを含む ResponseEntity
+     */
+    @ExceptionHandler(SpotifyWebApiException.class)
+    public ResponseEntity<ErrorResponse> handleSpotifyWebApiException(SpotifyWebApiException ex) {
+        logger.error("SpotifyWebApiException が発生しました: {}", ex.getMessage(), ex);
+
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR; // デフォルトのステータスコード
+        if (ex instanceof final TooManyRequestsException tooManyRequestsEx) {
+            status = HttpStatus.TOO_MANY_REQUESTS; // 429 ステータスコード
+
+            // Retry-After の値を取得してヘッダーに追加
+            int retryAfter = tooManyRequestsEx.getRetryAfter();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Retry-After", String.valueOf(retryAfter));
+
+            ErrorResponse errorResponse = new ErrorResponse(status, ex.getMessage(), "リクエストが多すぎます。しばらくしてから再度お試しください。");
+            return new ResponseEntity<>(errorResponse, headers, status);
         }
-        return params.toString();
+
+        ErrorResponse errorResponse = new ErrorResponse(status, ex.getMessage(), "Spotify API エラーが発生しました。");
+        return new ResponseEntity<>(errorResponse, status);
     }
 
     /**
      * ConstraintViolationException を処理するハンドラ
      *
-     * @param ex      発生した ConstraintViolationException
-     * @param request リクエスト情報
+     * @param ex 発生した ConstraintViolationException
      * @return エラーレスポンスを含む ResponseEntity
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
         logger.warn("バリデーションエラーが発生しました: {}", ex.getMessage());
 
         Map<String, String> errors = new HashMap<>();
@@ -133,17 +153,36 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * その他の例外を処理するハンドラ
+     * 全ての例外を処理するハンドラ
      *
-     * @param ex      発生した Exception
-     * @param request リクエスト情報
+     * @param ex 発生した Exception
      * @return エラーレスポンスを含む ResponseEntity
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         logger.error("予期しないエラーが発生しました: {}", ex.getMessage(), ex);
-        String requestParams = getRequestParams(); // リクエストパラメータを取得
-        ErrorResponse errorResponse = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。", "リクエストパラメータ: " + requestParams);
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
+        String details = ex.getMessage(); // 例外メッセージを詳細情報に追加
+
+        // 例外の種類に応じてステータスコードとメッセージを変更
+        if (ex instanceof SpotifyWebApiException) {
+            status = HttpStatus.BAD_REQUEST;
+            message = "Spotify API エラーが発生しました。";
+        } else if (ex instanceof ResourceNotFoundException) {
+            status = HttpStatus.NOT_FOUND;
+            message = "リクエストされたリソースは存在しません。";
+        } else if (ex instanceof AuthenticationException) {
+            status = HttpStatus.UNAUTHORIZED;
+            message = "認証に失敗しました。";
+        }
+
+        // リクエストパラメータを詳細情報に追加
+        String requestParams = getRequestParams();
+        details += " リクエストパラメータ: " + requestParams;
+
+        ErrorResponse errorResponse = new ErrorResponse(status, message, details);
+        return new ResponseEntity<>(errorResponse, status);
     }
 }

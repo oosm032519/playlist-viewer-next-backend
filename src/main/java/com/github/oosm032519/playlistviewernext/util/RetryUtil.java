@@ -1,10 +1,12 @@
 package com.github.oosm032519.playlistviewernext.util;
 
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+
+import java.util.Objects;
 
 public class RetryUtil {
 
@@ -18,12 +20,10 @@ public class RetryUtil {
         while (true) {
             try {
                 return operation.execute();
-            } catch (SpotifyApiException e) {
-                if (e.getCause() instanceof final HttpClientErrorException httpException &&
-                        retryCount < maxRetries) {
-
+            } catch (HttpClientErrorException httpException) {
+                if (retryCount < maxRetries) {
                     // Retry-Afterヘッダーがあればその値を使用
-                    String retryAfterHeader = httpException.getResponseHeaders().getFirst("Retry-After");
+                    String retryAfterHeader = Objects.requireNonNull(httpException.getResponseHeaders()).getFirst("Retry-After");
                     if (retryAfterHeader != null) {
                         try {
                             intervalMillis = Long.parseLong(retryAfterHeader) * 1000; // 秒をミリ秒に変換
@@ -39,13 +39,19 @@ public class RetryUtil {
                     try {
                         Thread.sleep(intervalMillis);
                     } catch (InterruptedException ex) {
+                        // 割り込みが発生した場合は、現在のスレッドの割り込み状態をセットし、SpotifyApiExceptionをスロー
                         Thread.currentThread().interrupt();
-                        throw new SpotifyApiException(HttpStatus.INTERNAL_SERVER_ERROR, "RETRY_INTERRUPTED", "再試行が中断されました。", e);
+
+                        // HttpStatus を取得してSpotifyApiExceptionをスロー
+                        HttpStatus status = HttpStatus.valueOf(httpException.getStatusText());
+                        throw new InternalServerException(status, "再試行が中断されました。", ex);
                     }
+
                     intervalMillis *= 2; // 指数バックオフ
                     retryCount++;
                 } else {
-                    throw e;
+                    // 再試行条件を満たさない場合は、例外をそのままスロー
+                    throw httpException;
                 }
             }
         }
@@ -53,6 +59,6 @@ public class RetryUtil {
 
     @FunctionalInterface
     public interface RetryableOperation<T> {
-        T execute() throws SpotifyApiException;
+        T execute() throws HttpClientErrorException;
     }
 }

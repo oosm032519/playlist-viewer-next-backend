@@ -7,21 +7,18 @@ import org.springframework.http.HttpStatus;
 public class PlaylistViewerNextException extends RuntimeException {
 
     private final HttpStatus httpStatus;
-    private final String errorCode;
-    private final String details; // 詳細なエラー情報
+    private final String details;
 
-    public PlaylistViewerNextException(HttpStatus httpStatus, String errorCode, String message) {
+    public PlaylistViewerNextException(HttpStatus httpStatus, String message) {
         super(message);
         this.httpStatus = httpStatus;
-        this.errorCode = errorCode;
-        this.details = null;
+        details = null;
     }
 
-    public PlaylistViewerNextException(HttpStatus httpStatus, String errorCode, String message, Throwable cause) {
+    public PlaylistViewerNextException(HttpStatus httpStatus, String message, Throwable cause) {
         super(message, cause);
         this.httpStatus = httpStatus;
-        this.errorCode = errorCode;
-        this.details = getStackTraceAsString(cause); // スタックトレースを詳細情報として保存
+        details = getStackTraceAsString(cause);
     }
 
     // スタックトレースを文字列に変換するヘルパーメソッド
@@ -34,17 +31,15 @@ public class PlaylistViewerNextException extends RuntimeException {
         return sb.toString();
     }
 
-    public PlaylistViewerNextException(HttpStatus httpStatus, String errorCode, String message, String details) {
+    public PlaylistViewerNextException(HttpStatus httpStatus, String message, String details) {
         super(message);
         this.httpStatus = httpStatus;
-        this.errorCode = errorCode;
         this.details = details;
     }
 
-    public PlaylistViewerNextException(HttpStatus httpStatus, String errorCode, String message, String details, Throwable cause) {
+    public PlaylistViewerNextException(HttpStatus httpStatus, String message, String details, Throwable cause) {
         super(message, cause);
         this.httpStatus = httpStatus;
-        this.errorCode = errorCode;
         this.details = details;
     }
 }

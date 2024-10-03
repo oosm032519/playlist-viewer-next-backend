@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.SpotifyApiException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -83,25 +82,10 @@ public class PlaylistCreationController {
         String userName = principal.getAttribute("name");
         String playlistName = generatePlaylistName(userName);
 
-        try {
-            // プレイリストを作成
-            String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, playlistName, trackIds);
-            logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
-            return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
-        } catch (SpotifyApiException e) {
-            // Spotify API エラーはそのまま再スロー
-            throw e;
-        } catch (Exception e) {
-            logger.error("プレイリストの作成中に予期しないエラーが発生しました。", e);
-            String requestParams = getRequestParams();
-            throw new SpotifyApiException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "PLAYLIST_CREATION_ERROR",
-                    "Spotify APIでプレイリストの作成中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    "リクエストパラメータ: " + requestParams,
-                    e
-            );
-        }
+        // プレイリストを作成
+        String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, playlistName, trackIds);
+        logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
+        return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
     }
 
     /**
@@ -112,17 +96,5 @@ public class PlaylistCreationController {
      */
     private String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
-    }
-
-    // リクエストパラメータを取得するヘルパーメソッド
-    private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> {
-            params.append(key).append("=").append(String.join(",", values)).append("&");
-        });
-        if (params.length() > 0) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
     }
 }

@@ -120,15 +120,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (InvalidRequestException e) {
                 // InvalidRequestException はそのまま再スロー
                 HttpStatus status = e.getHttpStatus();
-                String errorCode = e.getErrorCode();
                 String message = e.getMessage();
                 String details = e.getDetails();
 
                 // エラーログに記録
-                logger.error("Invalid request error occurred during JWT validation: {} - {} - {}", status, errorCode, message, e);
+                logger.error("Invalid request error occurred during JWT validation: {} - {} - {}", status, message, e);
 
                 // エラーレスポンスを返す
-                ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+                ErrorResponse errorResponse = new ErrorResponse(status, message, details);
                 response.setStatus(status.value());
                 response.setContentType("application/json");
                 response.getWriter().write(errorResponse.toString());
@@ -138,7 +137,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.error("JWTトークンの検証エラー", e);
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
-                        "JWT_VALIDATION_ERROR",
                         "ログイン処理中にエラーが発生しました。再度ログインしてください。",
                         e
                 );
@@ -187,7 +185,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.warn("無効な発行者: {}", issuer);
                 throw new InvalidRequestException(
                         HttpStatus.BAD_REQUEST,
-                        "INVALID_ISSUER",
                         "無効な発行者です。"
                 );
             }
@@ -201,7 +198,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.warn("無効な対象者: {}", audience);
                 throw new InvalidRequestException(
                         HttpStatus.BAD_REQUEST,
-                        "INVALID_AUDIENCE",
                         "無効な対象者です。"
                 );
             }
@@ -213,7 +209,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.warn("トークンの有効期限切れ: {}", expiration);
                 throw new InvalidRequestException(
                         HttpStatus.BAD_REQUEST,
-                        "TOKEN_EXPIRED",
                         "トークンの有効期限が切れています。"
                 );
             }
@@ -224,7 +219,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.warn("必須クレームが不足しています");
                 throw new InvalidRequestException(
                         HttpStatus.BAD_REQUEST,
-                        "MISSING_CLAIMS",
                         "必須クレームが不足しています。"
                 );
             }
