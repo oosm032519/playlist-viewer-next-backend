@@ -21,6 +21,9 @@ import se.michaelthelin.spotify.exceptions.detailed.TooManyRequestsException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * アプリケーション全体で発生する例外を処理するグローバル例外ハンドラー
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -28,6 +31,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final HttpServletRequest request;
 
+    /**
+     * コンストラクタ
+     *
+     * @param request HTTPサーブレットリクエスト
+     */
     public GlobalExceptionHandler(HttpServletRequest request) {
         this.request = request;
     }
@@ -43,6 +51,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("PlaylistViewerNextException が発生しました: {} - 詳細: {}", ex.getMessage(), ex.getDetails(), ex);
 
         HttpStatus status = ex.getHttpStatus();
+        String errorCode = ex.getClass().getSimpleName();
         String message = ex.getMessage();
         String details = ex.getDetails();
 
@@ -51,6 +60,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             details = "リクエストされたリソースは存在しません。";
         } else if (ex instanceof AuthenticationException) {
             details = "認証に失敗しました。";
+        } else if (ex instanceof InvalidRequestException) {
+            details = "無効なリクエストです。";
+        } else if (ex instanceof DatabaseAccessException) {
+            details = "データベースアクセスエラーが発生しました。";
+        } else if (ex instanceof InternalServerException) {
+            details = "内部サーバーエラーが発生しました。";
         }
 
         // リクエストパラメータを詳細情報に追加
@@ -61,11 +76,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             details += " リクエストパラメータ: " + requestParams;
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(status, message, details);
+        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
     }
 
-    // リクエストパラメータを取得するヘルパーメソッド
+    /**
+     * リクエストパラメータを取得するヘルパーメソッド
+     *
+     * @return リクエストパラメータの文字列
+     */
     private String getRequestParams() {
         StringBuilder params = new StringBuilder();
         request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
@@ -114,20 +133,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorResponse> handleSpotifyWebApiException(SpotifyWebApiException ex) {
         logger.error("SpotifyWebApiException が発生しました: {}", ex.getMessage(), ex);
 
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR; // デフォルトのステータスコード
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String errorCode = ex.getClass().getSimpleName();
+        String message = "Spotify API エラーが発生しました。";
+        String details = ex.getMessage();
+
         if (ex instanceof final TooManyRequestsException tooManyRequestsEx) {
-            status = HttpStatus.TOO_MANY_REQUESTS; // 429 ステータスコード
+            status = HttpStatus.TOO_MANY_REQUESTS;
+            errorCode = "TOO_MANY_REQUESTS";
+            message = "リクエストが多すぎます。しばらくしてから再度お試しください。";
 
             // Retry-After の値を取得してヘッダーに追加
             int retryAfter = tooManyRequestsEx.getRetryAfter();
             HttpHeaders headers = new HttpHeaders();
             headers.add("Retry-After", String.valueOf(retryAfter));
 
-            ErrorResponse errorResponse = new ErrorResponse(status, ex.getMessage(), "リクエストが多すぎます。しばらくしてから再度お試しください。");
+            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
             return new ResponseEntity<>(errorResponse, headers, status);
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(status, ex.getMessage(), "Spotify API エラーが発生しました。");
+        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
     }
 
@@ -163,18 +188,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("予期しないエラーが発生しました: {}", ex.getMessage(), ex);
 
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String errorCode = ex.getClass().getSimpleName();
         String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
-        String details = ex.getMessage(); // 例外メッセージを詳細情報に追加
+        String details = ex.getMessage();
 
         // 例外の種類に応じてステータスコードとメッセージを変更
         if (ex instanceof SpotifyWebApiException) {
             status = HttpStatus.BAD_REQUEST;
+            errorCode = "SPOTIFY_API_ERROR";
             message = "Spotify API エラーが発生しました。";
         } else if (ex instanceof ResourceNotFoundException) {
             status = HttpStatus.NOT_FOUND;
+            errorCode = "RESOURCE_NOT_FOUND";
             message = "リクエストされたリソースは存在しません。";
         } else if (ex instanceof AuthenticationException) {
             status = HttpStatus.UNAUTHORIZED;
+            errorCode = "AUTHENTICATION_ERROR";
             message = "認証に失敗しました。";
         }
 
@@ -182,7 +211,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String requestParams = getRequestParams();
         details += " リクエストパラメータ: " + requestParams;
 
-        ErrorResponse errorResponse = new ErrorResponse(status, message, details);
+        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
     }
 }
