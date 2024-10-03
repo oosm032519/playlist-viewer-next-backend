@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.requests.data.tracks.GetAudioFeaturesForSeveralTracksRequest;
 
@@ -36,7 +37,7 @@ public class SpotifyTrackService {
      *
      * @param trackIds 取得対象のトラックIDリスト
      * @return 指定されたトラックのAudioFeaturesリスト
-     * @throws SpotifyApiException AudioFeaturesの取得中にエラーが発生した場合
+     * @throws InternalServerException その他のエラーが発生した場合
      */
     public List<AudioFeatures> getAudioFeaturesForTracks(List<String> trackIds) {
         logger.info("getAudioFeaturesForTracks: トラック数: {}", trackIds.size());
@@ -60,6 +61,10 @@ public class SpotifyTrackService {
 
                 logger.info("getAudioFeaturesForTracks: AudioFeatures取得完了");
                 return allAudioFeatures;
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
             } catch (Exception e) {
                 logger.error("AudioFeaturesの取得中にエラーが発生しました。 trackIds: {}", trackIds, e);
                 throw new InternalServerException(

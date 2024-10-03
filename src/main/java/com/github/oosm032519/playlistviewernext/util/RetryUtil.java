@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.util.Objects;
 
@@ -60,6 +61,6 @@ public class RetryUtil {
 
     @FunctionalInterface
     public interface RetryableOperation<T> {
-        T execute() throws HttpClientErrorException;
+        T execute() throws HttpClientErrorException, SpotifyWebApiException;
     }
 }

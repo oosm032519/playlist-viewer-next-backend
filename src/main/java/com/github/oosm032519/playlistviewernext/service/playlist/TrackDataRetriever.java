@@ -28,7 +28,6 @@ public class TrackDataRetriever {
      *
      * @param tracks プレイリストのトラック配列
      * @return トラック情報のリスト
-     * @throws SpotifyApiException トラックデータの取得中にエラーが発生した場合
      */
     public List<Map<String, Object>> getTrackListData(PlaylistTrack[] tracks) {
         logger.info("getTrackListData: トラック数: {}", tracks.length);
@@ -55,7 +54,6 @@ public class TrackDataRetriever {
             logger.info("getTrackListData: トラックデータリスト作成完了");
             return trackList;
         } catch (Exception e) {
-            // トラックデータの取得中にエラーが発生した場合は SpotifyApiException をスロー
             logger.error("トラックデータの取得中にエラーが発生しました。", e);
             throw new InternalServerException(
                     HttpStatus.INTERNAL_SERVER_ERROR,

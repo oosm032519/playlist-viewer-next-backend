@@ -14,9 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 import se.michaelthelin.spotify.requests.data.playlists.RemoveItemsFromPlaylistRequest;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -38,7 +40,6 @@ public class SpotifyPlaylistTrackRemovalService {
      * @param principal 認証されたユーザー情報
      * @return 削除操作の結果を含むResponseEntity
      * @throws AuthenticationException 認証エラーが発生した場合
-     * @throws SpotifyApiException     Spotify APIとの通信中にエラーが発生した場合
      */
     public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
         String accessToken = getAccessToken(principal);
@@ -68,7 +69,11 @@ public class SpotifyPlaylistTrackRemovalService {
 
                 SnapshotResult snapshotResult = removeItemsFromPlaylistRequest.execute();
                 return successResponse(snapshotResult);
-            } catch (Exception e) {
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
+            } catch (IOException | org.apache.hc.core5.http.ParseException e) {
                 logger.error("Error occurred while removing track from playlist.", e);
                 throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,

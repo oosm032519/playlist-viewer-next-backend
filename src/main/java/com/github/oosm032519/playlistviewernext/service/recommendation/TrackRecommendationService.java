@@ -29,7 +29,6 @@ public class TrackRecommendationService {
      * @param maxAudioFeatures AudioFeaturesの最大値を含むマップ
      * @param minAudioFeatures AudioFeaturesの最小値を含むマップ
      * @return 推薦されたトラックのリスト
-     * @throws SpotifyApiException トラックの推薦中にエラーが発生した場合
      */
     public List<Track> getRecommendations(List<String> artists,
                                           Map<String, Float> maxAudioFeatures,

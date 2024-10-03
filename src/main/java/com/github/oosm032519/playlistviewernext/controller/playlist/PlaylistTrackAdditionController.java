@@ -59,7 +59,6 @@ public class PlaylistTrackAdditionController {
      * @param principal 認証されたユーザー情報
      * @return トラック追加の結果を含むレスポンスエンティティ
      * @throws AuthenticationException ユーザーが認証されていない場合
-     * @throws SpotifyApiException     Spotify APIでエラーが発生した場合
      */
     @PostMapping("/add-track")
     public ResponseEntity<Map<String, String>> addTrackToPlaylist(@Valid @RequestBody PlaylistTrackAdditionRequest request,

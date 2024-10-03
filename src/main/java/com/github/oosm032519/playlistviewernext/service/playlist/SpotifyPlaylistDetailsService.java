@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
@@ -44,7 +45,6 @@ public class SpotifyPlaylistDetailsService {
      * @param playlistId プレイリストのID
      * @return プレイリスト内のトラックの配列
      * @throws ResourceNotFoundException プレイリストが見つからない場合
-     * @throws SpotifyApiException       トラック情報の取得中にエラーが発生した場合
      */
     @Cacheable(value = "playlistTracks", key = "#playlistId")
     public PlaylistTrack[] getPlaylistTracks(String playlistId) {
@@ -80,6 +80,10 @@ public class SpotifyPlaylistDetailsService {
             } catch (ResourceNotFoundException e) {
                 // ResourceNotFoundException はそのまま再スロー
                 throw e;
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
             } catch (Exception e) {
                 logger.error("トラック情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
                 throw new InternalServerException(
@@ -96,7 +100,6 @@ public class SpotifyPlaylistDetailsService {
      *
      * @param playlistId プレイリストのID
      * @return プレイリスト情報、見つからない場合は null
-     * @throws SpotifyApiException プレイリスト情報の取得中にエラーが発生した場合
      */
     @Cacheable(value = "playlist", key = "#playlistId")
     public Playlist getPlaylist(String playlistId) {
@@ -104,6 +107,10 @@ public class SpotifyPlaylistDetailsService {
             try {
                 GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();
                 return getPlaylistRequest.execute();
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
             } catch (Exception e) {
                 logger.error("プレイリスト情報の取得中にエラーが発生しました。 playlistId: {}", playlistId, e);
                 throw new InternalServerException(

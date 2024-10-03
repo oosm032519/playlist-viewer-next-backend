@@ -10,10 +10,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.playlists.GetListOfCurrentUsersPlaylistsRequest;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +46,6 @@ public class SpotifyUserPlaylistsService {
      *
      * @return プレイリストの簡略情報のリスト
      * @throws AuthenticationException 認証エラーが発生した場合
-     * @throws SpotifyApiException     Spotify APIの呼び出し中にエラーが発生した場合
      */
     public List<PlaylistSimplified> getCurrentUsersPlaylists() {
         return RetryUtil.executeWithRetry(() -> {
@@ -66,6 +67,10 @@ public class SpotifyUserPlaylistsService {
             } catch (AuthenticationException e) {
                 // AuthenticationException はそのまま再スロー
                 throw e;
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
             } catch (Exception e) {
                 logger.error("Error occurred while retrieving playlists", e);
                 throw new InternalServerException(
@@ -81,9 +86,11 @@ public class SpotifyUserPlaylistsService {
      * Spotify APIを使用してプレイリスト一覧を取得する
      *
      * @return プレイリストの簡略情報のリスト
-     * @throws Exception Spotify APIの呼び出し中にエラーが発生した場合
+     * @throws IOException                             Spotify APIの呼び出し中にIOエラーが発生した場合
+     * @throws SpotifyWebApiException                  Spotify APIの呼び出し中にエラーが発生した場合
+     * @throws org.apache.hc.core5.http.ParseException Spotify APIのレスポンスのパース中にエラーが発生した場合
      */
-    private List<PlaylistSimplified> getPlaylists() throws Exception {
+    private List<PlaylistSimplified> getPlaylists() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
         GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
         return Optional.ofNullable(playlistsPaging.getItems())

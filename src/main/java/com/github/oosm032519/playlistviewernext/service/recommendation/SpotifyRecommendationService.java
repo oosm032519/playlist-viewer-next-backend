@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Recommendations;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.requests.data.browse.GetRecommendationsRequest;
@@ -46,7 +47,6 @@ public class SpotifyRecommendationService {
      * @param maxAudioFeatures 最大AudioFeaturesのマップ
      * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 推奨トラックのリスト
-     * @throws SpotifyApiException Spotify APIの呼び出し中にエラーが発生した場合
      */
     public List<Track> getRecommendations(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
         logger.info("getRecommendations: seedArtists: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedArtists, maxAudioFeatures, minAudioFeatures);
@@ -68,7 +68,12 @@ public class SpotifyRecommendationService {
 
                 logger.info("getRecommendations: 推奨トラック数: {}", recommendations.getTracks().length);
                 return Stream.of(recommendations.getTracks()).collect(Collectors.toList());
+            } catch (SpotifyWebApiException e) {
+                // SpotifyWebApiException はそのまま再スロー
+                logger.error("Spotify API エラー: {}", e.getMessage(), e);
+                throw e;
             } catch (Exception e) {
+                // その他の例外は InternalServerException にラップしてスロー
                 logger.error("推奨トラックの取得中にエラーが発生しました。", e);
                 throw new InternalServerException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
