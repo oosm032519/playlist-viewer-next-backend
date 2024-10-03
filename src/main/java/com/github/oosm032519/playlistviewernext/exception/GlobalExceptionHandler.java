@@ -56,24 +56,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         // 例外の種類に応じて詳細情報を追加
         if (ex instanceof ResourceNotFoundException) {
-            details = "リクエストされたリソースは存在しません。";
+            errorCode = "RESOURCE_NOT_FOUND";
+            details = (details != null) ? details : "リクエストされたリソースは存在しません。"; // 詳細情報がnullの場合はデフォルトメッセージを設定
         } else if (ex instanceof AuthenticationException) {
-            details = "認証に失敗しました。";
+            errorCode = "AUTHENTICATION_ERROR";
+            details = (details != null) ? details : "認証に失敗しました。";
         } else if (ex instanceof InvalidRequestException) {
-            details = "無効なリクエストです。";
+            errorCode = "INVALID_REQUEST";
+            details = (details != null) ? details : "無効なリクエストです。";
         } else if (ex instanceof DatabaseAccessException) {
-            details = "データベースアクセスエラーが発生しました。";
+            errorCode = "DATABASE_ACCESS_ERROR";
+            details = (details != null) ? details : "データベースアクセスエラーが発生しました。";
         } else if (ex instanceof InternalServerException) {
-            details = "内部サーバーエラーが発生しました。";
+            errorCode = "INTERNAL_SERVER_ERROR";
+            details = (details != null) ? details : "内部サーバーエラーが発生しました。";
         }
 
         // リクエストパラメータを詳細情報に追加
         String requestParams = getRequestParams();
-        if (details == null) {
-            details = "リクエストパラメータ: " + requestParams;
-        } else {
-            details += " リクエストパラメータ: " + requestParams;
-        }
+        details += (details != null ? " " : "") + "リクエストパラメータ: " + requestParams;
 
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
@@ -81,8 +82,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     /**
      * リクエストパラメータを取得するヘルパーメソッド
-     *
-     * @return リクエストパラメータの文字列
      */
     private String getRequestParams() {
         StringBuilder params = new StringBuilder();
@@ -95,12 +94,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     /**
      * バリデーションエラーを処理するハンドラ
-     *
-     * @param ex      発生した MethodArgumentNotValidException
-     * @param headers HTTPヘッダー
-     * @param status  HTTPステータス
-     * @param request リクエスト情報
-     * @return エラーレスポンスを含む ResponseEntity
      */
     @Override
     @NonNull
@@ -123,29 +116,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * SpotifyWebApiException を処理するハンドラ
-     *
-     * @param ex 発生した SpotifyWebApiException
-     * @return エラーレスポンスを含む ResponseEntity
-     */
-    @ExceptionHandler(SpotifyWebApiException.class)
-    public ResponseEntity<ErrorResponse> handleSpotifyWebApiException(SpotifyWebApiException ex) {
-        logger.error("SpotifyWebApiException が発生しました: {}", ex.getMessage(), ex);
-
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        String errorCode = ex.getClass().getSimpleName();
-        String message = "Spotify API エラーが発生しました。";
-        String details = ex.getMessage();
-
-        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-        return new ResponseEntity<>(errorResponse, status);
-    }
-
-    /**
      * ConstraintViolationException を処理するハンドラ
-     *
-     * @param ex 発生した ConstraintViolationException
-     * @return エラーレスポンスを含む ResponseEntity
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
@@ -163,6 +134,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * SpotifyWebApiException を処理するハンドラ
+     *
+     * @param ex 発生した SpotifyWebApiException
+     * @return エラーレスポンスを含む ResponseEntity
+     */
+    @ExceptionHandler(SpotifyWebApiException.class)
+    public ResponseEntity<ErrorResponse> handleSpotifyWebApiException(SpotifyWebApiException ex) {
+        logger.error("SpotifyWebApiException が発生しました: {}", ex.getMessage(), ex);
+
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String errorCode = "SPOTIFY_API_ERROR";
+        String message = "Spotify API エラーが発生しました。";
+        String details = ex.getMessage();
+
+        // リクエストパラメータを詳細情報に追加
+        String requestParams = getRequestParams();
+        details += " リクエストパラメータ: " + requestParams;
+
+        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
+    /**
      * 全ての例外を処理するハンドラ
      *
      * @param ex 発生した Exception
@@ -170,27 +164,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+
         logger.error("予期しないエラーが発生しました: {}", ex.getMessage(), ex);
 
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        String errorCode = ex.getClass().getSimpleName();
+        String errorCode = "UNEXPECTED_ERROR";
         String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
         String details = ex.getMessage();
-
-        // 例外の種類に応じてステータスコードとメッセージを変更
-        if (ex instanceof SpotifyWebApiException) {
-            status = HttpStatus.BAD_REQUEST;
-            errorCode = "SPOTIFY_API_ERROR";
-            message = "Spotify API エラーが発生しました。";
-        } else if (ex instanceof ResourceNotFoundException) {
-            status = HttpStatus.NOT_FOUND;
-            errorCode = "RESOURCE_NOT_FOUND";
-            message = "リクエストされたリソースは存在しません。";
-        } else if (ex instanceof AuthenticationException) {
-            status = HttpStatus.UNAUTHORIZED;
-            errorCode = "AUTHENTICATION_ERROR";
-            message = "認証に失敗しました。";
-        }
 
         // リクエストパラメータを詳細情報に追加
         String requestParams = getRequestParams();

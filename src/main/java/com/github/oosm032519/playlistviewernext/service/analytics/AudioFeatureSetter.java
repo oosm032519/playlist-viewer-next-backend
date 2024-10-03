@@ -29,8 +29,6 @@ public class AudioFeatureSetter {
         setAudioFeatures(builder, minAudioFeatures, this::setMinFeature);
     }
 
-    // setMedianAudioFeaturesメソッドとsetModeValuesメソッドを削除
-
     private void setAudioFeatures(GetRecommendationsRequest.Builder builder, Map<String, Float> audioFeatures, BiConsumer<GetRecommendationsRequest.Builder, Map.Entry<String, Float>> featureSetter) {
         for (Map.Entry<String, Float> entry : audioFeatures.entrySet()) {
             featureSetter.accept(builder, entry);
