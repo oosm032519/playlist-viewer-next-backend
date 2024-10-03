@@ -47,7 +47,7 @@ public class SpotifyPlaylistDetailsService {
      * @throws ResourceNotFoundException プレイリストが見つからない場合
      */
     @Cacheable(value = "playlistTracks", key = "#playlistId")
-    public PlaylistTrack[] getPlaylistTracks(String playlistId) {
+    public PlaylistTrack[] getPlaylistTracks(String playlistId) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 Playlist playlist = getPlaylist(playlistId);
@@ -102,7 +102,7 @@ public class SpotifyPlaylistDetailsService {
      * @return プレイリスト情報、見つからない場合は null
      */
     @Cacheable(value = "playlist", key = "#playlistId")
-    public Playlist getPlaylist(String playlistId) {
+    public Playlist getPlaylist(String playlistId) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 GetPlaylistRequest getPlaylistRequest = spotifyApi.getPlaylist(playlistId).build();

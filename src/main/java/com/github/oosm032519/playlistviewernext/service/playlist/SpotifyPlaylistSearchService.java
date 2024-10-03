@@ -33,7 +33,7 @@ public class SpotifyPlaylistSearchService {
      * @param limit  検索結果の最大数
      * @return 検索結果のプレイリストと総数を含むマップ
      */
-    public Map<String, Object> searchPlaylists(String query, int offset, int limit) {
+    public Map<String, Object> searchPlaylists(String query, int offset, int limit) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 SearchPlaylistsRequest searchRequest = buildSearchRequest(query, offset, limit);

@@ -47,7 +47,7 @@ public class SpotifyUserPlaylistsService {
      * @return プレイリストの簡略情報のリスト
      * @throws AuthenticationException 認証エラーが発生した場合
      */
-    public List<PlaylistSimplified> getCurrentUsersPlaylists() {
+    public List<PlaylistSimplified> getCurrentUsersPlaylists() throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

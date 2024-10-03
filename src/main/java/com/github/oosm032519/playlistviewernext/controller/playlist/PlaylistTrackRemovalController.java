@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class PlaylistTrackRemovalController {
     @PostMapping("/remove-track")
     public ResponseEntity<?> removeTrackFromPlaylist(
             @Valid @RequestBody PlaylistTrackRemovalRequest request,
-            @AuthenticationPrincipal OAuth2User principal) {
+            @AuthenticationPrincipal OAuth2User principal) throws SpotifyWebApiException {
         LOGGER.info("removeTrackFromPlaylist メソッドが呼び出されました。リクエスト: {}", request);
 
         if (principal == null) {

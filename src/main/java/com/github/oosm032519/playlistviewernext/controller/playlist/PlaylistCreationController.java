@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -64,7 +65,7 @@ public class PlaylistCreationController {
      */
     @PostMapping("/create")
     public ResponseEntity<String> createPlaylist(@Valid @RequestBody @NotEmpty List<String> trackIds,
-                                                 @AuthenticationPrincipal OAuth2User principal) {
+                                                 @AuthenticationPrincipal OAuth2User principal) throws SpotifyWebApiException {
         logger.info("プレイリスト作成リクエストを受信しました。トラックID数: {}", trackIds.size());
 
         // ユーザーのアクセストークンを取得

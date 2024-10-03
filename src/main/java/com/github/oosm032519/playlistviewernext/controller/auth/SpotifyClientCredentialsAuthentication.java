@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 /**
  * Spotifyのクライアントクレデンシャル認証を処理するコントローラークラス
@@ -35,7 +36,7 @@ public class SpotifyClientCredentialsAuthentication {
      * Spotifyのクライアントクレデンシャル認証を実行するメソッド
      * 認証に成功した場合はログを出力し、エラーが発生した場合は適切な例外をスローする
      */
-    public void authenticate() {
+    public void authenticate() throws SpotifyWebApiException {
         authService.getClientCredentialsToken();
         LOGGER.info("クライアントクレデンシャル認証が成功しました。");
     }

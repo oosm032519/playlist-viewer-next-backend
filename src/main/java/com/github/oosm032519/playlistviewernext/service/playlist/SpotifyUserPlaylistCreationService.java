@@ -41,7 +41,7 @@ public class SpotifyUserPlaylistCreationService {
      * @return 作成されたプレイリストのID
      * @throws InternalServerException プレイリストの作成中に内部エラーが発生した場合
      */
-    public String createPlaylist(String accessToken, String userId, String playlistName, List<String> trackIds) {
+    public String createPlaylist(String accessToken, String userId, String playlistName, List<String> trackIds) throws SpotifyWebApiException {
         logMethodCall(accessToken, userId, playlistName, trackIds);
 
         spotifyApi.setAccessToken(accessToken);

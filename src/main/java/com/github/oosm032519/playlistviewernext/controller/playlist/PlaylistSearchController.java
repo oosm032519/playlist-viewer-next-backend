@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.util.Map;
 
@@ -61,7 +62,7 @@ public class PlaylistSearchController {
     public ResponseEntity<?> searchPlaylists(
             @RequestParam @NotBlank String query,
             @RequestParam(defaultValue = "0") @Min(0) int offset,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) {
+            @RequestParam(defaultValue = "20") @Min(1) @Max(50) int limit) throws SpotifyWebApiException {
 
         if (query.isBlank()) {
             ErrorResponse errorResponse = new ErrorResponse(HttpStatus.BAD_REQUEST, "INVALID_QUERY", "検索クエリは必須です。");

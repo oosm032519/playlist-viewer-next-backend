@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.special.SnapshotResult;
 
 import java.util.HashMap;
@@ -62,7 +63,7 @@ public class PlaylistTrackAdditionController {
      */
     @PostMapping("/add-track")
     public ResponseEntity<Map<String, String>> addTrackToPlaylist(@Valid @RequestBody PlaylistTrackAdditionRequest request,
-                                                                  @AuthenticationPrincipal OAuth2User principal) {
+                                                                  @AuthenticationPrincipal OAuth2User principal) throws SpotifyWebApiException {
         logger.info("トラック追加リクエストを受信しました。プレイリストID: {}, トラックID: {}", request.getPlaylistId(), request.getTrackId());
 
         // アクセストークンの取得と検証

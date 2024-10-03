@@ -41,7 +41,7 @@ public class SpotifyPlaylistTrackRemovalService {
      * @return 削除操作の結果を含むResponseEntity
      * @throws AuthenticationException 認証エラーが発生した場合
      */
-    public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) {
+    public ResponseEntity<String> removeTrackFromPlaylist(PlaylistTrackRemovalRequest request, OAuth2User principal) throws SpotifyWebApiException {
         String accessToken = getAccessToken(principal);
         if (accessToken == null) {
             logger.warn("Unauthorized access attempt with missing access token.");

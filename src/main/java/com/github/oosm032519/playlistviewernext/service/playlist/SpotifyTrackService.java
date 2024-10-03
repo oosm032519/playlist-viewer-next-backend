@@ -39,7 +39,7 @@ public class SpotifyTrackService {
      * @return 指定されたトラックのAudioFeaturesリスト
      * @throws InternalServerException その他のエラーが発生した場合
      */
-    public List<AudioFeatures> getAudioFeaturesForTracks(List<String> trackIds) {
+    public List<AudioFeatures> getAudioFeaturesForTracks(List<String> trackIds) throws SpotifyWebApiException {
         logger.info("getAudioFeaturesForTracks: トラック数: {}", trackIds.size());
 
         return RetryUtil.executeWithRetry(() -> {

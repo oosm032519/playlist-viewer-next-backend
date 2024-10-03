@@ -30,7 +30,7 @@ public class SpotifyPlaylistTrackAdditionService {
      * @return SnapshotResult プレイリストのスナップショット結果
      * @throws InternalServerException トラックの追加中に内部エラーが発生した場合
      */
-    public SnapshotResult addTrackToPlaylist(String accessToken, String playlistId, String trackId) {
+    public SnapshotResult addTrackToPlaylist(String accessToken, String playlistId, String trackId) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 spotifyApi.setAccessToken(accessToken);

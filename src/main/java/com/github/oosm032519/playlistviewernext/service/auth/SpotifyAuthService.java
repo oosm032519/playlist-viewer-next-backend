@@ -34,7 +34,7 @@ public class SpotifyAuthService {
      *
      * @throws InternalServerException アクセストークンの取得中にエラーが発生した場合
      */
-    public void getClientCredentialsToken() {
+    public void getClientCredentialsToken() throws SpotifyWebApiException {
         RetryUtil.executeWithRetry(() -> {
             try {
                 ClientCredentialsRequest clientCredentialsRequest = spotifyApi.clientCredentials().build();

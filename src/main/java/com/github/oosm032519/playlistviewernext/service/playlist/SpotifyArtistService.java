@@ -41,7 +41,7 @@ public class SpotifyArtistService {
      * @return アーティストIDとジャンルのリストのマップ
      */
     @Cacheable(value = "artistGenres", key = "#artistIds")
-    public Map<String, List<String>> getArtistGenres(List<String> artistIds) {
+    public Map<String, List<String>> getArtistGenres(List<String> artistIds) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
                 // アーティストIDのリストを50個以下のチャンクに分割

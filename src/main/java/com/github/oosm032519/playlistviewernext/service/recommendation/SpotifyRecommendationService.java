@@ -48,7 +48,7 @@ public class SpotifyRecommendationService {
      * @param minAudioFeatures 最小AudioFeaturesのマップ
      * @return 推奨トラックのリスト
      */
-    public List<Track> getRecommendations(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) {
+    public List<Track> getRecommendations(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) throws SpotifyWebApiException {
         logger.info("getRecommendations: seedArtists: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedArtists, maxAudioFeatures, minAudioFeatures);
 
         if (seedArtists == null || seedArtists.isEmpty()) {
