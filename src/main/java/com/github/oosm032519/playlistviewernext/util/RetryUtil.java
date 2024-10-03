@@ -4,15 +4,14 @@ import com.github.oosm032519.playlistviewernext.exception.InternalServerExceptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.client.HttpClientErrorException;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-
-import java.util.Objects;
+import se.michaelthelin.spotify.exceptions.detailed.TooManyRequestsException;
 
 public class RetryUtil {
 
-    public static final long DEFAULT_RETRY_INTERVAL_MILLIS = 5000; // デフォルトの再試行間隔（ミリ秒）
     private static final Logger logger = LoggerFactory.getLogger(RetryUtil.class);
+
+    public static final long DEFAULT_RETRY_INTERVAL_MILLIS = 5000;
 
     public static <T> T executeWithRetry(RetryableOperation<T> operation, int maxRetries, long initialIntervalMillis) throws SpotifyWebApiException {
         int retryCount = 0;
@@ -21,39 +20,25 @@ public class RetryUtil {
         while (true) {
             try {
                 return operation.execute();
-            } catch (HttpClientErrorException httpException) {
-                if (retryCount < maxRetries) {
-                    // Retry-Afterヘッダーがあればその値を使用
-                    String retryAfterHeader = Objects.requireNonNull(httpException.getResponseHeaders()).getFirst("Retry-After");
-                    if (retryAfterHeader != null) {
+            } catch (SpotifyWebApiException e) {
+                if (e instanceof TooManyRequestsException tooManyRequestsException) {
+                    if (retryCount < maxRetries) {
+                        int retryAfterSeconds = tooManyRequestsException.getRetryAfter();
+                        intervalMillis = retryAfterSeconds * 1000L; // 秒をミリ秒に変換
+                        logger.warn("TooManyRequests: {}秒後に再試行します... (試行回数: {})", retryAfterSeconds, retryCount + 1);
                         try {
-                            intervalMillis = Long.parseLong(retryAfterHeader) * 1000; // 秒をミリ秒に変換
-                        } catch (NumberFormatException ex) {
-                            logger.warn("Retry-After ヘッダーの値が数値に変換できません: {}. デフォルトのインターバルを使用します。", retryAfterHeader);
-                            intervalMillis = DEFAULT_RETRY_INTERVAL_MILLIS;
+                            Thread.sleep(intervalMillis);
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                            throw new InternalServerException(HttpStatus.INTERNAL_SERVER_ERROR, "再試行が中断されました。", ex);
                         }
+                        retryCount++;
+                        intervalMillis *= 2; // 指数バックオフ (必要に応じて)
                     } else {
-                        intervalMillis = DEFAULT_RETRY_INTERVAL_MILLIS; // Retry-After ヘッダーがない場合はデフォルトを使用
+                        throw e; // 再試行回数を超えた場合は例外をスロー
                     }
-
-                    logger.warn("Spotify APIエラーが発生しました。{}秒後に再試行します... (試行回数: {})", intervalMillis / 1000, retryCount + 1);
-                    try {
-                        Thread.sleep(intervalMillis);
-                    } catch (InterruptedException ex) {
-                        // 割り込みが発生した場合は、InternalServerExceptionにラップしてスロー
-                        Thread.currentThread().interrupt();
-                        throw new InternalServerException(
-                                HttpStatus.INTERNAL_SERVER_ERROR,
-                                "再試行が中断されました。",
-                                ex
-                        );
-                    }
-
-                    intervalMillis *= 2; // 指数バックオフ
-                    retryCount++;
                 } else {
-                    // 再試行条件を満たさない場合は、例外をそのままスロー
-                    throw httpException;
+                    throw e; // TooManyRequestsException以外の場合は例外をスロー
                 }
             }
         }
@@ -61,6 +46,6 @@ public class RetryUtil {
 
     @FunctionalInterface
     public interface RetryableOperation<T> {
-        T execute() throws HttpClientErrorException, SpotifyWebApiException;
+        T execute() throws SpotifyWebApiException;
     }
 }

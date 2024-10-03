@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
-import se.michaelthelin.spotify.exceptions.detailed.TooManyRequestsException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -137,20 +136,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String errorCode = ex.getClass().getSimpleName();
         String message = "Spotify API エラーが発生しました。";
         String details = ex.getMessage();
-
-        if (ex instanceof final TooManyRequestsException tooManyRequestsEx) {
-            status = HttpStatus.TOO_MANY_REQUESTS;
-            errorCode = "TOO_MANY_REQUESTS";
-            message = "リクエストが多すぎます。しばらくしてから再度お試しください。";
-
-            // Retry-After の値を取得してヘッダーに追加
-            int retryAfter = tooManyRequestsEx.getRetryAfter();
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Retry-After", String.valueOf(retryAfter));
-
-            ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-            return new ResponseEntity<>(errorResponse, headers, status);
-        }
 
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
