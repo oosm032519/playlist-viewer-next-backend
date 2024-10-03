@@ -33,7 +33,7 @@ public class RetryUtil {
                             throw new InternalServerException(HttpStatus.INTERNAL_SERVER_ERROR, "再試行が中断されました。", ex);
                         }
                         retryCount++;
-                        intervalMillis *= 2; // 指数バックオフ (必要に応じて)
+                        intervalMillis *= 2;
                     } else {
                         throw e; // 再試行回数を超えた場合は例外をスロー
                     }

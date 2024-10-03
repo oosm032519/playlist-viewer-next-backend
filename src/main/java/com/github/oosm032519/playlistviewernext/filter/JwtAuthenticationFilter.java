@@ -1,7 +1,6 @@
 package com.github.oosm032519.playlistviewernext.filter;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -118,20 +117,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } catch (InvalidRequestException e) {
-                // InvalidRequestException はそのまま再スロー
-                HttpStatus status = e.getHttpStatus();
-                String message = e.getMessage();
-                String details = e.getDetails();
-
-                // エラーログに記録
-                logger.error("Invalid request error occurred during JWT validation: {} - {} - {}", status, message, e);
-
-                // エラーレスポンスを返す
-                ErrorResponse errorResponse = new ErrorResponse(status, message, details);
-                response.setStatus(status.value());
-                response.setContentType("application/json");
-                response.getWriter().write(errorResponse.toString());
-                return;
+                logger.error("JWTトークンの検証エラー: 不正なリクエスト", e);
+                throw new AuthenticationException(
+                        e.getHttpStatus(),
+                        "INVALID_REQUEST",
+                        "不正なリクエストです。",
+                        e
+                ); // InvalidRequestException を AuthenticationException に変換
             } catch (Exception e) {
                 // その他の例外は AuthenticationException に変換
                 logger.error("JWTトークンの検証エラー", e);
