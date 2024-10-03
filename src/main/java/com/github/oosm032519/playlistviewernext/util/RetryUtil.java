@@ -39,12 +39,13 @@ public class RetryUtil {
                     try {
                         Thread.sleep(intervalMillis);
                     } catch (InterruptedException ex) {
-                        // 割り込みが発生した場合は、現在のスレッドの割り込み状態をセットし、SpotifyApiExceptionをスロー
+                        // 割り込みが発生した場合は、InternalServerExceptionにラップしてスロー
                         Thread.currentThread().interrupt();
-
-                        // HttpStatus を取得してSpotifyApiExceptionをスロー
-                        HttpStatus status = HttpStatus.valueOf(httpException.getStatusText());
-                        throw new InternalServerException(status, "再試行が中断されました。", ex);
+                        throw new InternalServerException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "再試行が中断されました。",
+                                ex
+                        );
                     }
 
                     intervalMillis *= 2; // 指数バックオフ

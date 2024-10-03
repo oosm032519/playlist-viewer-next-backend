@@ -211,6 +211,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String requestParams = getRequestParams();
         details += " リクエストパラメータ: " + requestParams;
 
+        // スタックトレースをログに記録
+        logger.error("スタックトレース:", ex);
+
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
     }
