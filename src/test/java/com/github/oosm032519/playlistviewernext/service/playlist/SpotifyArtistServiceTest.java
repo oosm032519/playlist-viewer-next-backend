@@ -10,14 +10,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Artist;
-import se.michaelthelin.spotify.requests.data.artists.GetArtistRequest;
+import se.michaelthelin.spotify.requests.data.artists.GetSeveralArtistsRequest;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyArtistServiceTest {
@@ -28,65 +32,55 @@ class SpotifyArtistServiceTest {
     @InjectMocks
     private SpotifyArtistService artistService;
 
-    private GetArtistRequest getArtistRequest;
+    private GetSeveralArtistsRequest getSeveralArtistsRequest;
     private Artist artist;
 
+
     @BeforeEach
-    void setUp() {
-        GetArtistRequest.Builder builder = mock(GetArtistRequest.Builder.class);
-        getArtistRequest = mock(GetArtistRequest.class);
+    void setUp() throws ParseException, IOException, SpotifyWebApiException {
+        GetSeveralArtistsRequest.Builder builder = mock(GetSeveralArtistsRequest.Builder.class);
+        getSeveralArtistsRequest = mock(GetSeveralArtistsRequest.class);
         artist = mock(Artist.class);
 
-        when(spotifyApi.getArtist(anyString())).thenReturn(builder);
-        when(builder.build()).thenReturn(getArtistRequest);
+        when(spotifyApi.getSeveralArtists(anyString())).thenReturn(builder);
+        when(builder.build()).thenReturn(getSeveralArtistsRequest);
+        when(getSeveralArtistsRequest.execute()).thenReturn(new Artist[]{artist});
     }
 
     @Test
-    void getArtistGenres_shouldReturnGenres_whenArtistHasGenres() throws IOException, SpotifyWebApiException, ParseException {
+    void getArtistGenres_shouldReturnGenres_whenArtistHasGenres() throws SpotifyWebApiException {
         String artistId = "test-artist-id";
         String[] genres = {"pop", "rock"};
 
-        when(getArtistRequest.execute()).thenReturn(artist);
         when(artist.getGenres()).thenReturn(genres);
+        when(artist.getId()).thenReturn(artistId);
 
-        List<String> result = artistService.getArtistGenres(artistId);
+        Map<String, List<String>> result = artistService.getArtistGenres(Collections.singletonList(artistId));
 
-        assertThat(result).containsExactly("pop", "rock");
+        assertThat(result.get(artistId)).containsExactly("pop", "rock");
     }
 
     @Test
-    void getArtistGenres_shouldReturnEmptyList_whenArtistHasNoGenres() throws IOException, SpotifyWebApiException, ParseException {
-        String artistId = "test-artist-id";
-
-        when(getArtistRequest.execute()).thenReturn(artist);
-        when(artist.getGenres()).thenReturn(null);
-
-        List<String> result = artistService.getArtistGenres(artistId);
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getArtistGenres_shouldThrowException_whenArtistNotFound() throws IOException, SpotifyWebApiException, ParseException {
+    void getArtistGenres_shouldThrowException_whenArtistNotFound() throws IOException, ParseException, SpotifyWebApiException {
         String artistId = "non-existent-artist-id";
 
-        when(getArtistRequest.execute()).thenThrow(new SpotifyWebApiException("Artist not found"));
+        when(getSeveralArtistsRequest.execute()).thenThrow(new SpotifyWebApiException("Artist not found"));
 
-        assertThatThrownBy(() -> artistService.getArtistGenres(artistId))
-                .isInstanceOf(SpotifyApiException.class)
-                .hasMessageContaining("アーティスト情報の取得中にエラーが発生しました。");
+        assertThatThrownBy(() -> artistService.getArtistGenres(Collections.singletonList(artistId)))
+                .isInstanceOf(SpotifyWebApiException.class)
+                .hasMessageContaining("Artist not found");
     }
 
     @Test
-    void getArtistGenres_shouldReturnAllGenres_whenArtistHasMultipleGenres() throws IOException, SpotifyWebApiException, ParseException {
+    void getArtistGenres_shouldReturnAllGenres_whenArtistHasMultipleGenres() throws SpotifyWebApiException {
         String artistId = "test-artist-id";
         String[] genres = {"pop", "rock", "indie", "alternative"};
 
-        when(getArtistRequest.execute()).thenReturn(artist);
         when(artist.getGenres()).thenReturn(genres);
+        when(artist.getId()).thenReturn(artistId);
 
-        List<String> result = artistService.getArtistGenres(artistId);
+        Map<String, List<String>> result = artistService.getArtistGenres(Collections.singletonList(artistId));
 
-        assertThat(result).containsExactly("pop", "rock", "indie", "alternative");
+        assertThat(result.get(artistId)).containsExactly("pop", "rock", "indie", "alternative");
     }
 }

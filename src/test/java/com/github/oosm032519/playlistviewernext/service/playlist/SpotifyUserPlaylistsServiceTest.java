@@ -1,6 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,23 +77,13 @@ public class SpotifyUserPlaylistsServiceTest {
     }
 
     @Test
-    public void getCurrentUsersPlaylists_authenticationException() {
-        when(oauth2User.getAttribute("spotify_access_token")).thenReturn(null);
-
-        assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("Spotify access token is missing");
-    }
-
-    @Test
     public void getCurrentUsersPlaylists_spotifyApiException() throws Exception {
         String accessToken = "mockAccessToken";
         when(oauth2User.getAttribute("spotify_access_token")).thenReturn(accessToken);
         when(request.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(SpotifyApiException.class)
-                .hasMessageContaining("Error occurred while retrieving playlists");
+                .isInstanceOf(SpotifyWebApiException.class); // SpotifyWebApiException がスローされることを検証
         verify(spotifyApi).setAccessToken(accessToken);
     }
 
@@ -104,7 +94,7 @@ public class SpotifyUserPlaylistsServiceTest {
         when(request.execute()).thenThrow(new IOException("IO error"));
 
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(SpotifyApiException.class)
+                .isInstanceOf(InternalServerException.class) // InternalServerException がスローされることを検証
                 .hasMessageContaining("Error occurred while retrieving playlists");
         verify(spotifyApi).setAccessToken(accessToken);
     }

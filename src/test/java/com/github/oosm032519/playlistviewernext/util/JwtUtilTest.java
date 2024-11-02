@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -19,11 +20,13 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class JwtUtilTest {
 
+    @Spy
     @InjectMocks
     private JwtUtil jwtUtil;
 
@@ -57,7 +60,7 @@ class JwtUtilTest {
         assertThat(validatedClaims.get("aud")).isInstanceOf(List.class);
         List<?> audList = (List<?>) validatedClaims.get("aud");
         assertThat(audList).hasSize(1);
-        assertThat(audList.get(0)).isEqualTo("testAudience");
+        assertThat(audList.getFirst()).isEqualTo("testAudience");
     }
 
     @Test
@@ -74,65 +77,11 @@ class JwtUtilTest {
     }
 
     @Test
-    void testInitializationWithJOSEException() {
-        JwtUtil spyJwtUtil = spy(new JwtUtil());
-        ReflectionTestUtils.setField(spyJwtUtil, "secret", "testSecret");
-        ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
-        ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
-
-        doAnswer(_ -> {
-            throw new AuthenticationException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "JWT_UTIL_INIT_ERROR",
-                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    new JOSEException("JOSE Exception")
-            );
-        }).when(spyJwtUtil).init();
-
-        assertThatThrownBy(spyJwtUtil::init)
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。")
-                .hasCauseInstanceOf(JOSEException.class);
-    }
-
-    @Test
-    void testInitializationWithGeneralSecurityException() {
-        JwtUtil spyJwtUtil = spy(new JwtUtil());
-        ReflectionTestUtils.setField(spyJwtUtil, "secret", "testSecret");
-        ReflectionTestUtils.setField(spyJwtUtil, "issuer", "testIssuer");
-        ReflectionTestUtils.setField(spyJwtUtil, "audience", "testAudience");
-
-        doAnswer(_ -> {
-            throw new AuthenticationException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "JWT_UTIL_INIT_ERROR",
-                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    new GeneralSecurityException("Security Exception")
-            );
-        }).when(spyJwtUtil).init();
-
-        assertThatThrownBy(spyJwtUtil::init)
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。")
-                .hasCauseInstanceOf(GeneralSecurityException.class);
-    }
-
-    @Test
     void testGenerateTokenWithJOSEException() {
-        JwtUtil spyJwtUtil = spy(jwtUtil);
+        doThrow(new AuthenticationException(HttpStatus.INTERNAL_SERVER_ERROR, "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。", new JOSEException("test exception"))).when(jwtUtil).generateToken(any());
+
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", "123");
-
-        doAnswer(_ -> {
-            throw new AuthenticationException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOKEN_GENERATION_ERROR",
-                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    new JOSEException("JOSE Exception")
-            );
-        }).when(spyJwtUtil).generateToken(any());
-
-        assertThatThrownBy(() -> spyJwtUtil.generateToken(claims))
+        assertThatThrownBy(() -> jwtUtil.generateToken(claims))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。")
                 .hasCauseInstanceOf(JOSEException.class);
@@ -140,20 +89,10 @@ class JwtUtilTest {
 
     @Test
     void testGenerateTokenWithGeneralSecurityException() {
-        JwtUtil spyJwtUtil = spy(jwtUtil);
+        doThrow(new AuthenticationException(HttpStatus.INTERNAL_SERVER_ERROR, "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。", new GeneralSecurityException("test exception"))).when(jwtUtil).generateToken(any());
+
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", "123");
-
-        doAnswer(_ -> {
-            throw new AuthenticationException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "TOKEN_GENERATION_ERROR",
-                    "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    new GeneralSecurityException("Security Exception")
-            );
-        }).when(spyJwtUtil).generateToken(any());
-
-        assertThatThrownBy(() -> spyJwtUtil.generateToken(claims))
+        assertThatThrownBy(() -> jwtUtil.generateToken(claims))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessageContaining("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。")
                 .hasCauseInstanceOf(GeneralSecurityException.class);
@@ -161,18 +100,11 @@ class JwtUtilTest {
 
     @Test
     void testValidateTokenWithInvalidSignature() {
-        JwtUtil spyJwtUtil = spy(jwtUtil);
         String invalidToken = "invalidToken";
+        doThrow(new InvalidRequestException(HttpStatus.BAD_REQUEST, "ログイン処理中にエラーが発生しました。再度ログインしてください。", new JOSEException("Invalid signature"))).when(jwtUtil).validateToken(invalidToken);
 
-        doAnswer(_ -> {
-            throw new InvalidRequestException(
-                    HttpStatus.BAD_REQUEST,
-                    "ログイン処理中にエラーが発生しました。再度ログインしてください。",
-                    new JOSEException("Invalid signature")
-            );
-        }).when(spyJwtUtil).validateToken(invalidToken);
 
-        assertThatThrownBy(() -> spyJwtUtil.validateToken(invalidToken))
+        assertThatThrownBy(() -> jwtUtil.validateToken(invalidToken))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessageContaining("ログイン処理中にエラーが発生しました。再度ログインしてください。")
                 .hasCauseInstanceOf(JOSEException.class);
@@ -180,19 +112,14 @@ class JwtUtilTest {
 
     @Test
     void testValidateTokenWithExpiredToken() {
-        JwtUtil spyJwtUtil = spy(jwtUtil);
         String expiredToken = "expiredToken";
+        doThrow(new AuthenticationException(HttpStatus.UNAUTHORIZED, "セッションが有効期限切れです。再度ログインしてください。")).when(jwtUtil).validateToken(expiredToken);
 
-        doThrow(new AuthenticationException(
-                HttpStatus.UNAUTHORIZED,
-                "TOKEN_EXPIRED",
-                "セッションが有効期限切れです。再度ログインしてください。"
-        )).when(spyJwtUtil).validateToken(expiredToken);
-
-        assertThatThrownBy(() -> spyJwtUtil.validateToken(expiredToken))
+        assertThatThrownBy(() -> jwtUtil.validateToken(expiredToken))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessageContaining("セッションが有効期限切れです。再度ログインしてください。");
     }
+
 
     @Test
     void testSecretIssuerAudienceSetCorrectly() {
@@ -200,6 +127,7 @@ class JwtUtilTest {
         assertThat(jwtUtil.getIssuer()).isEqualTo("testIssuer");
         assertThat(jwtUtil.getAudience()).isEqualTo("testAudience");
     }
+
 
     @Test
     void testGenerateTokenDetails() {
@@ -211,7 +139,14 @@ class JwtUtilTest {
         Map<String, Object> validatedClaims = jwtUtil.validateToken(token);
 
         assertThat(validatedClaims).containsEntry("iss", "testIssuer");
-        assertThat(validatedClaims).containsEntry("aud", List.of("testAudience"));
+
+        assertThat(validatedClaims).containsKey("aud");
+        assertThat(validatedClaims.get("aud")).isInstanceOf(List.class);
+        List<?> audList = (List<?>) validatedClaims.get("aud");
+        assertThat(audList).hasSize(1);
+        assertThat(audList.getFirst()).isEqualTo("testAudience");
+
+
         assertThat(validatedClaims).containsKey("exp");
         assertThat(validatedClaims).containsKey("iat");
         assertThat((Date) validatedClaims.get("exp")).isAfter(new Date());
@@ -235,8 +170,9 @@ class JwtUtilTest {
                 .containsKey("exp")
                 .containsKey("iat")
                 .containsEntry("iss", "testIssuer")
-                .containsEntry("aud", List.of("testAudience"));
+                .containsEntry("aud", List.of("testAudience")); // audの検証を追加
     }
+
 
     @Test
     void testValidateTokenWithInvalidIssuer() {

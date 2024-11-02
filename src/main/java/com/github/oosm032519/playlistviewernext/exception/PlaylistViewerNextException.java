@@ -7,21 +7,23 @@ import org.springframework.http.HttpStatus;
 public class PlaylistViewerNextException extends RuntimeException {
 
     private final HttpStatus httpStatus;
+    private final String errorCode;
     private final String details;
 
     public PlaylistViewerNextException(HttpStatus httpStatus, String message) {
         super(message);
         this.httpStatus = httpStatus;
+        errorCode = null;
         details = null;
     }
 
     public PlaylistViewerNextException(HttpStatus httpStatus, String message, Throwable cause) {
         super(message, cause);
         this.httpStatus = httpStatus;
+        errorCode = null;
         details = getStackTraceAsString(cause);
     }
 
-    // スタックトレースを文字列に変換するヘルパーメソッド
     private String getStackTraceAsString(Throwable throwable) {
         StackTraceElement[] stackTraceElements = throwable.getStackTrace();
         StringBuilder sb = new StringBuilder();
@@ -34,12 +36,14 @@ public class PlaylistViewerNextException extends RuntimeException {
     public PlaylistViewerNextException(HttpStatus httpStatus, String message, String details) {
         super(message);
         this.httpStatus = httpStatus;
+        errorCode = null;
         this.details = details;
     }
 
-    public PlaylistViewerNextException(HttpStatus httpStatus, String message, String details, Throwable cause) {
+    public PlaylistViewerNextException(HttpStatus httpStatus, String message, String errorCode, Throwable cause) {
         super(message, cause);
         this.httpStatus = httpStatus;
-        this.details = details;
+        this.errorCode = errorCode;
+        details = getStackTraceAsString(cause);
     }
 }

@@ -61,7 +61,7 @@ public class SessionIdController {
             throw new DatabaseAccessException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "ログイン処理中にエラーが発生しました。再度ログインしてください。",
-                    null
+                    new Exception("Session ID not found for temporary token: " + temporaryToken)
             );
         }
 

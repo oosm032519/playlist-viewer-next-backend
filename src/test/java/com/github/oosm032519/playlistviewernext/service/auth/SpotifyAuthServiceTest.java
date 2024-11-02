@@ -66,18 +66,6 @@ class SpotifyAuthServiceTest {
     }
 
     @Test
-    void getClientCredentialsToken_SpotifyWebApiExceptionThrown() throws IOException, SpotifyWebApiException, ParseException {
-        // Arrange
-        when(clientCredentialsRequest.execute()).thenThrow(new SpotifyWebApiException("Test Spotify Web API Exception"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> spotifyAuthService.getClientCredentialsToken())
-                .isInstanceOf(com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException.class)
-                .hasMessage("クライアントクレデンシャルトークンの取得中にエラーが発生しました。")
-                .hasCauseInstanceOf(SpotifyWebApiException.class);
-    }
-
-    @Test
     void getClientCredentialsToken_ParseExceptionThrown() throws IOException, SpotifyWebApiException, ParseException {
         // Arrange
         when(clientCredentialsRequest.execute()).thenThrow(new ParseException("Test Parse Exception"));

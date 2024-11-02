@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.http.HttpStatus;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -34,7 +35,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
     @Test
-    void getGenreCountsForPlaylist_ShouldReturnSortedGenreCounts() throws PlaylistViewerNextException {
+    void getGenreCountsForPlaylist_ShouldReturnSortedGenreCounts() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "testPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
@@ -62,7 +63,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     }
 
     @Test
-    void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException {
+    void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "emptyPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
@@ -76,7 +77,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     }
 
     @Test
-    void getGenreCountsForPlaylist_ShouldHandleException() throws PlaylistViewerNextException {
+    void getGenreCountsForPlaylist_ShouldHandleException() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
@@ -89,7 +90,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     }
 
     @Test
-    void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws PlaylistViewerNextException {
+    void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "nullTracksPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(null);
@@ -147,7 +148,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     }
 
     @Test
-    void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException {
+    void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "emptyPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
@@ -161,7 +162,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
     }
 
     @Test
-    void getTop5GenresForPlaylist_ShouldHandleException() throws PlaylistViewerNextException {
+    void getTop5GenresForPlaylist_ShouldHandleException() throws PlaylistViewerNextException, SpotifyWebApiException {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))

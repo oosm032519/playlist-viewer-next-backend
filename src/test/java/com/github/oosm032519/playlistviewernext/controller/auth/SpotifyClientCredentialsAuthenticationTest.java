@@ -1,19 +1,18 @@
 package com.github.oosm032519.playlistviewernext.controller.auth;
 
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyAuthService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
-import java.util.HashMap;
-import java.util.Map;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class SpotifyClientCredentialsAuthenticationTest {
@@ -21,70 +20,48 @@ class SpotifyClientCredentialsAuthenticationTest {
     @Mock
     private SpotifyAuthService authService;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
-    private SpotifyClientCredentialsAuthentication authController;
+    private SpotifyClientCredentialsAuthentication spotifyClientCredentialsAuthentication;
 
     @Test
-    void authenticate_Successfully() {
-        authController.authenticate();
-        verify(authService, times(1)).getClientCredentialsToken();
+    void authenticate_success() throws SpotifyWebApiException {
+        // SpotifyAuthServiceのモックを設定し、getClientCredentialsToken()が例外をスローしないようにする
+        doNothing().when(authService).getClientCredentialsToken();
+
+        // authenticate()メソッドを実行
+        spotifyClientCredentialsAuthentication.authenticate();
     }
 
     @Test
-    void authenticate_HandlesSpotifyApiExceptionGracefully() {
-        SpotifyApiException spotifyApiException = new SpotifyApiException(
-                HttpStatus.BAD_REQUEST,
-                "TEST_ERROR",
-                "Test error message",
-                "Test error details"
-        );
-        doThrow(spotifyApiException).when(authService).getClientCredentialsToken();
+    void authenticate_throwsSpotifyWebApiException() throws SpotifyWebApiException {
+        // SpotifyAuthServiceのモックを設定し、getClientCredentialsToken()がSpotifyWebApiExceptionをスローするようにする
+        doThrow(SpotifyWebApiException.class).when(authService).getClientCredentialsToken();
 
-        SpotifyApiException thrownException = assertThrows(SpotifyApiException.class, () -> authController.authenticate());
-
-        verify(authService, times(1)).getClientCredentialsToken();
-        assertEquals(spotifyApiException, thrownException);
+        // authenticate()メソッドを実行し、SpotifyWebApiExceptionがスローされることを確認
+        org.junit.jupiter.api.Assertions.assertThrows(SpotifyWebApiException.class, () -> spotifyClientCredentialsAuthentication.authenticate());
     }
 
     @Test
-    void authenticate_HandlesGenericExceptionGracefully() {
-        doThrow(new RuntimeException("Auth error")).when(authService).getClientCredentialsToken();
+    void getRequestParams() {
+        // MockHttpServletRequestを使用して、テスト用のリクエストパラメータを設定
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addParameter("param1", "value1");
+        mockRequest.addParameter("param2", "value2", "value3");
 
-        Map<String, String[]> parameterMap = new HashMap<>();
-        parameterMap.put("testParam", new String[]{"testValue"});
-        when(request.getParameterMap()).thenReturn(parameterMap);
+        // テスト対象のクラスにMockHttpServletRequestを注入
+        spotifyClientCredentialsAuthentication = new SpotifyClientCredentialsAuthentication(authService, mockRequest);
 
-        SpotifyApiException exception = assertThrows(SpotifyApiException.class, () -> authController.authenticate());
+        // getRequestParams()メソッドを実行し、結果を取得
+        String params = spotifyClientCredentialsAuthentication.getRequestParams();
 
-        verify(authService, times(1)).getClientCredentialsToken();
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpStatus());
-        assertEquals("CLIENT_CREDENTIALS_AUTH_ERROR", exception.getErrorCode());
-        assertEquals("Spotify APIへの接続中にエラーが発生しました。しばらく時間をおいてから再度お試しください。", exception.getMessage());
-        assertEquals("リクエストパラメータ: testParam=testValue", exception.getDetails());
-    }
+        // 結果が期待値と一致することを確認
+        assertThat(params).isEqualTo("param1=value1&param2=value2,value3");
 
-    @Test
-    void getRequestParams_ReturnsCorrectString() {
-        Map<String, String[]> parameterMap = new HashMap<>();
-        parameterMap.put("param1", new String[]{"value1"});
-        parameterMap.put("param2", new String[]{"value2", "value3"});
-        when(request.getParameterMap()).thenReturn(parameterMap);
 
-        String result = authController.getRequestParams();
-
-        assertTrue(result.contains("param1=value1"));
-        assertTrue(result.contains("param2=value2,value3"));
-    }
-
-    @Test
-    void getRequestParams_ReturnsEmptyStringForNoParams() {
-        when(request.getParameterMap()).thenReturn(new HashMap<>());
-
-        String result = authController.getRequestParams();
-
-        assertEquals("", result);
+        // パラメータがない場合のテスト
+        mockRequest = new MockHttpServletRequest();
+        spotifyClientCredentialsAuthentication = new SpotifyClientCredentialsAuthentication(authService, mockRequest);
+        params = spotifyClientCredentialsAuthentication.getRequestParams();
+        assertThat(params).isEmpty();
     }
 }

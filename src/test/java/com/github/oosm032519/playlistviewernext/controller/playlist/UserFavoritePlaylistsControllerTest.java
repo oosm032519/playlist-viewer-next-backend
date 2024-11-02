@@ -1,110 +1,85 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 
-class UserFavoritePlaylistsControllerTest {
+
+@ExtendWith(MockitoExtension.class)
+public class UserFavoritePlaylistsControllerTest {
 
     @Mock
     private UserFavoritePlaylistsService userFavoritePlaylistsService;
 
-    @Mock
-    private OAuth2User principal;
-
-    private UserFavoritePlaylistsController controller;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        controller = new UserFavoritePlaylistsController(userFavoritePlaylistsService);
-    }
+    @InjectMocks
+    private UserFavoritePlaylistsController userFavoritePlaylistsController;
 
     @Test
-    void getFavoritePlaylists_Success() {
-        // Arrange
-        String userId = "testUser";
-        when(principal.getAttribute("id")).thenReturn(userId);
+    void getFavoritePlaylists_正常系() throws NoSuchAlgorithmException {
+        // テストデータの準備
+        String userId = "test_user_id";
+        String hashedUserId = userFavoritePlaylistsController.hashUserId(userId);
+        OAuth2User principal = new TestOAuth2User(Map.of("id", userId));
+        List<FavoritePlaylistResponse> expectedPlaylists = Collections.emptyList();
 
-        String hashedUserId = controller.hashUserId(userId);
-
-        List<FavoritePlaylistResponse> expectedPlaylists = Arrays.asList(
-                new FavoritePlaylistResponse("1", "Playlist 1", "Owner 1", 10, LocalDateTime.now()),
-                new FavoritePlaylistResponse("2", "Playlist 2", "Owner 2", 15, LocalDateTime.now())
-        );
+        // モックの設定
         when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId)).thenReturn(expectedPlaylists);
 
-        // Act
-        ResponseEntity<List<FavoritePlaylistResponse>> response = (ResponseEntity<List<FavoritePlaylistResponse>>) controller.getFavoritePlaylists(principal);
+        // テスト対象メソッドの実行
+        ResponseEntity<?> response = userFavoritePlaylistsController.getFavoritePlaylists(principal);
 
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // アサーション
+        assertThat(response.getStatusCodeValue()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo(expectedPlaylists);
-        verify(userFavoritePlaylistsService).getFavoritePlaylists(hashedUserId);
     }
 
     @Test
-    void getFavoritePlaylists_Exception() {
-        // Arrange
-        String userId = "testUser";
-        when(principal.getAttribute("id")).thenReturn(userId);
+    void getFavoritePlaylists_異常系_userIdがnullの場合() {
+        // テストデータの準備: HashMapを使用してnull値を許可
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("id", null);
+        OAuth2User principal = new TestOAuth2User(attributes);
 
-        String hashedUserId = controller.hashUserId(userId);
-
-        when(userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId))
-                .thenThrow(new RuntimeException("Test exception"));
-
-        // Act
-        ResponseEntity<?> response = controller.getFavoritePlaylists(principal);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
+        // テスト対象メソッドの実行とアサーション
+        assertThrows(NullPointerException.class, () -> userFavoritePlaylistsController.getFavoritePlaylists(principal));
     }
 
-    @Test
-    void hashUserId_Success() {
-        // Arrange
-        String userId = "testUser";
 
-        // Act
-        String hashedUserId = controller.hashUserId(userId);
+    // OAuth2User のモック実装のための内部クラス
+    private static class TestOAuth2User implements OAuth2User {
+        private final Map<String, Object> attributes;
 
-        // Assert
-        assertThat(hashedUserId).isNotNull().isNotEmpty();
-    }
+        public TestOAuth2User(Map<String, Object> attributes) {
+            this.attributes = attributes;
+        }
 
-    @Test
-    void hashUserId_Exception() {
-        UserFavoritePlaylistsController spyController = spy(controller);
-        doThrow(new DatabaseAccessException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "ハッシュアルゴリズムが見つかりません。",
-                new Exception()))
-                .when(spyController).hashUserId(anyString());
+        @Override
+        public Map<String, Object> getAttributes() {
+            return attributes;
+        }
 
-        // Act & Assert
-        assertThatThrownBy(() -> spyController.hashUserId("testUser"))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "HASHING_ALGORITHM_ERROR")
-                .hasMessage("ハッシュアルゴリズムが見つかりません。");
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            return null;
+        }
     }
 }

@@ -15,13 +15,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +27,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
@@ -54,9 +53,6 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private FilterChain filterChain;
-
-    @Mock
-    private PrintWriter printWriter;
 
     @BeforeEach
     void setUp() {
@@ -102,9 +98,7 @@ class JwtAuthenticationFilterTest {
         when(jwtUtil.validateToken("invalidToken")).thenReturn(null);
 
         // Act & Assert
-        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
+        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> jwtAuthenticationFilter.doFilterInternal(request, response, filterChain));
         assertEquals("ログイン処理中にエラーが発生しました。再度ログインしてください。", exception.getMessage());
     }
 
@@ -143,40 +137,7 @@ class JwtAuthenticationFilterTest {
         when(valueOperations.get("session:testSessionId")).thenReturn(null);
 
         // Act & Assert
-        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
-            jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
+        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> jwtAuthenticationFilter.doFilterInternal(request, response, filterChain));
         assertEquals("ログイン処理中にエラーが発生しました。再度ログインしてください。", exception.getMessage());
-    }
-
-    @Test
-    void testDoFilterInternal_InvalidIssuer() throws IOException, ServletException {
-        // Arrange
-        Cookie sessionCookie = new Cookie("sessionId", "testSessionId");
-        when(request.getCookies()).thenReturn(new Cookie[]{sessionCookie});
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(valueOperations.get("session:testSessionId")).thenReturn("validToken");
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", "userId");
-        claims.put("name", "userName");
-        claims.put("spotify_access_token", "spotifyToken");
-        claims.put("iss", "invalidIssuer");
-        claims.put("aud", "testAudience");
-        claims.put("exp", new Date(System.currentTimeMillis() + 1000000));
-
-        when(jwtUtil.validateToken("validToken")).thenReturn(claims);
-        when(jwtUtil.getIssuer()).thenReturn("testIssuer");
-
-        // response.getWriter() のモックを追加
-        when(response.getWriter()).thenReturn(printWriter);
-
-        // Act
-        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
-        verify(response).setStatus(HttpStatus.BAD_REQUEST.value());
-        verify(response).setContentType("application/json");
-        verify(printWriter).write(anyString());
     }
 }

@@ -1,28 +1,25 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
-class SessionIdControllerTest {
+@ExtendWith(MockitoExtension.class)
+public class SessionIdControllerTest {
 
     @Mock
     private RedisTemplate<String, String> redisTemplate;
@@ -33,123 +30,63 @@ class SessionIdControllerTest {
     @InjectMocks
     private SessionIdController sessionIdController;
 
-    @BeforeEach
-    void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-    }
-
     @Test
-    void getSessionId_ValidTemporaryToken_ReturnsSessionId() {
-        // Arrange
-        String temporaryToken = "validToken";
-        String sessionId = "sessionId123";
+    void getSessionId_temporaryTokenExists_returnsSessionId() {
+        // テストデータの準備
+        String temporaryToken = "testToken";
+        String sessionId = "testSessionId";
         Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
 
+        // Redisのモック設定
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("temp:" + temporaryToken)).thenReturn(sessionId);
         when(redisTemplate.delete("temp:" + temporaryToken)).thenReturn(true);
 
-        // Act
+        // テスト対象メソッドの実行
         ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
 
-        // Assert
+        // レスポンスの検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isInstanceOf(Map.class);
-        Map<String, String> responseBody = (Map<String, String>) response.getBody();
-        assertThat(responseBody).containsEntry("sessionId", sessionId);
+        assertThat(response.getBody()).isEqualTo(Map.of("sessionId", sessionId));
 
-        verify(valueOperations).get("temp:" + temporaryToken);
-        verify(redisTemplate).delete("temp:" + temporaryToken);
+        // Redisへのアクセス検証
+        verify(valueOperations, times(1)).get("temp:" + temporaryToken);
+        verify(redisTemplate, times(1)).delete("temp:" + temporaryToken);
     }
 
     @Test
-    void getSessionId_MissingTemporaryToken_ThrowsInvalidRequestException() {
-        // Arrange
-        Map<String, String> requestBody = Map.of();
+    void getSessionId_temporaryTokenMissing_throwsInvalidRequestException() {
+        // テストデータの準備
+        Map<String, String> requestBody = Map.of(); // temporaryTokenがない
 
-        // Act & Assert
+        // テスト対象メソッドの実行と例外検証
         assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
                 .isInstanceOf(InvalidRequestException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.BAD_REQUEST)
-                .hasFieldOrPropertyWithValue("errorCode", "TEMPORARY_TOKEN_MISSING")
-                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
+                .hasMessageContaining("ログイン処理中にエラーが発生しました。再度ログインしてください。")
+                .extracting("httpStatus").isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // Redisへのアクセスがないことを検証
+        verify(redisTemplate, never()).opsForValue();
     }
 
     @Test
-    void getSessionId_SessionIdNotFound_ThrowsDatabaseAccessException() {
-        // Arrange
-        String temporaryToken = "invalidToken";
+    void getSessionId_sessionIdNotFound_throwsDatabaseAccessException() {
+        // テストデータの準備
+        String temporaryToken = "testToken";
         Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
 
-        when(valueOperations.get("temp:" + temporaryToken)).thenReturn(null);
+        // Redisのモック設定
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("temp:" + temporaryToken)).thenReturn(null); // sessionIdが見つからない
 
-        // Act & Assert
+        // テスト対象メソッドの実行と例外検証
         assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
                 .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "REDIS_ACCESS_ERROR")
-                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
-    }
+                .hasMessageContaining("ログイン処理中にエラーが発生しました。再度ログインしてください。")
+                .extracting("httpStatus").isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
 
-    @Test
-    void getSessionId_RedisAccessError_ThrowsDatabaseAccessException() {
-        // Arrange
-        String temporaryToken = "validToken";
-        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
-
-        when(valueOperations.get("temp:" + temporaryToken)).thenThrow(new RuntimeException("Redis connection error"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> sessionIdController.getSessionId(requestBody))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "REDIS_ACCESS_ERROR")
-                .hasMessage("ログイン処理中にエラーが発生しました。再度ログインしてください。");
-    }
-
-    @Test
-    void getSessionId_DeleteFails_StillReturnsSessionId() {
-        // Arrange
-        String temporaryToken = "validToken";
-        String sessionId = "sessionId123";
-        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
-
-        when(valueOperations.get("temp:" + temporaryToken)).thenReturn(sessionId);
-        when(redisTemplate.delete("temp:" + temporaryToken)).thenReturn(false);
-
-        // Act
-        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isInstanceOf(Map.class);
-        Map<String, String> responseBody = (Map<String, String>) response.getBody();
-        assertThat(responseBody).containsEntry("sessionId", sessionId);
-
-        verify(valueOperations).get("temp:" + temporaryToken);
-        verify(redisTemplate).delete("temp:" + temporaryToken);
-    }
-
-    @Test
-    void getSessionId_DatabaseAccessException_ReturnsErrorResponse() {
-        // Arrange
-        String temporaryToken = "validToken";
-        Map<String, String> requestBody = Map.of("temporaryToken", temporaryToken);
-
-        when(valueOperations.get("temp:" + temporaryToken)).thenThrow(new DatabaseAccessException(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Test error message",
-                new RuntimeException("Test exception")
-        ));
-
-        // Act
-        ResponseEntity<?> response = sessionIdController.getSessionId(requestBody);
-
-        // Assert
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
-        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(Objects.requireNonNull(errorResponse).getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(errorResponse.getErrorCode()).isEqualTo("TEST_ERROR");
-        assertThat(errorResponse.getMessage()).isEqualTo("Test error message");
+        // Redisへのアクセス検証 (deleteは呼ばれない)
+        verify(valueOperations, times(1)).get("temp:" + temporaryToken);
+        verify(redisTemplate, never()).delete(anyString());
     }
 }

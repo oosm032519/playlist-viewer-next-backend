@@ -21,7 +21,6 @@ class ErrorResponseTest {
 
         // Then
         assertThat(errorResponse.getStatus()).isEqualTo(status);
-        assertThat(errorResponse.getErrorCode()).isEqualTo(errorCode);
         assertThat(errorResponse.getMessage()).isEqualTo(message);
         assertThat(errorResponse.getDetails()).isNull();
     }
@@ -39,29 +38,7 @@ class ErrorResponseTest {
 
         // Then
         assertThat(errorResponse.getStatus()).isEqualTo(status);
-        assertThat(errorResponse.getErrorCode()).isEqualTo(errorCode);
         assertThat(errorResponse.getMessage()).isEqualTo(message);
         assertThat(errorResponse.getDetails()).isEqualTo(details);
-    }
-
-    @Test
-    void testToString() {
-        // Given
-        HttpStatus status = HttpStatus.NOT_FOUND;
-        String errorCode = "ERR003";
-        String message = "Resource not found";
-        String details = "The requested resource could not be found";
-        ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
-
-        // When
-        String result = errorResponse.toString();
-
-        // Then
-        assertThat(result).contains(
-                "\"status\":\"" + status + "\"",
-                "\"errorCode\":\"" + errorCode + "\"",
-                "\"message\":\"" + message + "\"",
-                "\"details\":\"" + details + "\""
-        );
     }
 }

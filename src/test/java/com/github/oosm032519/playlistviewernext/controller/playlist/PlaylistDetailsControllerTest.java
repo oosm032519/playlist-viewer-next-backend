@@ -1,8 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
+import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +33,9 @@ class PlaylistDetailsControllerTest {
     private PlaylistAnalyticsService playlistAnalyticsService;
 
     @Mock
+    private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
+
+    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -43,7 +46,7 @@ class PlaylistDetailsControllerTest {
 
     @BeforeEach
     void setUp() {
-        reset(playlistDetailsRetrievalService, playlistAnalyticsService, trackRecommendationService);
+        reset(playlistDetailsRetrievalService, playlistAnalyticsService, spotifyPlaylistAnalyticsService, trackRecommendationService);
     }
 
     @Test
@@ -52,18 +55,16 @@ class PlaylistDetailsControllerTest {
         String playlistId = "testPlaylistId";
         Map<String, Object> playlistDetails = createTestPlaylistDetails();
         Map<String, Integer> genreCounts = Map.of("pop", 2, "rock", 1);
-        List<String> top5Genres = List.of("pop", "rock");
+        List<String> top5Artists = List.of("artist1", "artist2");
         List<Track> recommendations = List.of(mock(Track.class), mock(Track.class));
 
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
         when(playlistAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
-        when(playlistAnalyticsService.getTop5GenresForPlaylist(playlistId)).thenReturn(top5Genres);
+        when(spotifyPlaylistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
         when(trackRecommendationService.getRecommendations(
-                eq(top5Genres),
+                eq(top5Artists),
                 eq(Map.of("feature1", 1.0f)),
-                eq(Map.of("feature1", 0.1f)),
-                eq(Map.of("feature1", 0.5f)),
-                eq(Map.of("feature1", 0.5f))
+                eq(Map.of("feature1", 0.1f))
         )).thenReturn(recommendations);
 
         // When
@@ -81,60 +82,25 @@ class PlaylistDetailsControllerTest {
 
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
         verify(playlistAnalyticsService).getGenreCountsForPlaylist(playlistId);
-        verify(playlistAnalyticsService).getTop5GenresForPlaylist(playlistId);
+        verify(spotifyPlaylistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
         verify(trackRecommendationService).getRecommendations(
-                eq(top5Genres),
+                eq(top5Artists),
                 eq(Map.of("feature1", 1.0f)),
-                eq(Map.of("feature1", 0.1f)),
-                eq(Map.of("feature1", 0.5f)),
-                eq(Map.of("feature1", 0.5f))
+                eq(Map.of("feature1", 0.1f))
         );
     }
 
     @Test
-    void shouldHandleResourceNotFoundException() {
+    void shouldHandleResourceNotFoundException() throws Exception {
         // Given
         String playlistId = "testPlaylistId";
-        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "プレイリストが見つかりません"));
+        ResourceNotFoundException exception = new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND");
+        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(exception);
 
         // When & Then
-        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.NOT_FOUND)
-                .hasFieldOrPropertyWithValue("errorCode", "RESOURCE_NOT_FOUND")
-                .hasMessage("プレイリストが見つかりません");
+        Throwable thrown = catchThrowable(() -> detailsController.getPlaylistById(playlistId));
+        assertThat(thrown).isSameAs(exception);
 
-        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
-    }
-
-    @Test
-    void shouldHandleSpotifyApiException() {
-        // Given
-        String playlistId = "testPlaylistId";
-        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new SpotifyApiException(HttpStatus.BAD_REQUEST, "SPOTIFY_API_ERROR", "Spotify API エラー", new RuntimeException("API error")));
-
-        // When & Then
-        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
-                .isInstanceOf(SpotifyApiException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.BAD_REQUEST)
-                .hasFieldOrPropertyWithValue("errorCode", "SPOTIFY_API_ERROR")
-                .hasMessage("Spotify API エラー");
-
-        verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
-    }
-
-    @Test
-    void shouldHandleGenericException() {
-        // Given
-        String playlistId = "testPlaylistId";
-        when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(new RuntimeException("API error"));
-
-        // When & Then
-        assertThatThrownBy(() -> detailsController.getPlaylistById(playlistId))
-                .isInstanceOf(PlaylistViewerNextException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_DETAILS_ERROR")
-                .hasMessage("プレイリスト情報の取得中にエラーが発生しました。URLが正しいか確認し、しばらく時間をおいてから再度お試しください。");
 
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
     }

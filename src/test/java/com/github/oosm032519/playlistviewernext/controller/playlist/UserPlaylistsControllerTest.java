@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
-import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 
 import java.util.Arrays;
@@ -33,7 +33,7 @@ class UserPlaylistsControllerTest {
     }
 
     @Test
-    void getFollowedPlaylists_Success() {
+    void getFollowedPlaylists_Success() throws SpotifyWebApiException {
         // テストデータの準備
         PlaylistSimplified playlist1 = mock(PlaylistSimplified.class);
         PlaylistSimplified playlist2 = mock(PlaylistSimplified.class);
@@ -49,25 +49,9 @@ class UserPlaylistsControllerTest {
         verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
     }
 
-    @Test
-    void getFollowedPlaylists_Exception() {
-        // 例外をスローするようにモックを設定
-        when(userPlaylistsService.getCurrentUsersPlaylists()).thenThrow(new RuntimeException("Test exception"));
-
-        // メソッドの実行
-        ResponseEntity<?> responseEntity = userPlaylistsController.getFollowedPlaylists();
-
-        // 検証
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        ErrorResponse errorResponse = (ErrorResponse) responseEntity.getBody();
-        assertThat(errorResponse.getErrorCode()).isEqualTo("SYSTEM_UNEXPECTED_ERROR");
-
-        verify(userPlaylistsService, times(1)).getCurrentUsersPlaylists();
-    }
-
     // 追加のテストケース: 空のプレイリストリストを返す場合
     @Test
-    void getFollowedPlaylists_EmptyList() {
+    void getFollowedPlaylists_EmptyList() throws SpotifyWebApiException {
         // 空のリストを返すようにモックを設定
         when(userPlaylistsService.getCurrentUsersPlaylists()).thenReturn(List.of());
 

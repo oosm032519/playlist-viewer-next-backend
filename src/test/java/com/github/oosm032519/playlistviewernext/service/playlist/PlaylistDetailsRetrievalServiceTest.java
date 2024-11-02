@@ -3,13 +3,17 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
+import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
+import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.User;
@@ -55,6 +59,12 @@ class PlaylistDetailsRetrievalServiceTest {
     @Mock
     private ModeValuesCalculator modeValuesCalculator;
 
+    @Mock
+    private SpotifyPlaylistAnalyticsService playlistAnalyticsService;
+
+    @Mock
+    private SpotifyRecommendationService trackRecommendationService;
+
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
@@ -84,17 +94,24 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Float> averageAudioFeatures = Map.of("feature1", 0.3f);
         Map<String, Object> modeValues = Map.of("feature1", 0.3f);
         long expectedTotalDuration = 420000; // 180000 + 240000
+        List<String> top5Artists = List.of("artist1", "artist2");
+        List<Track> recommendations = List.of(new Track.Builder().build());
+
+        Playlist playlist = new Playlist.Builder().setName(playlistName).setOwner(owner).build();
+
 
         // モックの設定
+        when(playlistDetailsService.getPlaylist(playlistId)).thenReturn(playlist);
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
-        when(playlistDetailsService.getPlaylistName(playlistId)).thenReturn(playlistName);
-        when(playlistDetailsService.getPlaylistOwner(playlistId)).thenReturn(owner);
         when(trackDataRetriever.getTrackListData(tracks)).thenReturn(trackList);
         when(maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
         when(minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
         when(medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList)).thenReturn(medianAudioFeatures);
         when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
+        when(playlistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
+        when(trackRecommendationService.getRecommendations(top5Artists, maxAudioFeatures, minAudioFeatures)).thenReturn(recommendations);
+
 
         // Act: テスト対象メソッドの実行
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
@@ -110,29 +127,43 @@ class PlaylistDetailsRetrievalServiceTest {
                 .containsEntry("medianAudioFeatures", medianAudioFeatures)
                 .containsEntry("averageAudioFeatures", averageAudioFeatures)
                 .containsEntry("modeValues", modeValues)
-                .containsEntry("totalDuration", expectedTotalDuration);
+                .containsEntry("totalDuration", expectedTotalDuration)
+                .containsEntry("recommendations", recommendations);
 
         // モックの呼び出し検証
+        verify(playlistDetailsService).getPlaylist(playlistId);
         verify(playlistDetailsService).getPlaylistTracks(playlistId);
-        verify(playlistDetailsService).getPlaylistName(playlistId);
-        verify(playlistDetailsService).getPlaylistOwner(playlistId);
         verify(trackDataRetriever).getTrackListData(tracks);
         verify(maxAudioFeaturesCalculator).calculateMaxAudioFeatures(trackList);
         verify(minAudioFeaturesCalculator).calculateMinAudioFeatures(trackList);
         verify(medianAudioFeaturesCalculator).calculateMedianAudioFeatures(trackList);
         verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
         verify(modeValuesCalculator).calculateModeValues(trackList);
+        verify(playlistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
+        verify(trackRecommendationService).getRecommendations(top5Artists, maxAudioFeatures, minAudioFeatures);
     }
 
     @Test
-    void getPlaylistDetails_ThrowsPlaylistViewerNextException_WhenOtherExceptionOccurs() throws Exception {
+    void getPlaylistDetails_ThrowsPlaylistViewerNextException_WhenOtherExceptionOccurs() throws SpotifyWebApiException {
         // Arrange
         String playlistId = "testPlaylistId";
-        when(playlistDetailsService.getPlaylistTracks(playlistId)).thenThrow(new RuntimeException("Other Error"));
+        when(playlistDetailsService.getPlaylist(playlistId)).thenThrow(new RuntimeException("Other Error"));
 
         // Act & Assert
         assertThatThrownBy(() -> playlistDetailsRetrievalService.getPlaylistDetails(playlistId))
                 .isInstanceOf(PlaylistViewerNextException.class)
                 .hasMessageContaining("プレイリストの詳細情報の取得中にエラーが発生しました。");
+    }
+
+    @Test
+    void getPlaylistDetails_ThrowsResourceNotFoundException_WhenPlaylistNotFound() throws SpotifyWebApiException {
+        // Arrange
+        String playlistId = "testPlaylistId";
+        when(playlistDetailsService.getPlaylist(playlistId)).thenReturn(null);
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistDetailsRetrievalService.getPlaylistDetails(playlistId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("指定されたプレイリストが見つかりません。");
     }
 }

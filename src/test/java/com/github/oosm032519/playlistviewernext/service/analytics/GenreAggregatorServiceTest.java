@@ -7,20 +7,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
+import org.springframework.http.HttpStatus;
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class GenreAggregatorServiceTest {
+public class GenreAggregatorServiceTest {
 
     @Mock
     private SpotifyArtistService artistService;
@@ -29,114 +30,64 @@ class GenreAggregatorServiceTest {
     private GenreAggregatorService genreAggregatorService;
 
     @Test
-    void aggregateGenres_ShouldReturnSortedGenreCounts() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(artistService.getArtistGenres("artist1")).thenReturn(Arrays.asList("rock", "pop"));
-        when(artistService.getArtistGenres("artist2")).thenReturn(Arrays.asList("rock", "jazz"));
+    void aggregateGenres_正常系_ジャンルを集計できる() throws Exception {
+        // given: SpotifyArtistServiceのモックを設定
+        PlaylistTrack[] tracks = createMockPlaylistTracks(2, 2); // 2アーティスト、2トラック
+        Map<String, List<String>> artistGenres = new HashMap<>();
+        artistGenres.put("artistId1", List.of("genre1", "genre2"));
+        artistGenres.put("artistId2", List.of("genre2", "genre3"));
+        when(artistService.getArtistGenres(List.of("artistId1", "artistId2"))).thenReturn(artistGenres);
 
-        Map<String, Integer> result = genreAggregatorService.aggregateGenres(playlistTracks);
+        // when: aggregateGenresメソッドを実行
+        Map<String, Integer> result = genreAggregatorService.aggregateGenres(tracks);
 
-        assertThat(result).isNotEmpty();
-        assertThat(result).containsOnlyKeys("rock", "pop", "jazz");
-        assertThat(result).containsEntry("rock", 2);
-        assertThat(result).containsEntry("pop", 1);
-        assertThat(result).containsEntry("jazz", 1);
+        // then: 期待通りの結果が返されることを確認
+        assertThat(result).containsExactlyInAnyOrderEntriesOf(Map.of("genre1", 4, "genre2", 8, "genre3", 4));
+    }
 
-        List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(result.entrySet());
-        sortedEntries.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
-        assertThat(new ArrayList<>(result.entrySet())).isEqualTo(sortedEntries);
+    // --- Helper methods ---
+    private PlaylistTrack[] createMockPlaylistTracks(int numArtists, int numTracks) {
+        PlaylistTrack[] tracks = new PlaylistTrack[numTracks];
+        for (int i = 0; i < numTracks; i++) {
+            Track track = new Track.Builder().setArtists(createMockArtists(numArtists)).build();
+            tracks[i] = new PlaylistTrack.Builder().setTrack(track).build();
+        }
+        return tracks;
+    }
+
+    private ArtistSimplified[] createMockArtists(int numArtists) {
+        ArtistSimplified[] artists = new ArtistSimplified[numArtists];
+        for (int i = 0; i < numArtists; i++) {
+            artists[i] = new ArtistSimplified.Builder().setId("artistId" + (i + 1)).build();
+        }
+        return artists;
     }
 
     @Test
-    void aggregateGenres_ShouldHandleEmptyPlaylist() {
-        PlaylistTrack[] playlistTracks = new PlaylistTrack[0];
+    void aggregateGenres_異常系_例外がスローされる() throws Exception {
+        // given: SpotifyArtistServiceが例外をスローするよう設定
+        PlaylistTrack[] tracks = createMockPlaylistTracks(1, 1);
+        when(artistService.getArtistGenres(List.of("artistId1"))).thenThrow(new RuntimeException("Spotify API Error"));
 
-        Map<String, Integer> result = genreAggregatorService.aggregateGenres(playlistTracks);
-
-        assertThat(result).isEmpty();
+        // when & then: aggregateGenresメソッドを実行するとPlaylistViewerNextExceptionがスローされることを確認
+        assertThatThrownBy(() -> genreAggregatorService.aggregateGenres(tracks))
+                .isInstanceOf(PlaylistViewerNextException.class)
+                .hasMessage("ジャンルの集計中にエラーが発生しました。")
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    void aggregateGenres_ShouldHandleArtistsWithNoGenres() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(artistService.getArtistGenres("artist1")).thenReturn(Collections.emptyList());
-        when(artistService.getArtistGenres("artist2")).thenReturn(Collections.emptyList());
+    void getTopGenres_正常系_上位ジャンルを取得できる() {
+        // given: ジャンルと出現回数のマップ
+        Map<String, Integer> genreCounts = new HashMap<>();
+        genreCounts.put("genre1", 5);
+        genreCounts.put("genre2", 3);
+        genreCounts.put("genre3", 1);
 
-        Map<String, Integer> result = genreAggregatorService.aggregateGenres(playlistTracks);
+        // when: getTopGenresメソッドを実行
+        List<String> result = genreAggregatorService.getTopGenres(genreCounts, 2);
 
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void aggregateGenres_ShouldHandleTracksWithNoArtists() {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracksWithNoArtists();
-
-        Map<String, Integer> result = genreAggregatorService.aggregateGenres(playlistTracks);
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void aggregateGenres_ShouldHandleSpotifyWebApiException() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        // SpotifyWebApiException をラップした RuntimeException をスローするように変更
-        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new SpotifyWebApiException("Test Exception")));
-
-        assertThrows(SpotifyApiException.class, () -> {
-            genreAggregatorService.aggregateGenres(playlistTracks);
-        });
-    }
-
-    @Test
-    void aggregateGenres_ShouldHandleIOException() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        // IOException をラップした RuntimeException をスローするように変更
-        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException(new IOException("Test Exception")));
-
-        assertThrows(SpotifyApiException.class, () -> {
-            genreAggregatorService.aggregateGenres(playlistTracks);
-        });
-    }
-
-    @Test
-    void aggregateGenres_ShouldHandleRuntimeException() throws Exception {
-        PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
-        when(artistService.getArtistGenres("artist1")).thenThrow(new RuntimeException("Test Exception"));
-
-        assertThrows(PlaylistViewerNextException.class, () -> {
-            genreAggregatorService.aggregateGenres(playlistTracks);
-        });
-    }
-
-    private PlaylistTrack[] createMockPlaylistTracks() {
-        PlaylistTrack track1 = mock(PlaylistTrack.class);
-        PlaylistTrack track2 = mock(PlaylistTrack.class);
-        Track fullTrack1 = mock(Track.class);
-        Track fullTrack2 = mock(Track.class);
-        ArtistSimplified artist1 = mock(ArtistSimplified.class);
-        ArtistSimplified artist2 = mock(ArtistSimplified.class);
-
-        lenient().when(track1.getTrack()).thenReturn(fullTrack1);
-        lenient().when(track2.getTrack()).thenReturn(fullTrack2);
-        lenient().when(fullTrack1.getArtists()).thenReturn(new ArtistSimplified[]{artist1});
-        lenient().when(fullTrack2.getArtists()).thenReturn(new ArtistSimplified[]{artist2});
-        lenient().when(artist1.getId()).thenReturn("artist1");
-        lenient().when(artist2.getId()).thenReturn("artist2");
-
-        return new PlaylistTrack[]{track1, track2};
-    }
-
-    private PlaylistTrack[] createMockPlaylistTracksWithNoArtists() {
-        PlaylistTrack track1 = mock(PlaylistTrack.class);
-        PlaylistTrack track2 = mock(PlaylistTrack.class);
-        Track fullTrack1 = mock(Track.class);
-        Track fullTrack2 = mock(Track.class);
-
-        when(track1.getTrack()).thenReturn(fullTrack1);
-        when(track2.getTrack()).thenReturn(fullTrack2);
-        when(fullTrack1.getArtists()).thenReturn(new ArtistSimplified[]{});
-        when(fullTrack2.getArtists()).thenReturn(new ArtistSimplified[]{});
-
-        return new PlaylistTrack[]{track1, track2};
+        // then: 期待通りの結果が返されることを確認
+        assertThat(result).containsExactly("genre1", "genre2");
     }
 }

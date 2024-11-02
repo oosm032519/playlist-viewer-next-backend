@@ -29,16 +29,12 @@ class TrackRecommendationServiceTest {
 
     private Map<String, Float> maxAudioFeatures;
     private Map<String, Float> minAudioFeatures;
-    private Map<String, Float> medianAudioFeatures;
-    private Map<String, Object> modeValues;
     private List<String> genres;
 
     @BeforeEach
     void setUp() {
         maxAudioFeatures = Map.of("danceability", 0.9f);
         minAudioFeatures = Map.of("danceability", 0.1f);
-        medianAudioFeatures = Map.of("danceability", 0.5f);
-        modeValues = Map.of("key", 1);
         genres = List.of("pop", "rock");
     }
 
@@ -49,15 +45,15 @@ class TrackRecommendationServiceTest {
                 new Track.Builder().setName("Recommended Track 1").build(),
                 new Track.Builder().setName("Recommended Track 2").build()
         );
-        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
+        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures))
                 .thenReturn(expectedRecommendations);
 
         // Act
-        List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        List<Track> result = trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures);
 
         // Assert
         assertThat(result).isEqualTo(expectedRecommendations);
-        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures);
     }
 
     @Test
@@ -66,7 +62,7 @@ class TrackRecommendationServiceTest {
         List<String> emptyGenres = Collections.emptyList();
 
         // Act
-        List<Track> result = trackRecommendationService.getRecommendations(emptyGenres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        List<Track> result = trackRecommendationService.getRecommendations(emptyGenres, maxAudioFeatures, minAudioFeatures);
 
         // Assert
         assertThat(result).isEmpty();
@@ -76,26 +72,26 @@ class TrackRecommendationServiceTest {
     @Test
     void givenSpotifyWebApiException_whenGetRecommendations_thenThrowsSpotifyApiException() throws Exception {
         // Arrange
-        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
+        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures))
                 .thenThrow(new RuntimeException(new SpotifyWebApiException("API Error")));
 
         // Act & Assert
-        assertThrows(SpotifyApiException.class, () ->
-                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
+        assertThrows(RuntimeException.class, () ->
+                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures)
         );
-        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures);
     }
 
     @Test
     void givenIOException_whenGetRecommendations_thenThrowsSpotifyApiException() throws Exception {
         // Arrange
-        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues))
+        when(recommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures))
                 .thenThrow(new RuntimeException(new IOException("IO Error")));
 
         // Act & Assert
-        assertThrows(SpotifyApiException.class, () ->
-                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues)
+        assertThrows(RuntimeException.class, () ->
+                trackRecommendationService.getRecommendations(genres, maxAudioFeatures, minAudioFeatures)
         );
-        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, modeValues);
+        verify(recommendationService).getRecommendations(genres, maxAudioFeatures, minAudioFeatures);
     }
 }

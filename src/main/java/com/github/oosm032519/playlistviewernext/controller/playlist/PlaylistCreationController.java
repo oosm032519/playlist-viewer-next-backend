@@ -38,7 +38,7 @@ public class PlaylistCreationController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService;
-    private final HttpServletRequest request; // リクエスト情報を取得
+    private final HttpServletRequest request;
 
     /**
      * PlaylistCreationControllerのコンストラクタ
@@ -95,7 +95,7 @@ public class PlaylistCreationController {
      * @param userName ユーザー名
      * @return 生成されたプレイリスト名
      */
-    private String generatePlaylistName(String userName) {
+    public String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
     }
 }

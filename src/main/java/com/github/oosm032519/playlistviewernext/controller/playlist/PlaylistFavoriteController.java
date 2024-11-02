@@ -97,7 +97,7 @@ public class PlaylistFavoriteController {
      * @param userId ハッシュ化するユーザーID
      * @return ハッシュ化されたユーザーID
      */
-    private String hashUserId(String userId) throws NoSuchAlgorithmException {
+    public String hashUserId(String userId) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         byte[] hashedBytes = md.digest(userId.getBytes());
         return Base64.getEncoder().encodeToString(hashedBytes);

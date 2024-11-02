@@ -59,7 +59,6 @@ class PlaylistAnalyticsServiceTest {
                 .satisfies(thrown -> {
                     PlaylistViewerNextException exception = (PlaylistViewerNextException) thrown;
                     assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-                    assertThat(exception.getErrorCode()).isEqualTo("GENRE_COUNTS_RETRIEVAL_ERROR");
                 });
     }
 
@@ -88,7 +87,6 @@ class PlaylistAnalyticsServiceTest {
                 .satisfies(thrown -> {
                     PlaylistViewerNextException exception = (PlaylistViewerNextException) thrown;
                     assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-                    assertThat(exception.getErrorCode()).isEqualTo("TOP_GENRES_RETRIEVAL_ERROR");
                 });
     }
 }

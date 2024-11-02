@@ -1,7 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
+import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import org.apache.hc.core5.http.ParseException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +14,9 @@ import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
 import se.michaelthelin.spotify.requests.data.search.simplified.SearchPlaylistsRequest;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,13 +32,8 @@ class SpotifyPlaylistSearchServiceTest {
     @InjectMocks
     private SpotifyPlaylistSearchService playlistSearchService;
 
-    @BeforeEach
-    void setUp() {
-        // 必要なセットアップがあればここに記述
-    }
-
     @Test
-    void testSearchPlaylists_正常系_検索結果あり() throws IOException, SpotifyWebApiException, ParseException {
+    void testSearchPlaylists_正常系_検索結果あり() throws SpotifyWebApiException, ParseException, IOException {
         // Arrange
         String query = "test query";
         int offset = 0;
@@ -52,17 +49,18 @@ class SpotifyPlaylistSearchServiceTest {
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(playlistSimplifieds);
+        when(playlistSimplifiedPaging.getTotal()).thenReturn(1);
 
         // Act
-        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
+        Map<String, Object> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
         // Assert
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(playlistSimplifieds[0]);
+        assertThat(result.get("playlists")).isEqualTo(Arrays.asList(playlistSimplifieds));
+        assertThat(result.get("total")).isEqualTo(1);
     }
 
     @Test
-    void testSearchPlaylists_正常系_検索結果なし() throws IOException, SpotifyWebApiException, ParseException {
+    void testSearchPlaylists_正常系_検索結果なし() throws SpotifyWebApiException, ParseException, IOException {
         // Arrange
         String query = "empty query";
         int offset = 0;
@@ -77,12 +75,15 @@ class SpotifyPlaylistSearchServiceTest {
         when(builder.build()).thenReturn(searchPlaylistsRequest);
         when(searchPlaylistsRequest.execute()).thenReturn(playlistSimplifiedPaging);
         when(playlistSimplifiedPaging.getItems()).thenReturn(null);
+        when(playlistSimplifiedPaging.getTotal()).thenReturn(0);
+
 
         // Act
-        List<PlaylistSimplified> result = playlistSearchService.searchPlaylists(query, offset, limit);
+        Map<String, Object> result = playlistSearchService.searchPlaylists(query, offset, limit);
 
         // Assert
-        assertThat(result).isEmpty();
+        assertThat(result.get("playlists")).isEqualTo(Collections.emptyList());
+        assertThat(result.get("total")).isEqualTo(0);
     }
 
     @Test
@@ -102,7 +103,7 @@ class SpotifyPlaylistSearchServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> playlistSearchService.searchPlaylists(query, offset, limit))
-                .isInstanceOf(SpotifyApiException.class)
+                .isInstanceOf(InternalServerException.class)
                 .hasMessageContaining("Spotifyプレイリストの検索中にエラーが発生しました。");
     }
 }

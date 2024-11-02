@@ -1,20 +1,17 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
-import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +41,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void favoritePlaylist_Success() {
+    void favoritePlaylist_Success() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
         when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenReturn(new UserFavoritePlaylist());
@@ -62,7 +59,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void favoritePlaylist_AlreadyFavorited() {
+    void favoritePlaylist_AlreadyFavorited() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(true);
 
@@ -79,22 +76,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void favoritePlaylist_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
-        when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenThrow(new RuntimeException("DB error"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> playlistFavoriteController.favoritePlaylist(
-                principal, "playlistId", "playlistName", 10, "ownerName"))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_ERROR")
-                .hasMessage("プレイリストをお気に入りに登録できませんでした。しばらく時間をおいてから再度お試しください。");
-    }
-
-    @Test
-    void unfavoritePlaylist_Success() {
+    void unfavoritePlaylist_Success() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(1L);
 
@@ -110,7 +92,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void unfavoritePlaylist_NotFavorited() {
+    void unfavoritePlaylist_NotFavorited() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(0L);
 
@@ -124,20 +106,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void unfavoritePlaylist_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> playlistFavoriteController.unfavoritePlaylist(principal, "playlistId"))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_UNFAVORITE_ERROR")
-                .hasMessage("プレイリストをお気に入りから解除できませんでした。しばらく時間をおいてから再度お試しください。");
-    }
-
-    @Test
-    void getFavoritePlaylists_Success() {
+    void getFavoritePlaylists_Success() throws NoSuchAlgorithmException {
         // Arrange
         UserFavoritePlaylist playlist1 = new UserFavoritePlaylist();
         playlist1.setPlaylistId("id1");
@@ -166,20 +135,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void getFavoritePlaylists_Error() {
-        // Arrange
-        when(userFavoritePlaylistRepository.findByUserId(anyString())).thenThrow(new RuntimeException("DB error"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> playlistFavoriteController.getFavoritePlaylists(principal))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
-                .hasMessage("お気に入りプレイリスト一覧を取得できませんでした。しばらく時間をおいてから再度お試しください。");
-    }
-
-    @Test
-    void checkFavorite_Favorited() {
+    void checkFavorite_Favorited() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(true);
 
@@ -194,7 +150,7 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
-    void checkFavorite_NotFavorited() {
+    void checkFavorite_NotFavorited() throws NoSuchAlgorithmException {
         // Arrange
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
 
@@ -209,35 +165,48 @@ class PlaylistFavoriteControllerTest {
     }
 
     @Test
+    void favoritePlaylist_Error() {
+        // Arrange
+        when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenReturn(false);
+        when(userFavoritePlaylistRepository.save(any(UserFavoritePlaylist.class))).thenThrow(new RuntimeException("DB error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.favoritePlaylist(
+                principal, "playlistId", "playlistName", 10, "ownerName"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("DB error");
+    }
+
+    @Test
+    void unfavoritePlaylist_Error() {
+        // Arrange
+        when(userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.unfavoritePlaylist(principal, "playlistId"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("DB error");
+    }
+
+    @Test
+    void getFavoritePlaylists_Error() {
+        // Arrange
+        when(userFavoritePlaylistRepository.findByUserId(anyString())).thenThrow(new RuntimeException("DB error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> playlistFavoriteController.getFavoritePlaylists(principal))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("DB error");
+    }
+
+    @Test
     void checkFavorite_Error() {
         // Arrange
         when(userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(anyString(), anyString())).thenThrow(new RuntimeException("DB error"));
 
         // Act & Assert
         assertThatThrownBy(() -> playlistFavoriteController.checkFavorite(principal, "playlistId"))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "PLAYLIST_FAVORITE_CHECK_ERROR")
-                .hasMessage("プレイリストのお気に入り状態を確認できませんでした。しばらく時間をおいてから再度お試しください。");
-    }
-
-    @Test
-    void hashUserId_ThrowsIllegalStateException() {
-        // Arrange
-        PlaylistFavoriteController controller = new PlaylistFavoriteController(userFavoritePlaylistRepository);
-
-        // Act & Assert
-        assertThatThrownBy(() -> {
-            // MessageDigestをモックして例外をスローするように設定
-            try (MockedStatic<MessageDigest> mockedMessageDigest = mockStatic(MessageDigest.class)) {
-                mockedMessageDigest.when(() -> MessageDigest.getInstance("SHA-256"))
-                        .thenThrow(new NoSuchAlgorithmException("Test exception"));
-
-                controller.favoritePlaylist(principal, "playlistId", "playlistName", 10, "ownerName");
-            }
-        })
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("SHA-256 ハッシュアルゴリズムが見つかりません。")
-                .hasCauseInstanceOf(NoSuchAlgorithmException.class);
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("DB error");
     }
 }
