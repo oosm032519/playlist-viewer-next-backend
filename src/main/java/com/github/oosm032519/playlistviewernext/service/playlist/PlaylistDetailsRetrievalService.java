@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
-import se.michaelthelin.spotify.model_objects.specification.Track;
 import se.michaelthelin.spotify.model_objects.specification.User;
 
 import java.util.HashMap;
@@ -33,7 +32,6 @@ public class PlaylistDetailsRetrievalService {
     private final TrackDataRetriever trackDataRetriever;
     private final ModeValuesCalculator modeValuesCalculator;
     private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
-    private final SpotifyRecommendationService trackRecommendationService;
 
     @Autowired
     public PlaylistDetailsRetrievalService(
@@ -56,7 +54,6 @@ public class PlaylistDetailsRetrievalService {
         this.trackDataRetriever = trackDataRetriever;
         this.modeValuesCalculator = modeValuesCalculator;
         this.playlistAnalyticsService = playlistAnalyticsService;
-        this.trackRecommendationService = trackRecommendationService;
     }
 
     /**
@@ -93,20 +90,13 @@ public class PlaylistDetailsRetrievalService {
             Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
 
             // アーティスト出現頻度上位5件を取得
-            List<String> top5Artists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
+            List<String> seedArtists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
 
             logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
 
             long totalDuration = calculateTotalDuration(tracks);
 
-
-            // top5Artists をrecommendationsメソッドに渡す
-            List<Track> recommendations = trackRecommendationService.getRecommendations(
-                    top5Artists, maxAudioFeatures, minAudioFeatures);
-
-            Map<String, Object> response = createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration);
-            response.put("recommendations", recommendations); // レスポンスに推奨トラックを追加
-            return response;
+            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration, seedArtists);
 
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -138,7 +128,7 @@ public class PlaylistDetailsRetrievalService {
         logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
     }
 
-    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues, long totalDuration) {
+    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues, long totalDuration, final List<String> seedArtists) {
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
         response.put("playlistName", playlistName);
@@ -150,6 +140,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("averageAudioFeatures", averageAudioFeatures);
         response.put("modeValues", modeValues);
         response.put("totalDuration", totalDuration);
+        response.put("seedArtists", seedArtists);
         return response;
     }
 }
