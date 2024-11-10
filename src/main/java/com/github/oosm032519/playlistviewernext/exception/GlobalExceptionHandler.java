@@ -13,6 +13,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
@@ -28,16 +30,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private final HttpServletRequest request;
-
-    /**
-     * コンストラクタ
-     *
-     * @param request HTTPサーブレットリクエスト
-     */
-    public GlobalExceptionHandler(HttpServletRequest request) {
-        this.request = request;
-    }
 
     /**
      * PlaylistViewerNextException を処理するハンドラ
@@ -62,16 +54,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, status);
     }
 
+
     /**
      * リクエストパラメータを取得するヘルパーメソッド
      */
     private String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
-        if (!params.isEmpty()) {
-            params.deleteCharAt(params.length() - 1);
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                Map<String, String[]> parameterMap = request.getParameterMap();
+                if (!parameterMap.isEmpty()) {
+                    StringBuilder params = new StringBuilder();
+                    parameterMap.forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
+                    if (params.length() > 0) {
+                        params.deleteCharAt(params.length() - 1);
+                    }
+                    return params.toString();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("リクエストパラメータの取得中にエラーが発生しました。", e);
         }
-        return params.toString();
+        return ""; // パラメータがない場合
     }
 
     /**

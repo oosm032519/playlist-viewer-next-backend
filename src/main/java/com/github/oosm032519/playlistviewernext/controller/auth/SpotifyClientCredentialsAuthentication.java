@@ -40,19 +40,4 @@ public class SpotifyClientCredentialsAuthentication {
         authService.getClientCredentialsToken();
         LOGGER.info("クライアントクレデンシャル認証が成功しました。");
     }
-
-    /**
-     * 現在のHTTPリクエストからすべてのパラメータを取得し、文字列として整形するヘルパーメソッド
-     *
-     * @return リクエストパラメータを含む文字列
-     */
-    public String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
-        // 最後の '&' を削除
-        if (!params.isEmpty()) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
-    }
 }

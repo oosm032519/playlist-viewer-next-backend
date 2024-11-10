@@ -80,14 +80,4 @@ public class PlaylistSearchController {
         // 検索結果を返す
         return ResponseEntity.ok(searchResult);
     }
-
-    // リクエストパラメータを取得するヘルパーメソッド
-    public String getRequestParams() {
-        StringBuilder params = new StringBuilder();
-        request.getParameterMap().forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
-        if (!params.isEmpty()) {
-            params.deleteCharAt(params.length() - 1);
-        }
-        return params.toString();
-    }
 }
