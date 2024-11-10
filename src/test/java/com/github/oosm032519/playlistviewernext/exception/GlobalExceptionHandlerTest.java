@@ -1,106 +1,96 @@
 package com.github.oosm032519.playlistviewernext.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.context.request.WebRequest;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
     @Mock
-    private HttpServletRequest mockRequest;
+    private HttpServletRequest request;
 
-    @Mock
-    private WebRequest mockWebRequest;
-
-    private GlobalExceptionHandler exceptionHandler;
+    @InjectMocks
+    private GlobalExceptionHandler globalExceptionHandler;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        exceptionHandler = new GlobalExceptionHandler(mockRequest);
     }
 
     @Test
-    void handlePlaylistViewerNextException_ResourceNotFoundException() {
-        ResourceNotFoundException ex = new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND");
-        when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
+    void handlePlaylistViewerNextException_shouldReturnErrorResponse() {
+        // Arrange
+        PlaylistViewerNextException exception = new PlaylistViewerNextException(HttpStatus.NOT_FOUND, "Not Found", "NOT_FOUND_ERROR", "Details");
+        when(request.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handlePlaylistViewerNextException(exception);
 
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getDetails()).contains("リクエストされたリソースは存在しません。");
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("NOT_FOUND_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("Not Found");
+        assertThat(response.getBody().getDetails()).contains("Details");
     }
 
     @Test
-    void handlePlaylistViewerNextException_OtherException() {
-        PlaylistViewerNextException ex = new PlaylistViewerNextException(HttpStatus.BAD_REQUEST, "Other error", "Other details");
-        Map<String, String[]> paramMap = new HashMap<>();
-        paramMap.put("param1", new String[]{"value1"});
-        when(mockRequest.getParameterMap()).thenReturn(paramMap);
+    void handleConstraintViolationException_shouldReturnBadRequest() {
+        // Arrange
+        ConstraintViolationException exception = new ConstraintViolationException("Validation failed", new HashSet<>());
+        when(request.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<ErrorResponse> response = exceptionHandler.handlePlaylistViewerNextException(ex);
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleConstraintViolationException(exception);
 
+        // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getMessage()).isEqualTo("Other error");
-        assertThat(response.getBody().getDetails()).contains("Other details");
-        assertThat(response.getBody().getDetails()).contains("param1=value1");
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("VALIDATION_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("入力値が不正です。");
     }
 
     @Test
-    void handleMethodArgumentNotValid() {
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        FieldError fieldError = new FieldError("object", "field", "defaultMessage");
-        when(bindingResult.getAllErrors()).thenReturn(Collections.singletonList(fieldError));
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
+    void handleSpotifyWebApiException_shouldReturnInternalServerError() {
+        // Arrange
+        SpotifyWebApiException exception = new SpotifyWebApiException("Spotify API Error");
+        when(request.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<Object> response = exceptionHandler.handleMethodArgumentNotValid(ex, new HttpHeaders(), HttpStatus.BAD_REQUEST, mockWebRequest);
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleSpotifyWebApiException(exception);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
-        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(errorResponse.getMessage()).isEqualTo("入力値が不正です。");
-        assertThat(errorResponse.getDetails()).contains("field=defaultMessage");
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("SPOTIFY_API_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("Spotify API エラーが発生しました。");
+        assertThat(response.getBody().getDetails()).contains("Spotify API Error");
     }
 
     @Test
-    void handleMethodArgumentNotValid_MultipleFieldErrors() {
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        FieldError fieldError1 = new FieldError("object", "field1", "error1");
-        FieldError fieldError2 = new FieldError("object", "field2", "error2");
-        when(bindingResult.getAllErrors()).thenReturn(Arrays.asList(fieldError1, fieldError2));
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(mockRequest.getParameterMap()).thenReturn(Collections.emptyMap());
+    void handleUnexpectedException_shouldReturnInternalServerError() {
+        // Arrange
+        Exception exception = new Exception("Unexpected error");
+        when(request.getParameterMap()).thenReturn(Collections.emptyMap());
 
-        ResponseEntity<Object> response = exceptionHandler.handleMethodArgumentNotValid(ex, new HttpHeaders(), HttpStatus.BAD_REQUEST, mockWebRequest);
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleException(exception);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
-        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(errorResponse.getMessage()).isEqualTo("入力値が不正です。");
-        assertThat(errorResponse.getDetails()).contains("field1=error1");
-        assertThat(errorResponse.getDetails()).contains("field2=error2");
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("UNEXPECTED_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。");
+        assertThat(response.getBody().getDetails()).contains("Unexpected error");
     }
 }

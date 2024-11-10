@@ -74,7 +74,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.warn("セッション情報がRedisに見つかりません - セッションID: {}", sessionId);
                     throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
-                            "SESSION_NOT_FOUND",
                             "セッションが有効期限切れか、無効です。再度ログインしてください。"
                     );
                 }
@@ -85,7 +84,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.warn("フルセッショントークンの検証に失敗しました - セッションID: {}", sessionId);
                     throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
-                            "INVALID_SESSION",
                             "セッションが有効期限切れか、無効です。再度ログインしてください。"
                     );
                 }
@@ -120,12 +118,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 logger.error("JWTトークンの検証エラー: 不正なリクエスト", e);
                 throw new AuthenticationException(
                         e.getHttpStatus(),
-                        "INVALID_REQUEST",
                         "不正なリクエストです。",
                         e
-                ); // InvalidRequestException を AuthenticationException に変換
+                );
             } catch (Exception e) {
-                // その他の例外は AuthenticationException に変換
                 logger.error("JWTトークンの検証エラー", e);
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,

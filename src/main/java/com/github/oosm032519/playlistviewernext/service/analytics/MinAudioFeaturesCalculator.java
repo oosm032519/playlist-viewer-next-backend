@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ public class MinAudioFeaturesCalculator {
             return result;
         } catch (Exception e) {
             logger.error("最小AudioFeaturesの計算中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "最小AudioFeaturesの計算中にエラーが発生しました。",
                     e

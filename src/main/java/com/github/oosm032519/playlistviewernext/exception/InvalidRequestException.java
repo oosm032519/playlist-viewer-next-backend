@@ -4,14 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class InvalidRequestException extends PlaylistViewerNextException {
     public InvalidRequestException(HttpStatus httpStatus, String message) {
-        super(httpStatus, message);
+        super(httpStatus, message, "INVALID_REQUEST");
     }
 
-    public InvalidRequestException(final HttpStatus httpStatus, final String message, final IllegalArgumentException e) {
-        super(httpStatus, message, e);
-    }
-
-    public InvalidRequestException(final HttpStatus httpStatus, final String message, final Exception e) {
-        super(httpStatus, message, e);
+    public InvalidRequestException(HttpStatus httpStatus, String message, Throwable cause) {
+        super(httpStatus, message, "INVALID_REQUEST", cause);
     }
 }

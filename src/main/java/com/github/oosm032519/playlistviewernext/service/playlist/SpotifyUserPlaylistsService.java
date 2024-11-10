@@ -56,8 +56,7 @@ public class SpotifyUserPlaylistsService {
                 if (spotifyAccessToken == null) {
                     throw new AuthenticationException(
                             HttpStatus.UNAUTHORIZED,
-                            "AUTHENTICATION_ERROR",
-                            "Spotify access token is missing"
+                            "アクセストークンが見つかりません。"
                     );
                 }
 

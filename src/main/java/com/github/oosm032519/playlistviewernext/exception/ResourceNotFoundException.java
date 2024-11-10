@@ -4,6 +4,6 @@ import org.springframework.http.HttpStatus;
 
 public class ResourceNotFoundException extends PlaylistViewerNextException {
     public ResourceNotFoundException(HttpStatus httpStatus, String message) {
-        super(httpStatus, message);
+        super(httpStatus, message, "RESOURCE_NOT_FOUND");
     }
 }

@@ -71,7 +71,6 @@ public class PlaylistTrackAdditionController {
         if (accessToken == null) {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "AUTHENTICATION_ERROR",
                     "ユーザーが認証されていないか、アクセストークンが見つかりません。"
             );
         }

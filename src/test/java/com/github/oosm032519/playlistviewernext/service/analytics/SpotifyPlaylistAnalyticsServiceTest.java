@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
 import org.junit.jupiter.api.Test;
@@ -81,11 +82,11 @@ class SpotifyPlaylistAnalyticsServiceTest {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
-                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
+                .thenThrow(new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId))
-                .isInstanceOf(PlaylistViewerNextException.class)
+                .isInstanceOf(InvalidRequestException.class)
                 .hasMessage("プレイリストのジャンルごとのトラック数の取得中にエラーが発生しました。");
     }
 
@@ -166,7 +167,7 @@ class SpotifyPlaylistAnalyticsServiceTest {
         // Arrange
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
-                .thenThrow(new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
+                .thenThrow(new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
         // Act & Assert
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId))

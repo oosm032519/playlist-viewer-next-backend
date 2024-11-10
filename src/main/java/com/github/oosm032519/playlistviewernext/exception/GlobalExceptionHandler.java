@@ -50,27 +50,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("PlaylistViewerNextException が発生しました: {} - 詳細: {}", ex.getMessage(), ex.getDetails(), ex);
 
         HttpStatus status = ex.getHttpStatus();
-        String errorCode = ex.getClass().getSimpleName();
+        String errorCode = ex.getErrorCode();
         String message = ex.getMessage();
         String details = ex.getDetails();
-
-        // 例外の種類に応じて詳細情報を追加
-        if (ex instanceof ResourceNotFoundException) {
-            errorCode = "RESOURCE_NOT_FOUND";
-            details = (details != null) ? details : "リクエストされたリソースは存在しません。"; // 詳細情報がnullの場合はデフォルトメッセージを設定
-        } else if (ex instanceof AuthenticationException) {
-            errorCode = "AUTHENTICATION_ERROR";
-            details = (details != null) ? details : "認証に失敗しました。";
-        } else if (ex instanceof InvalidRequestException) {
-            errorCode = "INVALID_REQUEST";
-            details = (details != null) ? details : "無効なリクエストです。";
-        } else if (ex instanceof DatabaseAccessException) {
-            errorCode = "DATABASE_ACCESS_ERROR";
-            details = (details != null) ? details : "データベースアクセスエラーが発生しました。";
-        } else if (ex instanceof InternalServerException) {
-            errorCode = "INTERNAL_SERVER_ERROR";
-            details = (details != null) ? details : "内部サーバーエラーが発生しました。";
-        }
 
         // リクエストパラメータを詳細情報に追加
         String requestParams = getRequestParams();

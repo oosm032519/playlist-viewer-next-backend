@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistDetailsService;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class SpotifyPlaylistAnalyticsService {
         } catch (Exception e) {
             // ジャンル出現頻度上位5つの取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストID: {} のジャンル出現頻度上位5つの取得中にエラーが発生しました。", playlistId, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのジャンル出現頻度上位5つの取得中にエラーが発生しました。",
                     e
@@ -71,7 +72,7 @@ public class SpotifyPlaylistAnalyticsService {
         } catch (Exception e) {
             // ジャンルごとのトラック数の取得中にエラーが発生した場合は PlaylistViewerNextException をスロー
             logger.error("プレイリストID: {} のジャンルごとのトラック数の取得中にエラーが発生しました。", playlistId, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのジャンルごとのトラック数の取得中にエラーが発生しました。",
                     e
@@ -110,7 +111,7 @@ public class SpotifyPlaylistAnalyticsService {
             return genreAggregatorService.getTopArtists(artistCounts, 5);
         } catch (Exception e) {
             logger.error("プレイリストID: {} のアーティスト出現頻度上位5つの取得中にエラーが発生しました。", playlistId, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのアーティスト出現頻度上位5つの取得中にエラーが発生しました。",
                     e
@@ -150,7 +151,7 @@ public class SpotifyPlaylistAnalyticsService {
             return artistCount;
         } catch (Exception e) {
             logger.error("プレイリストID: {} のアーティスト数の取得中にエラーが発生しました。", playlistId, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのアーティスト数の取得中にエラーが発生しました。",
                     e

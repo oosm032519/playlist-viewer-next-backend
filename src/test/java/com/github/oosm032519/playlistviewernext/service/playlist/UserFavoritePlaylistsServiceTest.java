@@ -87,7 +87,6 @@ class UserFavoritePlaylistsServiceTest {
         assertThatThrownBy(() -> service.getFavoritePlaylists(userId))
                 .isInstanceOf(DatabaseAccessException.class)
                 .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasFieldOrPropertyWithValue("errorCode", "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR")
                 .hasMessage("お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。");
 
         verify(userFavoritePlaylistRepository).findByUserId(userId);

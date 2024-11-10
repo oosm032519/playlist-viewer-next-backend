@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.auth;
 
+import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,9 +66,9 @@ public class SpotifyOAuth2UserService extends DefaultOAuth2UserService {
             // 拡張されたユーザーを返す
             return enhancedUser;
         } catch (Exception e) {
-            // 認証エラーが発生した場合は PlaylistViewerNextException をスロー
+            // 認証エラーが発生した場合は AuthenticationException をスロー
             logger.error("OAuth2 認証中にエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(
+            throw new AuthenticationException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Spotifyへのログイン中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
                     e

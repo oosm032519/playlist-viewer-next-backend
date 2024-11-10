@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.service.analytics;
 
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class PlaylistAnalyticsService {
             return analyticsService.getGenreCountsForPlaylist(id);
         } catch (Exception e) {
             logger.error("プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。 id: {}", id, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのジャンルごとの曲数の取得中にエラーが発生しました。",
                     e
@@ -62,7 +63,7 @@ public class PlaylistAnalyticsService {
             return analyticsService.getTop5GenresForPlaylist(id);
         } catch (Exception e) {
             logger.error("プレイリストのトップ5ジャンルの取得中にエラーが発生しました。 id: {}", id, e);
-            throw new PlaylistViewerNextException(
+            throw new InvalidRequestException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "プレイリストのトップ5ジャンルの取得中にエラーが発生しました。",
                     e

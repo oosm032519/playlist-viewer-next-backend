@@ -63,7 +63,7 @@ public class PlaylistTrackRemovalControllerTest {
         // principalがnullの場合
         assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(request, null))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessage("AUTHENTICATION_ERROR"); // メッセージを"AUTHENTICATION_ERROR"に変更
+                .hasMessage("認証されていないユーザーがアクセスしようとしました。");
     }
 
     @Test

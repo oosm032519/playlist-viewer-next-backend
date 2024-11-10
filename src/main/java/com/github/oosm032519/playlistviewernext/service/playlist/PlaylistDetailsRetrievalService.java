@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
@@ -102,7 +103,7 @@ public class PlaylistDetailsRetrievalService {
             throw e;
         } catch (Exception e) {
             logger.error("プレイリストの詳細情報の取得中に予期しないエラーが発生しました。", e);
-            throw new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
+            throw new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
         }
     }
 

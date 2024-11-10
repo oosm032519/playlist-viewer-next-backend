@@ -156,7 +156,6 @@ public class JwtUtil {
                 logger.warn("トークンの署名が無効です");
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
-                        "INVALID_TOKEN_SIGNATURE",
                         "セッションが有効期限切れか、無効です。再度ログインしてください。"
                 );
             }
@@ -168,7 +167,6 @@ public class JwtUtil {
                 logger.warn("トークンの有効期限が切れています");
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
-                        "TOKEN_EXPIRED",
                         "セッションが有効期限切れです。再度ログインしてください。"
                 );
             }

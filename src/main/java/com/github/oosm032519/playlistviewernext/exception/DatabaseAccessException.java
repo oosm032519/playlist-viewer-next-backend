@@ -4,14 +4,10 @@ import org.springframework.http.HttpStatus;
 
 public class DatabaseAccessException extends PlaylistViewerNextException {
     public DatabaseAccessException(HttpStatus httpStatus, String message, Throwable cause) {
-        super(httpStatus, message, "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR", cause); // errorCode を設定
+        super(httpStatus, message, "DATABASE_ACCESS_ERROR", cause);
     }
 
     public DatabaseAccessException(HttpStatus httpStatus, String message) {
-        super(httpStatus, message, "FAVORITE_PLAYLISTS_RETRIEVAL_ERROR", null); // errorCode を設定、cause は null
-    }
-
-    public String getErrorCode() {
-        return super.getErrorCode();
+        super(httpStatus, message, "DATABASE_ACCESS_ERROR");
     }
 }

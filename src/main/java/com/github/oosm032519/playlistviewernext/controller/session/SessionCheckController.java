@@ -68,7 +68,6 @@ public class SessionCheckController {
             logger.warn("有効なセッションIDが存在しません。未認証の可能性があります。");
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "SESSION_NOT_FOUND",
                     "セッションが有効期限切れか、無効です。再度ログインしてください。"
             );
         }
@@ -114,7 +113,6 @@ public class SessionCheckController {
             logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "SESSION_NOT_FOUND",
                     "セッションが有効期限切れか、無効です。再度ログインしてください。"
             );
         }
@@ -165,7 +163,6 @@ public class SessionCheckController {
             logger.warn("有効なセッションIDが存在しません。");
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "SESSION_NOT_FOUND",
                     "有効なセッションIDが存在しません。"
             );
         }

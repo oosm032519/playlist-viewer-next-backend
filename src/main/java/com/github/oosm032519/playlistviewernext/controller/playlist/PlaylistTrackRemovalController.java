@@ -56,7 +56,6 @@ public class PlaylistTrackRemovalController {
         if (principal == null) {
             throw new AuthenticationException(
                     HttpStatus.UNAUTHORIZED,
-                    "AUTHENTICATION_ERROR",
                     "認証されていないユーザーがアクセスしようとしました。"
             );
         }
@@ -67,8 +66,7 @@ public class PlaylistTrackRemovalController {
         } else {
             throw new InternalServerException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。",
-                    "Spotify APIからのエラーレスポンス: " + response.getBody()
+                    "Spotify APIでトラックの削除中にエラーが発生しました。しばらく時間をおいてから再度お試しください。"
             );
         }
     }
