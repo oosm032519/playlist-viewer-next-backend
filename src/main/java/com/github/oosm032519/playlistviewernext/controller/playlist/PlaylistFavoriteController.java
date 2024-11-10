@@ -2,11 +2,13 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.entity.UserFavoritePlaylist;
 import com.github.oosm032519.playlistviewernext.repository.UserFavoritePlaylistRepository;
+import com.github.oosm032519.playlistviewernext.util.HashUtil;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -14,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * プレイリストのお気に入り機能を管理するコントローラークラス
@@ -30,6 +34,9 @@ public class PlaylistFavoriteController {
     private static final Logger logger = LoggerFactory.getLogger(PlaylistFavoriteController.class);
 
     private final UserFavoritePlaylistRepository userFavoritePlaylistRepository;
+
+    @Autowired
+    private HashUtil hashUtil;
 
     /**
      * コンストラクタ
@@ -62,7 +69,7 @@ public class PlaylistFavoriteController {
         String userId = principal.getAttribute("id");
 
         // ユーザーIDをハッシュ化
-        String hashedUserId = hashUserId(Objects.requireNonNull(userId));
+        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // 既に登録されているかチェック
         if (userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId)) {
@@ -92,18 +99,6 @@ public class PlaylistFavoriteController {
     }
 
     /**
-     * ユーザーIDをハッシュ化する
-     *
-     * @param userId ハッシュ化するユーザーID
-     * @return ハッシュ化されたユーザーID
-     */
-    public String hashUserId(String userId) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        byte[] hashedBytes = md.digest(userId.getBytes());
-        return Base64.getEncoder().encodeToString(hashedBytes);
-    }
-
-    /**
      * プレイリストのお気に入り登録を解除する
      *
      * @param principal  認証されたユーザー情報
@@ -119,7 +114,7 @@ public class PlaylistFavoriteController {
         String userId = principal.getAttribute("id");
 
         // ユーザーIDをハッシュ化
-        String hashedUserId = hashUserId(Objects.requireNonNull(userId));
+        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入り解除処理
         boolean deleted = userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(hashedUserId, playlistId) > 0;
@@ -154,7 +149,7 @@ public class PlaylistFavoriteController {
         String userId = principal.getAttribute("id");
 
         // ユーザーIDをハッシュ化
-        String hashedUserId = hashUserId(Objects.requireNonNull(userId));
+        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入りプレイリスト一覧を取得
         List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
@@ -189,7 +184,7 @@ public class PlaylistFavoriteController {
         String userId = principal.getAttribute("id");
 
         // ユーザーIDをハッシュ化
-        String hashedUserId = hashUserId(Objects.requireNonNull(userId));
+        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入り登録状況を確認
         boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);

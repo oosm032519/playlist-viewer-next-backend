@@ -2,8 +2,10 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.UserFavoritePlaylistsService;
+import com.github.oosm032519.playlistviewernext.util.HashUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -11,9 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,6 +27,9 @@ public class UserFavoritePlaylistsController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserFavoritePlaylistsController.class);
 
     private final UserFavoritePlaylistsService userFavoritePlaylistsService;
+
+    @Autowired
+    private HashUtil hashUtil;
 
     /**
      * コンストラクタ
@@ -49,18 +52,11 @@ public class UserFavoritePlaylistsController {
 
         String userId = principal.getAttribute("id");
         // ハッシュ値生成
-        String hashedUserId = hashUserId(Objects.requireNonNull(userId));
+        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
         LOGGER.debug("ユーザーID: {} のお気に入りプレイリストを取得します。", hashedUserId);
 
         List<FavoritePlaylistResponse> favoritePlaylists = userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId); // ハッシュ化されたIDを使用
         LOGGER.info("ユーザーID: {} のお気に入りプレイリストを {} 件取得しました。", hashedUserId, favoritePlaylists.size());
         return ResponseEntity.ok(favoritePlaylists);
-    }
-
-    // hashUserIdメソッドを追加
-    public String hashUserId(String userId) throws NoSuchAlgorithmException {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashedBytes = md.digest(userId.getBytes());
-            return Base64.getEncoder().encodeToString(hashedBytes);
     }
 }
