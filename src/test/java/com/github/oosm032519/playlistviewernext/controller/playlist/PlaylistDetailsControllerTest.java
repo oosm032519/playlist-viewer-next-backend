@@ -5,7 +5,6 @@ import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyt
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,8 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import se.michaelthelin.spotify.model_objects.specification.Track;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,9 +35,6 @@ class PlaylistDetailsControllerTest {
     private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
     @Mock
-    private HttpServletRequest request;
-
-    @Mock
     private TrackRecommendationService trackRecommendationService;
 
     @InjectMocks
@@ -50,31 +46,22 @@ class PlaylistDetailsControllerTest {
     }
 
     @Test
-    void shouldReturnPlaylistDetailsSuccessfully() throws Exception {
+    void shouldReturnPlaylistDetailsSuccessfully() {
         // Given
         String playlistId = "testPlaylistId";
-        Map<String, Object> playlistDetails = createTestPlaylistDetails();
-        Map<String, Integer> genreCounts = Map.of("pop", 2, "rock", 1);
-        List<String> top5Artists = List.of("artist1", "artist2");
-        List<Track> recommendations = List.of(mock(Track.class), mock(Track.class));
+        Map<String, Object> playlistDetails = new HashMap<>(createTestPlaylistDetails());
+        Map<String, Integer> genreCounts = new HashMap<>(Map.of("pop", 2, "rock", 1));
 
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
         when(playlistAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
-        when(spotifyPlaylistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
-        when(trackRecommendationService.getRecommendations(
-                eq(top5Artists),
-                eq(Map.of("feature1", 1.0f)),
-                eq(Map.of("feature1", 0.1f))
-        )).thenReturn(recommendations);
 
         // When
-        ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistById(playlistId);
+        ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistDetails(playlistId);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("genreCounts")).isEqualTo(genreCounts);
-        assertThat(response.getBody().get("recommendations")).isEqualTo(recommendations);
         assertThat(response.getBody().get("tracks")).isEqualTo(Map.of("items", List.of(Map.of("track", "track1"), Map.of("track", "track2"))));
         assertThat(response.getBody().get("playlistName")).isEqualTo("Test Playlist");
         assertThat(response.getBody().get("ownerId")).isEqualTo("ownerId");
@@ -82,39 +69,32 @@ class PlaylistDetailsControllerTest {
 
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
         verify(playlistAnalyticsService).getGenreCountsForPlaylist(playlistId);
-        verify(spotifyPlaylistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
-        verify(trackRecommendationService).getRecommendations(
-                eq(top5Artists),
-                eq(Map.of("feature1", 1.0f)),
-                eq(Map.of("feature1", 0.1f))
-        );
+    }
+
+    private Map<String, Object> createTestPlaylistDetails() {
+        Map<String, Object> details = new HashMap<>();
+        details.put("tracks", Map.of("items", List.of(Map.of("track", "track1"), Map.of("track", "track2"))));
+        details.put("playlistName", "Test Playlist");
+        details.put("ownerId", "ownerId");
+        details.put("ownerName", "Owner Name");
+        details.put("maxAudioFeatures", new HashMap<>(Map.of("feature1", 1.0f)));
+        details.put("minAudioFeatures", new HashMap<>(Map.of("feature1", 0.1f)));
+        details.put("medianAudioFeatures", new HashMap<>(Map.of("feature1", 0.5f)));
+        details.put("modeValues", new HashMap<>(Map.of("feature1", 0.5f)));
+        return details;
     }
 
     @Test
-    void shouldHandleResourceNotFoundException() throws Exception {
+    void shouldHandleResourceNotFoundException() {
         // Given
         String playlistId = "testPlaylistId";
         ResourceNotFoundException exception = new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND");
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(exception);
 
         // When & Then
-        Throwable thrown = catchThrowable(() -> detailsController.getPlaylistById(playlistId));
+        Throwable thrown = catchThrowable(() -> detailsController.getPlaylistDetails(playlistId));
         assertThat(thrown).isSameAs(exception);
 
-
         verify(playlistDetailsRetrievalService).getPlaylistDetails(playlistId);
-    }
-
-    private Map<String, Object> createTestPlaylistDetails() {
-        return Map.of(
-                "tracks", Map.of("items", List.of(Map.of("track", "track1"), Map.of("track", "track2"))),
-                "playlistName", "Test Playlist",
-                "ownerId", "ownerId",
-                "ownerName", "Owner Name",
-                "maxAudioFeatures", Map.of("feature1", 1.0f),
-                "minAudioFeatures", Map.of("feature1", 0.1f),
-                "medianAudioFeatures", Map.of("feature1", 0.5f),
-                "modeValues", Map.of("feature1", 0.5f)
-        );
     }
 }

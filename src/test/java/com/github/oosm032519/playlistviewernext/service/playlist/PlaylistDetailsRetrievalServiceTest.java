@@ -1,12 +1,9 @@
-// PlaylistDetailsRetrievalServiceTest.java
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.*;
-import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -62,16 +59,8 @@ class PlaylistDetailsRetrievalServiceTest {
     @Mock
     private SpotifyPlaylistAnalyticsService playlistAnalyticsService;
 
-    @Mock
-    private SpotifyRecommendationService trackRecommendationService;
-
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
-
-    @BeforeEach
-    void setUp() {
-        // 各テストメソッドの前に実行される設定
-    }
 
     @Test
     void getPlaylistDetails_ReturnsDetailsSuccessfully() throws Exception {
@@ -95,7 +84,6 @@ class PlaylistDetailsRetrievalServiceTest {
         Map<String, Object> modeValues = Map.of("feature1", 0.3f);
         long expectedTotalDuration = 420000; // 180000 + 240000
         List<String> top5Artists = List.of("artist1", "artist2");
-        List<Track> recommendations = List.of(new Track.Builder().build());
 
         Playlist playlist = new Playlist.Builder().setName(playlistName).setOwner(owner).build();
 
@@ -110,8 +98,6 @@ class PlaylistDetailsRetrievalServiceTest {
         when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
         when(playlistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
-        when(trackRecommendationService.getRecommendations(top5Artists, maxAudioFeatures, minAudioFeatures)).thenReturn(recommendations);
-
 
         // Act: テスト対象メソッドの実行
         Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
@@ -127,8 +113,7 @@ class PlaylistDetailsRetrievalServiceTest {
                 .containsEntry("medianAudioFeatures", medianAudioFeatures)
                 .containsEntry("averageAudioFeatures", averageAudioFeatures)
                 .containsEntry("modeValues", modeValues)
-                .containsEntry("totalDuration", expectedTotalDuration)
-                .containsEntry("recommendations", recommendations);
+                .containsEntry("totalDuration", expectedTotalDuration);
 
         // モックの呼び出し検証
         verify(playlistDetailsService).getPlaylist(playlistId);
@@ -140,7 +125,6 @@ class PlaylistDetailsRetrievalServiceTest {
         verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
         verify(modeValuesCalculator).calculateModeValues(trackList);
         verify(playlistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
-        verify(trackRecommendationService).getRecommendations(top5Artists, maxAudioFeatures, minAudioFeatures);
     }
 
     @Test
