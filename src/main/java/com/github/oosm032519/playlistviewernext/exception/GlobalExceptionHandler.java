@@ -30,7 +30,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-
     /**
      * PlaylistViewerNextException を処理するハンドラ
      *
@@ -46,9 +45,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String message = ex.getMessage();
         String details = ex.getDetails();
 
-        // リクエストパラメータを詳細情報に追加
-        String requestParams = getRequestParams();
-        details += (details != null ? " " : "") + "リクエストパラメータ: " + requestParams;
+        // details が null の場合のみリクエストパラメータを追加
+        if (details == null) {
+            String requestParams = getRequestParams();
+            details = "リクエストパラメータ: " + requestParams;
+        }
 
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
         return new ResponseEntity<>(errorResponse, status);
@@ -67,7 +68,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 if (!parameterMap.isEmpty()) {
                     StringBuilder params = new StringBuilder();
                     parameterMap.forEach((key, values) -> params.append(key).append("=").append(String.join(",", values)).append("&"));
-                    if (params.length() > 0) {
+                    if (!params.isEmpty()) {
                         params.deleteCharAt(params.length() - 1);
                     }
                     return params.toString();
@@ -135,7 +136,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String message = "Spotify API エラーが発生しました。";
         String details = ex.getMessage();
 
-        // リクエストパラメータを詳細情報に追加
         String requestParams = getRequestParams();
         details += " リクエストパラメータ: " + requestParams;
 
@@ -159,11 +159,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String message = "システムエラーが発生しました。しばらく時間をおいてから再度お試しください。";
         String details = ex.getMessage();
 
-        // リクエストパラメータを詳細情報に追加
         String requestParams = getRequestParams();
         details += " リクエストパラメータ: " + requestParams;
 
-        // スタックトレースをログに記録
         logger.error("スタックトレース:", ex);
 
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);

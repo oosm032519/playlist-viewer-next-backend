@@ -10,15 +10,6 @@ public class PlaylistViewerNextException extends RuntimeException {
     private final String errorCode;
     private final String details;
 
-    private String getStackTraceAsString(Throwable throwable) {
-        StackTraceElement[] stackTraceElements = throwable.getStackTrace();
-        StringBuilder sb = new StringBuilder();
-        for (StackTraceElement element : stackTraceElements) {
-            sb.append(element.toString()).append("\n");
-        }
-        return sb.toString();
-    }
-
     public PlaylistViewerNextException(HttpStatus httpStatus, String message, String errorCode) {
         super(message);
         this.httpStatus = httpStatus;
@@ -30,7 +21,7 @@ public class PlaylistViewerNextException extends RuntimeException {
         super(message, cause);
         this.httpStatus = httpStatus;
         this.errorCode = errorCode;
-        details = getStackTraceAsString(cause);
+        details = cause.getMessage();
     }
 
     // 詳細情報なし、エラーコードのみ
