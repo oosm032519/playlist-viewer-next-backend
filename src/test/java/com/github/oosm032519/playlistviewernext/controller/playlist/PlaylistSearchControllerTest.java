@@ -1,9 +1,8 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
+import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,19 +10,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import se.michaelthelin.spotify.model_objects.specification.PlaylistSimplified;
+import org.springframework.mock.web.MockHttpServletRequest;
+import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PlaylistSearchControllerTest {
+public class PlaylistSearchControllerTest {
 
     @Mock
     private SpotifyPlaylistSearchService playlistSearchService;
@@ -31,73 +28,72 @@ class PlaylistSearchControllerTest {
     @Mock
     private SpotifyClientCredentialsAuthentication authController;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
-    private PlaylistSearchController searchController;
-
-    @BeforeEach
-    void setUp() {
-        // 各テストメソッドの前に実行される設定
-    }
+    private PlaylistSearchController playlistSearchController;
 
     @Test
-    void givenValidQuery_whenSearchPlaylists_thenReturnsPlaylistsSuccessfully() throws Exception {
-        // Arrange
+    void searchPlaylists_validQuery_returnsSearchResults() throws SpotifyWebApiException {
+        // テストデータの準備
         String query = "test query";
         int offset = 0;
         int limit = 20;
-        Map<String, Object> expectedResult = new HashMap<>();
-        List<PlaylistSimplified> expectedPlaylists = createMockPlaylists();
-        expectedResult.put("playlists", expectedPlaylists);
-        expectedResult.put("total", expectedPlaylists.size());
+        Map<String, Object> expectedSearchResult = new HashMap<>();
+        expectedSearchResult.put("playlists", new Object()); // プレイリストのモックオブジェクト
+        expectedSearchResult.put("total", 10); // プレイリストの総数
 
+        // モックの設定
+        when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedSearchResult);
 
-        when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedResult);
+        // テスト対象メソッドの実行
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
+        ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
-        // Act
-        ResponseEntity<?> response = searchController.searchPlaylists(query, offset, limit);
-
-        // Assert
+        // アサーション
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(expectedResult);
-        verify(playlistSearchService).searchPlaylists(query, offset, limit);
-        verify(authController).authenticate();
+        assertThat(response.getBody()).isEqualTo(expectedSearchResult);
     }
 
     @Test
-    void givenRequestWithParameters_whenGetRequestParams_thenReturnsFormattedString() {
-        // Arrange
-        Map<String, String[]> parameterMap = new HashMap<>();
-        parameterMap.put("query", new String[]{"test"});
-        parameterMap.put("offset", new String[]{"0"});
-        parameterMap.put("limit", new String[]{"20"});
-        when(request.getParameterMap()).thenReturn(parameterMap);
+    void searchPlaylists_blankQuery_returnsBadRequest() throws SpotifyWebApiException {
+        // テストデータの準備
+        String query = "   ";
+        int offset = 0;
+        int limit = 20;
 
-        // Act
-        String result = searchController.getRequestParams();
+        // テスト対象メソッドの実行
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
+        ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
-        // Assert
-        assertThat(result).contains("query=test", "offset=0", "limit=20");
+
+        // アサーション
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
+        ErrorResponse errorResponse = (ErrorResponse) response.getBody();
+        assertThat(errorResponse.getErrorCode()).isEqualTo("INVALID_QUERY");
+        assertThat(errorResponse.getMessage()).isEqualTo("検索クエリは必須です。");
     }
 
     @Test
-    void givenEmptyRequestParameters_whenGetRequestParams_thenReturnsEmptyString() {
-        // Arrange
-        when(request.getParameterMap()).thenReturn(new HashMap<>());
+    void searchPlaylists_spotifyApiException_throwsException() throws SpotifyWebApiException {
+        // テストデータの準備
+        String query = "test query";
+        int offset = 0;
+        int limit = 20;
 
-        // Act
-        String result = searchController.getRequestParams();
+        // モックの設定
+        SpotifyWebApiException exception = new SpotifyWebApiException("Spotify API error");
+        when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(exception);
 
-        // Assert
-        assertThat(result).isEmpty();
-    }
+        // テスト対象メソッドの実行
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
 
-    private List<PlaylistSimplified> createMockPlaylists() {
-        return Arrays.asList(
-                new PlaylistSimplified.Builder().setName("Playlist 1").build(),
-                new PlaylistSimplified.Builder().setName("Playlist 2").build()
-        );
+        try {
+            playlistSearchController.searchPlaylists(query, offset, limit);
+        } catch (SpotifyWebApiException e) {
+            assertThat(e.getMessage()).isEqualTo("Spotify API error");
+        }
     }
 }

@@ -36,8 +36,9 @@ public class UserFavoritePlaylistsController {
      *
      * @param userFavoritePlaylistsService お気に入りプレイリストサービス
      */
-    public UserFavoritePlaylistsController(UserFavoritePlaylistsService userFavoritePlaylistsService) {
+    public UserFavoritePlaylistsController(UserFavoritePlaylistsService userFavoritePlaylistsService, HashUtil hashUtil) {
         this.userFavoritePlaylistsService = userFavoritePlaylistsService;
+        this.hashUtil = hashUtil;
     }
 
     /**
