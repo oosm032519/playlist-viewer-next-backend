@@ -1,11 +1,12 @@
+// JwtAuthenticationFilter.java (修正)
 package com.github.oosm032519.playlistviewernext.filter;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
+import com.github.oosm032519.playlistviewernext.util.ServletUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         logger.debug("doFilterInternalメソッドが開始されました - リクエストURI: {}", request.getRequestURI());
 
-        String sessionId = extractSessionIdFromRequest(request);
+        String sessionId = ServletUtil.extractSessionIdFromRequest(request);
         if (sessionId != null) {
             try {
                 // Redisからセッション情報を取得
@@ -95,7 +96,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     logger.info("ユーザー認証成功 - ユーザーID: {}, ユーザー名: {}", userId, userName);
 
-                    // OAuth2AuthenticationToken を作成
                     Map<String, Object> attributes = new HashMap<>();
                     attributes.put("id", userId);
                     attributes.put("name", userName);
@@ -138,23 +138,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.debug("doFilterInternalメソッドが完了しました");
     }
 
-    /**
-     * リクエストからセッションIDを抽出する
-     *
-     * @param request HTTPリクエスト
-     * @return セッションID、見つからない場合はnull
-     */
-    private String extractSessionIdFromRequest(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("sessionId".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
 
     /**
      * JWTクレームを検証する
@@ -179,7 +162,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 対象者の検証
             String audience = claims.get("aud") instanceof List ?
-                    ((List<?>) claims.get("aud")).get(0).toString() :
+                    ((List<?>) claims.get("aud")).getFirst().toString() :
                     (String) claims.get("aud");
             logger.debug("対象者の検証: {}", audience);
             if (!jwtUtil.getAudience().equals(audience)) {

@@ -3,6 +3,7 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
+import com.github.oosm032519.playlistviewernext.util.ServletUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,7 +58,7 @@ public class SessionCheckController {
         logger.info("セッションチェック開始 - リクエスト情報: メソッド={}, URI={}, リモートアドレス={}",
                 request.getMethod(), request.getRequestURI(), request.getRemoteAddr());
 
-        String sessionId = extractSessionIdFromRequest(request);
+        String sessionId = ServletUtil.extractSessionIdFromRequest(request);
         logger.debug("取得されたセッションID: {}", sessionId);
 
         Map<String, Object> response = new HashMap<>();
@@ -73,23 +74,6 @@ public class SessionCheckController {
         }
     }
 
-    /**
-     * リクエストからセッションIDを抽出する
-     *
-     * @param request HTTPリクエスト
-     * @return セッションID
-     */
-    private String extractSessionIdFromRequest(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("sessionId".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
 
     /**
      * セッションの検証を行う
@@ -100,9 +84,9 @@ public class SessionCheckController {
      */
     private ResponseEntity<?> handleSessionValidation(String sessionId, Map<String, Object> response) {
         logger.info("セッションIDが存在します。Redisからセッション情報を取得します。");
-            String redisKey = "session:" + sessionId;
-            String fullSessionToken = redisTemplate.opsForValue().get(redisKey);
-            logger.debug("Redisキー: {}, 取得されたトークン: {}", redisKey, fullSessionToken != null ? "存在" : "なし");
+        String redisKey = "session:" + sessionId;
+        String fullSessionToken = redisTemplate.opsForValue().get(redisKey);
+        logger.debug("Redisキー: {}, 取得されたトークン: {}", redisKey, fullSessionToken != null ? "存在" : "なし");
 
         if (fullSessionToken != null) {
             logger.info("Redisからセッショントークンを取得しました。トークンの検証を開始します。");
@@ -152,7 +136,7 @@ public class SessionCheckController {
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         logger.info("ログアウト処理開始");
 
-        String sessionId = extractSessionIdFromRequest(request);
+        String sessionId = ServletUtil.extractSessionIdFromRequest(request);
         logger.debug("取得されたセッションID: {}", sessionId);
 
         Map<String, Object> responseBody = new HashMap<>();
@@ -197,6 +181,7 @@ public class SessionCheckController {
         }
     }
 
+
     /**
      * セッションIDのCookieをクリアする
      *
@@ -205,6 +190,7 @@ public class SessionCheckController {
     private void clearSessionCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("sessionId", null);
         cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
         cookie.setPath("/");
         response.addCookie(cookie);
     }
