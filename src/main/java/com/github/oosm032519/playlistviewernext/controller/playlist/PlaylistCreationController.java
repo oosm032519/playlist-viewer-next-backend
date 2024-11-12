@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
@@ -38,21 +37,17 @@ public class PlaylistCreationController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService;
-    private final HttpServletRequest request;
 
     /**
      * PlaylistCreationControllerのコンストラクタ
      *
      * @param userAuthenticationService          ユーザー認証サービス
      * @param spotifyUserPlaylistCreationService Spotifyユーザープレイリスト作成サービス
-     * @param request                            HTTPリクエスト
      */
     public PlaylistCreationController(UserAuthenticationService userAuthenticationService,
-                                      SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService,
-                                      HttpServletRequest request) {
+                                      SpotifyUserPlaylistCreationService spotifyUserPlaylistCreationService) {
         this.userAuthenticationService = userAuthenticationService;
         this.spotifyUserPlaylistCreationService = spotifyUserPlaylistCreationService;
-        this.request = request;
     }
 
     /**
