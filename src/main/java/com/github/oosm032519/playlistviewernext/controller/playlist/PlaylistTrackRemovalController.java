@@ -4,7 +4,6 @@ import com.github.oosm032519.playlistviewernext.exception.AuthenticationExceptio
 import com.github.oosm032519.playlistviewernext.exception.InternalServerException;
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackRemovalRequest;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackRemovalService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,12 +31,9 @@ public class PlaylistTrackRemovalController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlaylistTrackRemovalController.class);
 
     private final SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService;
-    private final HttpServletRequest request; // リクエスト情報を取得
 
-    public PlaylistTrackRemovalController(SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService,
-                                          HttpServletRequest request) {
+    public PlaylistTrackRemovalController(SpotifyPlaylistTrackRemovalService spotifyPlaylistTrackRemovalService) {
         this.spotifyPlaylistTrackRemovalService = spotifyPlaylistTrackRemovalService;
-        this.request = request;
     }
 
     /**

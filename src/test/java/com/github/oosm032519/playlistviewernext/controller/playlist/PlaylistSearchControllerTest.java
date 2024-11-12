@@ -10,11 +10,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -45,8 +45,7 @@ public class PlaylistSearchControllerTest {
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedSearchResult);
 
         // テスト対象メソッドの実行
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
         ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
         // アサーション
@@ -62,8 +61,7 @@ public class PlaylistSearchControllerTest {
         int limit = 20;
 
         // テスト対象メソッドの実行
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
         ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
 
@@ -71,7 +69,7 @@ public class PlaylistSearchControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
         ErrorResponse errorResponse = (ErrorResponse) response.getBody();
-        assertThat(errorResponse.getErrorCode()).isEqualTo("INVALID_QUERY");
+        assertThat(Objects.requireNonNull(errorResponse).getErrorCode()).isEqualTo("INVALID_QUERY");
         assertThat(errorResponse.getMessage()).isEqualTo("検索クエリは必須です。");
     }
 
@@ -87,8 +85,7 @@ public class PlaylistSearchControllerTest {
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(exception);
 
         // テスト対象メソッドの実行
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController, request);
+        playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
 
         try {
             playlistSearchController.searchPlaylists(query, offset, limit);

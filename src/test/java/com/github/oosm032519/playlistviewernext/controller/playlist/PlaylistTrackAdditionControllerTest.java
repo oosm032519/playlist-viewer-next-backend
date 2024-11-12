@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -64,8 +63,7 @@ public class PlaylistTrackAdditionControllerTest {
         when(spotifyService.addTrackToPlaylist(accessToken, playlistId, trackId)).thenReturn(mockSnapshotResult);
 
         // コントローラーの呼び出し
-        MockHttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        controller = new PlaylistTrackAdditionController(userAuthenticationService, spotifyService, httpServletRequest);
+        controller = new PlaylistTrackAdditionController(userAuthenticationService, spotifyService);
         ResponseEntity<Map<String, String>> response = controller.addTrackToPlaylist(request, oAuth2User);
 
         // レスポンスの検証
@@ -84,8 +82,7 @@ public class PlaylistTrackAdditionControllerTest {
         // モックの設定（不要）
 
         // コントローラーの呼び出し、OAuth2Userをnullにすることで認証エラーを発生させる
-        MockHttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        controller = new PlaylistTrackAdditionController(userAuthenticationService, spotifyService, httpServletRequest);
+        controller = new PlaylistTrackAdditionController(userAuthenticationService, spotifyService);
         OAuth2User oAuth2User = null; // <-AuthenticationPrincipalがnullの場合をテスト
 
         try {

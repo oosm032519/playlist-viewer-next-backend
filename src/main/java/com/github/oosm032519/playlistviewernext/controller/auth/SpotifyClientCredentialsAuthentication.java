@@ -18,7 +18,6 @@ public class SpotifyClientCredentialsAuthentication {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpotifyClientCredentialsAuthentication.class);
 
     private final SpotifyAuthService authService;
-    private final HttpServletRequest request;
 
     /**
      * SpotifyClientCredentialsAuthenticationクラスのコンストラクタ
@@ -29,7 +28,6 @@ public class SpotifyClientCredentialsAuthentication {
     @Autowired
     public SpotifyClientCredentialsAuthentication(SpotifyAuthService authService, HttpServletRequest request) {
         this.authService = authService;
-        this.request = request;
     }
 
     /**

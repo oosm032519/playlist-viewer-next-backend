@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.Map;
@@ -37,8 +36,7 @@ public class PlaylistTrackRemovalControllerTest {
     void removeTrackFromPlaylist_success() throws Exception {
         // テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
-        MockHttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService, httpServletRequest);
+        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
 
 
         // SpotifyPlaylistTrackRemovalServiceのモックを設定
@@ -57,8 +55,7 @@ public class PlaylistTrackRemovalControllerTest {
     void removeTrackFromPlaylist_authenticationError() {
         // テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
-        MockHttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService, httpServletRequest);
+        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
 
         // principalがnullの場合
         assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(request, null))
@@ -70,8 +67,7 @@ public class PlaylistTrackRemovalControllerTest {
     void removeTrackFromPlaylist_internalServerError() throws Exception {
         // テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
-        MockHttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService, httpServletRequest);
+        playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
 
         // SpotifyPlaylistTrackRemovalServiceのモックを設定、エラーレスポンスを返す
         when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal))

@@ -115,7 +115,7 @@ public class GenreAggregatorService {
         List<Map.Entry<String, Integer>> sortedEntries = artistCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(limit)
-                .collect(Collectors.toList());
+                .toList();
 
 
         Map<Integer, List<String>> groupedArtists = sortedEntries.stream()
@@ -132,7 +132,6 @@ public class GenreAggregatorService {
 
                 Collections.shuffle(artists, random);
                 topArtists.addAll(artists.subList(0, limit - count));
-                count = limit;
                 break;
             }
         }

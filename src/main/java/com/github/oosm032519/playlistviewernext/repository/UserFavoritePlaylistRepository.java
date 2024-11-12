@@ -12,5 +12,4 @@ public interface UserFavoritePlaylistRepository extends JpaRepository<UserFavori
 
     List<UserFavoritePlaylist> findByUserId(String userId);
 
-    UserFavoritePlaylist findByUserIdAndPlaylistId(String userId, String playlistId);
 }

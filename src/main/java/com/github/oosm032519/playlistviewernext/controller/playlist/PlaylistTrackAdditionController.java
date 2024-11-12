@@ -4,7 +4,6 @@ import com.github.oosm032519.playlistviewernext.exception.AuthenticationExceptio
 import com.github.oosm032519.playlistviewernext.model.PlaylistTrackAdditionRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistTrackAdditionService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,21 +35,17 @@ public class PlaylistTrackAdditionController {
 
     private final UserAuthenticationService userAuthenticationService;
     private final SpotifyPlaylistTrackAdditionService spotifyService;
-    private final HttpServletRequest request;
 
     /**
      * PlaylistTrackAdditionControllerのコンストラクタ
      *
      * @param userAuthenticationService ユーザー認証サービス
      * @param spotifyService            Spotifyプレイリストトラック追加サービス
-     * @param request                   HTTPサーブレットリクエスト
      */
     public PlaylistTrackAdditionController(UserAuthenticationService userAuthenticationService,
-                                           SpotifyPlaylistTrackAdditionService spotifyService,
-                                           HttpServletRequest request) {
+                                           SpotifyPlaylistTrackAdditionService spotifyService) {
         this.userAuthenticationService = userAuthenticationService;
         this.spotifyService = spotifyService;
-        this.request = request;
     }
 
     /**
