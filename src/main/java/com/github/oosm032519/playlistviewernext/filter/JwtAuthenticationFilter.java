@@ -186,12 +186,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 必須クレームの確認
             logger.debug("必須クレームの確認");
-            if (!claims.containsKey("sub") || !claims.containsKey("name") || !claims.containsKey("spotify_access_token")) {
-                logger.warn("必須クレームが不足しています");
-                throw new InvalidRequestException(
-                        HttpStatus.BAD_REQUEST,
-                        "必須クレームが不足しています。"
-                );
+            String userId = claims.get("sub") instanceof String ? (String) claims.get("sub") : null;
+            String userName = claims.get("name") instanceof String ? (String) claims.get("name") : null;
+            String spotifyAccessToken = claims.get("spotify_access_token") instanceof String ? (String) claims.get("spotify_access_token") : null;
+
+            if (userId == null || userId.isEmpty() ||
+                    userName == null || userName.isEmpty() ||
+                    spotifyAccessToken == null || spotifyAccessToken.isEmpty()) {
+
+                logger.warn("必須クレームの値が無効です: sub={}, name={}, spotify_access_token={}", userId, userName, spotifyAccessToken);
+                throw new InvalidRequestException(HttpStatus.BAD_REQUEST, "必須クレームの値が無効です。");
             }
 
             logger.info("クレームの検証が成功しました");
