@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.ErrorResponse;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyPlaylistSearchService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,21 +32,17 @@ public class PlaylistSearchController {
 
     private final SpotifyPlaylistSearchService playlistSearchService;
     private final SpotifyClientCredentialsAuthentication authController;
-    private final HttpServletRequest request; // リクエスト情報を取得
 
     /**
      * PlaylistSearchControllerのコンストラクタ
      *
      * @param playlistSearchService Spotifyプレイリスト検索サービス
      * @param authController        Spotify認証コントローラ
-     * @param request               HTTPリクエスト
      */
     public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService,
-                                    SpotifyClientCredentialsAuthentication authController,
-                                    HttpServletRequest request) {
+                                    SpotifyClientCredentialsAuthentication authController) {
         this.playlistSearchService = playlistSearchService;
         this.authController = authController;
-        this.request = request;
     }
 
     /**
