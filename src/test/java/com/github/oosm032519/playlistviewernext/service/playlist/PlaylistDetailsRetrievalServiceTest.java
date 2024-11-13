@@ -3,7 +3,10 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.service.analytics.*;
+import com.github.oosm032519.playlistviewernext.service.analytics.AverageAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,16 +48,10 @@ class PlaylistDetailsRetrievalServiceTest {
     private MinAudioFeaturesCalculator minAudioFeaturesCalculator;
 
     @Mock
-    private MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
-
-    @Mock
     private AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
 
     @Mock
     private TrackDataRetriever trackDataRetriever;
-
-    @Mock
-    private ModeValuesCalculator modeValuesCalculator;
 
     @Mock
     private SpotifyPlaylistAnalyticsService playlistAnalyticsService;
@@ -79,9 +76,7 @@ class PlaylistDetailsRetrievalServiceTest {
 
         Map<String, Float> maxAudioFeatures = Map.of("feature1", 1.0f);
         Map<String, Float> minAudioFeatures = Map.of("feature1", 0.1f);
-        Map<String, Float> medianAudioFeatures = Map.of("feature1", 0.5f);
         Map<String, Float> averageAudioFeatures = Map.of("feature1", 0.3f);
-        Map<String, Object> modeValues = Map.of("feature1", 0.3f);
         long expectedTotalDuration = 420000; // 180000 + 240000
         List<String> top5Artists = List.of("artist1", "artist2");
 
@@ -94,9 +89,7 @@ class PlaylistDetailsRetrievalServiceTest {
         when(trackDataRetriever.getTrackListData(tracks)).thenReturn(trackList);
         when(maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
         when(minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
-        when(medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList)).thenReturn(medianAudioFeatures);
         when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
-        when(modeValuesCalculator.calculateModeValues(trackList)).thenReturn(modeValues);
         when(playlistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
 
         // Act: テスト対象メソッドの実行
@@ -110,9 +103,7 @@ class PlaylistDetailsRetrievalServiceTest {
                 .containsEntry("ownerName", owner.getDisplayName())
                 .containsEntry("maxAudioFeatures", maxAudioFeatures)
                 .containsEntry("minAudioFeatures", minAudioFeatures)
-                .containsEntry("medianAudioFeatures", medianAudioFeatures)
                 .containsEntry("averageAudioFeatures", averageAudioFeatures)
-                .containsEntry("modeValues", modeValues)
                 .containsEntry("totalDuration", expectedTotalDuration);
 
         // モックの呼び出し検証
@@ -121,9 +112,7 @@ class PlaylistDetailsRetrievalServiceTest {
         verify(trackDataRetriever).getTrackListData(tracks);
         verify(maxAudioFeaturesCalculator).calculateMaxAudioFeatures(trackList);
         verify(minAudioFeaturesCalculator).calculateMinAudioFeatures(trackList);
-        verify(medianAudioFeaturesCalculator).calculateMedianAudioFeatures(trackList);
         verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
-        verify(modeValuesCalculator).calculateModeValues(trackList);
         verify(playlistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
     }
 

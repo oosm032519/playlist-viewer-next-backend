@@ -4,7 +4,10 @@ import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCre
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.service.analytics.*;
+import com.github.oosm032519.playlistviewernext.service.analytics.AverageAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import se.michaelthelin.spotify.model_objects.specification.User;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class PlaylistDetailsRetrievalService {
@@ -28,10 +32,8 @@ public class PlaylistDetailsRetrievalService {
     private final SpotifyClientCredentialsAuthentication authController;
     private final MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
     private final MinAudioFeaturesCalculator minAudioFeaturesCalculator;
-    private final MedianAudioFeaturesCalculator medianAudioFeaturesCalculator;
     private final AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
     private final TrackDataRetriever trackDataRetriever;
-    private final ModeValuesCalculator modeValuesCalculator;
     private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
 
     @Autowired
@@ -40,20 +42,16 @@ public class PlaylistDetailsRetrievalService {
             SpotifyClientCredentialsAuthentication authController,
             MaxAudioFeaturesCalculator maxAudioFeaturesCalculator,
             MinAudioFeaturesCalculator minAudioFeaturesCalculator,
-            MedianAudioFeaturesCalculator medianAudioFeaturesCalculator,
             AverageAudioFeaturesCalculator averageAudioFeaturesCalculator,
             TrackDataRetriever trackDataRetriever,
-            ModeValuesCalculator modeValuesCalculator,
             SpotifyPlaylistAnalyticsService playlistAnalyticsService,
             SpotifyRecommendationService trackRecommendationService) {
         this.playlistDetailsService = playlistDetailsService;
         this.authController = authController;
         this.maxAudioFeaturesCalculator = maxAudioFeaturesCalculator;
         this.minAudioFeaturesCalculator = minAudioFeaturesCalculator;
-        this.medianAudioFeaturesCalculator = medianAudioFeaturesCalculator;
         this.averageAudioFeaturesCalculator = averageAudioFeaturesCalculator;
         this.trackDataRetriever = trackDataRetriever;
-        this.modeValuesCalculator = modeValuesCalculator;
         this.playlistAnalyticsService = playlistAnalyticsService;
     }
 
@@ -84,20 +82,26 @@ public class PlaylistDetailsRetrievalService {
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
 
-            Map<String, Float> maxAudioFeatures = maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
-            Map<String, Float> minAudioFeatures = minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
-            Map<String, Float> medianAudioFeatures = medianAudioFeaturesCalculator.calculateMedianAudioFeatures(trackList);
-            Map<String, Float> averageAudioFeatures = averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
-            Map<String, Object> modeValues = modeValuesCalculator.calculateModeValues(trackList);
+
+            CompletableFuture<Map<String, Float>> maxFuture = CompletableFuture.supplyAsync(() -> maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList));
+            CompletableFuture<Map<String, Float>> minFuture = CompletableFuture.supplyAsync(() -> minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList));
+            CompletableFuture<Map<String, Float>> averageFuture = CompletableFuture.supplyAsync(() -> averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList));
+
+            // 全てのFutureが完了するのを待つ
+            CompletableFuture.allOf(maxFuture, minFuture, averageFuture).join();
+
+            Map<String, Float> maxAudioFeatures = maxFuture.join();
+            Map<String, Float> minAudioFeatures = minFuture.join();
+            Map<String, Float> averageAudioFeatures = averageFuture.join();
 
             // アーティスト出現頻度上位5件を取得
             List<String> seedArtists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
 
-            logAudioFeatures(maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues);
+            logAudioFeatures(maxAudioFeatures, minAudioFeatures, averageAudioFeatures);
 
             long totalDuration = calculateTotalDuration(tracks);
 
-            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, medianAudioFeatures, averageAudioFeatures, modeValues, totalDuration, seedArtists);
+            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, averageAudioFeatures, totalDuration, seedArtists);
 
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -121,15 +125,13 @@ public class PlaylistDetailsRetrievalService {
         return totalDuration;
     }
 
-    private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues) {
+    private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures) {
         logger.info("getPlaylistDetails: 最大AudioFeatures: {}", maxAudioFeatures);
         logger.info("getPlaylistDetails: 最小AudioFeatures: {}", minAudioFeatures);
-        logger.info("getPlaylistDetails: 中央AudioFeatures: {}", medianAudioFeatures);
         logger.info("getPlaylistDetails: 平均AudioFeatures: {}", averageAudioFeatures);
-        logger.info("getPlaylistDetails: 最頻値: {}", modeValues);
     }
 
-    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> medianAudioFeatures, Map<String, Float> averageAudioFeatures, Map<String, Object> modeValues, long totalDuration, final List<String> seedArtists) {
+    private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures, long totalDuration, final List<String> seedArtists) {
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
         response.put("playlistName", playlistName);
@@ -137,9 +139,7 @@ public class PlaylistDetailsRetrievalService {
         response.put("ownerName", owner.getDisplayName());
         response.put("maxAudioFeatures", maxAudioFeatures);
         response.put("minAudioFeatures", minAudioFeatures);
-        response.put("medianAudioFeatures", medianAudioFeatures);
         response.put("averageAudioFeatures", averageAudioFeatures);
-        response.put("modeValues", modeValues);
         response.put("totalDuration", totalDuration);
         response.put("seedArtists", seedArtists);
         return response;
