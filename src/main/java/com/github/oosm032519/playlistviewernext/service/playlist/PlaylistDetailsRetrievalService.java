@@ -2,11 +2,8 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
-import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.service.analytics.AverageAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeaturesCalculator;
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
 import org.slf4j.Logger;
@@ -21,7 +18,6 @@ import se.michaelthelin.spotify.model_objects.specification.User;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class PlaylistDetailsRetrievalService {
@@ -30,9 +26,6 @@ public class PlaylistDetailsRetrievalService {
 
     private final SpotifyPlaylistDetailsService playlistDetailsService;
     private final SpotifyClientCredentialsAuthentication authController;
-    private final MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
-    private final MinAudioFeaturesCalculator minAudioFeaturesCalculator;
-    private final AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
     private final TrackDataRetriever trackDataRetriever;
     private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
 
@@ -40,28 +33,15 @@ public class PlaylistDetailsRetrievalService {
     public PlaylistDetailsRetrievalService(
             SpotifyPlaylistDetailsService playlistDetailsService,
             SpotifyClientCredentialsAuthentication authController,
-            MaxAudioFeaturesCalculator maxAudioFeaturesCalculator,
-            MinAudioFeaturesCalculator minAudioFeaturesCalculator,
-            AverageAudioFeaturesCalculator averageAudioFeaturesCalculator,
             TrackDataRetriever trackDataRetriever,
             SpotifyPlaylistAnalyticsService playlistAnalyticsService,
             SpotifyRecommendationService trackRecommendationService) {
         this.playlistDetailsService = playlistDetailsService;
         this.authController = authController;
-        this.maxAudioFeaturesCalculator = maxAudioFeaturesCalculator;
-        this.minAudioFeaturesCalculator = minAudioFeaturesCalculator;
-        this.averageAudioFeaturesCalculator = averageAudioFeaturesCalculator;
         this.trackDataRetriever = trackDataRetriever;
         this.playlistAnalyticsService = playlistAnalyticsService;
     }
 
-    /**
-     * プレイリストの詳細情報を取得するメソッド
-     *
-     * @param id プレイリストのID
-     * @return プレイリストの詳細情報を含むマップ
-     * @throws PlaylistViewerNextException 認証やデータ取得に失敗した場合にスローされる例外
-     */
     public Map<String, Object> getPlaylistDetails(String id) {
         logger.info("getPlaylistDetails: プレイリストID: {}", id);
 
@@ -82,19 +62,11 @@ public class PlaylistDetailsRetrievalService {
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
 
+            Map<String, Float> maxAudioFeatures = AudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
+            Map<String, Float> minAudioFeatures = AudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
+            Map<String, Float> averageAudioFeatures = AudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
 
-            CompletableFuture<Map<String, Float>> maxFuture = CompletableFuture.supplyAsync(() -> maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList));
-            CompletableFuture<Map<String, Float>> minFuture = CompletableFuture.supplyAsync(() -> minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList));
-            CompletableFuture<Map<String, Float>> averageFuture = CompletableFuture.supplyAsync(() -> averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList));
 
-            // 全てのFutureが完了するのを待つ
-            CompletableFuture.allOf(maxFuture, minFuture, averageFuture).join();
-
-            Map<String, Float> maxAudioFeatures = maxFuture.join();
-            Map<String, Float> minAudioFeatures = minFuture.join();
-            Map<String, Float> averageAudioFeatures = averageFuture.join();
-
-            // アーティスト出現頻度上位5件を取得
             List<String> seedArtists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
 
             logAudioFeatures(maxAudioFeatures, minAudioFeatures, averageAudioFeatures);
@@ -111,12 +83,6 @@ public class PlaylistDetailsRetrievalService {
         }
     }
 
-    /**
-     * プレイリストの総再生時間を計算するメソッド
-     *
-     * @param tracks プレイリストのトラック配列
-     * @return 総再生時間（ミリ秒）
-     */
     public long calculateTotalDuration(PlaylistTrack[] tracks) {
         long totalDuration = 0;
         for (PlaylistTrack track : tracks) {

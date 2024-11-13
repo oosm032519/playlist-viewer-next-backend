@@ -3,14 +3,13 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.service.analytics.AverageAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MaxAudioFeaturesCalculator;
-import com.github.oosm032519.playlistviewernext.service.analytics.MinAudioFeaturesCalculator;
+import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeaturesCalculator;
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
@@ -23,8 +22,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * PlaylistDetailsRetrievalServiceのテストクラス
@@ -40,15 +38,6 @@ class PlaylistDetailsRetrievalServiceTest {
 
     @Mock
     private SpotifyClientCredentialsAuthentication authController;
-
-    @Mock
-    private MaxAudioFeaturesCalculator maxAudioFeaturesCalculator;
-
-    @Mock
-    private MinAudioFeaturesCalculator minAudioFeaturesCalculator;
-
-    @Mock
-    private AverageAudioFeaturesCalculator averageAudioFeaturesCalculator;
 
     @Mock
     private TrackDataRetriever trackDataRetriever;
@@ -82,38 +71,38 @@ class PlaylistDetailsRetrievalServiceTest {
 
         Playlist playlist = new Playlist.Builder().setName(playlistName).setOwner(owner).build();
 
-
         // モックの設定
         when(playlistDetailsService.getPlaylist(playlistId)).thenReturn(playlist);
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(tracks);
         when(trackDataRetriever.getTrackListData(tracks)).thenReturn(trackList);
-        when(maxAudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
-        when(minAudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
-        when(averageAudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
         when(playlistAnalyticsService.getTop5ArtistsForPlaylist(playlistId)).thenReturn(top5Artists);
 
-        // Act: テスト対象メソッドの実行
-        Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
+        // AudioFeaturesCalculatorのスタティックメソッドのモック
+        try (MockedStatic<AudioFeaturesCalculator> mockedCalculator = mockStatic(AudioFeaturesCalculator.class)) {
+            mockedCalculator.when(() -> AudioFeaturesCalculator.calculateMaxAudioFeatures(trackList)).thenReturn(maxAudioFeatures);
+            mockedCalculator.when(() -> AudioFeaturesCalculator.calculateMinAudioFeatures(trackList)).thenReturn(minAudioFeatures);
+            mockedCalculator.when(() -> AudioFeaturesCalculator.calculateAverageAudioFeatures(trackList)).thenReturn(averageAudioFeatures);
 
-        // Assert: 結果の検証
-        assertThat(response)
-                .containsEntry("tracks", Map.of("items", trackList))
-                .containsEntry("playlistName", playlistName)
-                .containsEntry("ownerId", owner.getId())
-                .containsEntry("ownerName", owner.getDisplayName())
-                .containsEntry("maxAudioFeatures", maxAudioFeatures)
-                .containsEntry("minAudioFeatures", minAudioFeatures)
-                .containsEntry("averageAudioFeatures", averageAudioFeatures)
-                .containsEntry("totalDuration", expectedTotalDuration);
+            // Act: テスト対象メソッドの実行
+            Map<String, Object> response = playlistDetailsRetrievalService.getPlaylistDetails(playlistId);
 
-        // モックの呼び出し検証
-        verify(playlistDetailsService).getPlaylist(playlistId);
-        verify(playlistDetailsService).getPlaylistTracks(playlistId);
-        verify(trackDataRetriever).getTrackListData(tracks);
-        verify(maxAudioFeaturesCalculator).calculateMaxAudioFeatures(trackList);
-        verify(minAudioFeaturesCalculator).calculateMinAudioFeatures(trackList);
-        verify(averageAudioFeaturesCalculator).calculateAverageAudioFeatures(trackList);
-        verify(playlistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
+            // Assert: 結果の検証
+            assertThat(response)
+                    .containsEntry("tracks", Map.of("items", trackList))
+                    .containsEntry("playlistName", playlistName)
+                    .containsEntry("ownerId", owner.getId())
+                    .containsEntry("ownerName", owner.getDisplayName())
+                    .containsEntry("maxAudioFeatures", maxAudioFeatures)
+                    .containsEntry("minAudioFeatures", minAudioFeatures)
+                    .containsEntry("averageAudioFeatures", averageAudioFeatures)
+                    .containsEntry("totalDuration", expectedTotalDuration);
+
+            // モックの呼び出し検証
+            verify(playlistDetailsService).getPlaylist(playlistId);
+            verify(playlistDetailsService).getPlaylistTracks(playlistId);
+            verify(trackDataRetriever).getTrackListData(tracks);
+            verify(playlistAnalyticsService).getTop5ArtistsForPlaylist(playlistId);
+        }
     }
 
     @Test
