@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.exception.InternalServerExceptio
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -33,6 +34,7 @@ public class SpotifyPlaylistSearchService {
      * @param limit  検索結果の最大数
      * @return 検索結果のプレイリストと総数を含むマップ
      */
+    @Cacheable(value = "playlistSearch", key = "{#query, #offset, #limit}")
     public Map<String, Object> searchPlaylists(String query, int offset, int limit) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
