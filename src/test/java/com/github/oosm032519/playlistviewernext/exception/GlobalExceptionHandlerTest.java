@@ -9,6 +9,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.util.Collections;
@@ -16,6 +18,7 @@ import java.util.HashSet;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
@@ -45,6 +48,28 @@ class GlobalExceptionHandlerTest {
         assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("NOT_FOUND_ERROR");
         assertThat(response.getBody().getMessage()).isEqualTo("Not Found");
         assertThat(response.getBody().getDetails()).contains("Details");
+    }
+
+    @Test
+    void handlePlaylistViewerNextException_withNullDetails_shouldReturnErrorResponseWithRequestParams() {
+        // Arrange
+        PlaylistViewerNextException exception = new PlaylistViewerNextException(HttpStatus.NOT_FOUND, "Not Found", "NOT_FOUND_ERROR");
+
+        // Mocking ServletRequestAttributes and RequestContextHolder to provide request parameters
+        ServletRequestAttributes attributes = mock(ServletRequestAttributes.class);
+        when(attributes.getRequest()).thenReturn(request);
+        RequestContextHolder.setRequestAttributes(attributes);
+
+        when(request.getParameterMap()).thenReturn(Collections.singletonMap("param", new String[]{"value"}));
+
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handlePlaylistViewerNextException(exception);
+
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("NOT_FOUND_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("Not Found");
+        assertThat(response.getBody().getDetails()).contains("リクエストパラメータ: param=value");
     }
 
     @Test
@@ -93,4 +118,40 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo("システムエラーが発生しました。しばらく時間をおいてから再度お試しください。");
         assertThat(response.getBody().getDetails()).contains("Unexpected error");
     }
+
+    // 新規追加テスト: getRequestParamsメソッドで例外が発生した場合のテスト
+    @Test
+    void getRequestParams_shouldReturnEmptyString_whenExceptionOccurs() {
+        // Arrange
+        // RequestContextHolder をクリアして影響を受けないようにする
+        RequestContextHolder.resetRequestAttributes();
+
+        // `request.getParameterMap()` が例外をスローするようにモック
+        when(request.getParameterMap()).thenThrow(new RuntimeException("Request error"));
+
+        // Act
+        String requestParams = globalExceptionHandler.getRequestParams();
+
+        // Assert
+        assertThat(requestParams).isEmpty();
+    }
+
+    // 新規追加テスト: PlaylistViewerNextException の他のコンストラクタをテスト
+    @Test
+    void handlePlaylistViewerNextException_withCause_shouldReturnErrorResponse() {
+        // Arrange
+        Throwable cause = new Exception("Cause message");
+        PlaylistViewerNextException exception = new PlaylistViewerNextException(HttpStatus.INTERNAL_SERVER_ERROR, "Error with cause", "CAUSE_ERROR", cause);
+        when(request.getParameterMap()).thenReturn(Collections.emptyMap());
+
+        // Act
+        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handlePlaylistViewerNextException(exception);
+
+        // Assert
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(Objects.requireNonNull(response.getBody()).getErrorCode()).isEqualTo("CAUSE_ERROR");
+        assertThat(response.getBody().getMessage()).isEqualTo("Error with cause");
+        assertThat(response.getBody().getDetails()).isEqualTo("Cause message");
+    }
+
 }

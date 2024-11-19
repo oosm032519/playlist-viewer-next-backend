@@ -59,7 +59,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /**
      * リクエストパラメータを取得するヘルパーメソッド
      */
-    private String getRequestParams() {
+    public String getRequestParams() {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
