@@ -9,21 +9,50 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * CORS（Cross-Origin Resource Sharing）設定を行うクラス。
+ * フロントエンドアプリケーションとの通信を許可するために、CORSを設定する。
+ */
 @Configuration
 public class CorsConfig {
 
+    /**
+     * フロントエンドのURLを設定ファイルから取得する。
+     * `@Value`アノテーションを使用して、プロパティファイルから値を注入する。
+     */
     @Value("${frontend.url}")
     private String frontendUrl;
 
+    /**
+     * CORS設定を構成するメソッド。
+     * 特定のオリジン、HTTPメソッド、およびヘッダーを許可する設定を行う。
+     *
+     * @return CorsConfigurationSource CORS設定が適用されたソース
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        // CORSの設定を保持するオブジェクトを作成
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // 許可するオリジンを設定（フロントエンドのURL）
         configuration.setAllowedOrigins(List.of(frontendUrl));
+
+        // 許可するHTTPメソッドのリストを設定
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // 全てのリクエストヘッダーを許可
         configuration.setAllowedHeaders(List.of("*"));
+
+        // クッキーや認証情報の送信を許可する
         configuration.setAllowCredentials(true);
+
+        // URLパターンに基づいたCORS設定を適用するためのソースを作成
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        // 全てのエンドポイントに対して、上記のCORS設定を適用
         source.registerCorsConfiguration("/**", configuration);
+
+        // 設定したCORSソースを返す
         return source;
     }
 }

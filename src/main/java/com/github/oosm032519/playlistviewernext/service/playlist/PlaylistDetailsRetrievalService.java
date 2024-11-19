@@ -19,6 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Spotifyプレイリストの詳細情報を取得するサービスクラス
+ * プレイリストの楽曲情報、オーディオ特徴、統計情報などを提供する
+ */
 @Service
 public class PlaylistDetailsRetrievalService {
 
@@ -29,6 +33,15 @@ public class PlaylistDetailsRetrievalService {
     private final TrackDataRetriever trackDataRetriever;
     private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
 
+    /**
+     * コンストラクタ - 必要な依存関係を注入する
+     *
+     * @param playlistDetailsService     プレイリスト詳細取得サービス
+     * @param authController             Spotify認証コントローラ
+     * @param trackDataRetriever         トラックデータ取得サービス
+     * @param playlistAnalyticsService   プレイリスト分析サービス
+     * @param trackRecommendationService トラック推薦サービス
+     */
     @Autowired
     public PlaylistDetailsRetrievalService(
             SpotifyPlaylistDetailsService playlistDetailsService,
@@ -42,12 +55,22 @@ public class PlaylistDetailsRetrievalService {
         this.playlistAnalyticsService = playlistAnalyticsService;
     }
 
+    /**
+     * プレイリストの詳細情報を取得する
+     *
+     * @param id プレイリストID
+     * @return プレイリストの詳細情報を含むMap
+     * @throws ResourceNotFoundException プレイリストが見つからない場合
+     * @throws InvalidRequestException   処理中にエラーが発生した場合
+     */
     public Map<String, Object> getPlaylistDetails(String id) {
         logger.info("getPlaylistDetails: プレイリストID: {}", id);
 
         try {
+            // Spotify APIの認証
             authController.authenticate();
 
+            // プレイリスト情報の取得
             Playlist playlist = playlistDetailsService.getPlaylist(id);
             if (playlist == null) {
                 throw new ResourceNotFoundException(
@@ -59,14 +82,16 @@ public class PlaylistDetailsRetrievalService {
             String playlistName = playlist.getName();
             User owner = playlist.getOwner();
 
+            // トラック情報の取得と解析
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
             List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
 
+            // オーディオ特徴の計算
             Map<String, Float> maxAudioFeatures = AudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
             Map<String, Float> minAudioFeatures = AudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
             Map<String, Float> averageAudioFeatures = AudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
 
-
+            // 上位アーティストの取得
             List<String> seedArtists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
 
             logAudioFeatures(maxAudioFeatures, minAudioFeatures, averageAudioFeatures);
@@ -83,6 +108,21 @@ public class PlaylistDetailsRetrievalService {
         }
     }
 
+    /**
+     * オーディオ特徴をログに出力する
+     */
+    private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures) {
+        logger.info("getPlaylistDetails: 最大AudioFeatures: {}", maxAudioFeatures);
+        logger.info("getPlaylistDetails: 最小AudioFeatures: {}", minAudioFeatures);
+        logger.info("getPlaylistDetails: 平均AudioFeatures: {}", averageAudioFeatures);
+    }
+
+    /**
+     * プレイリストの総再生時間を計算する
+     *
+     * @param tracks プレイリストのトラック配列
+     * @return 総再生時間（ミリ秒）
+     */
     public long calculateTotalDuration(PlaylistTrack[] tracks) {
         long totalDuration = 0;
         for (PlaylistTrack track : tracks) {
@@ -91,12 +131,9 @@ public class PlaylistDetailsRetrievalService {
         return totalDuration;
     }
 
-    private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures) {
-        logger.info("getPlaylistDetails: 最大AudioFeatures: {}", maxAudioFeatures);
-        logger.info("getPlaylistDetails: 最小AudioFeatures: {}", minAudioFeatures);
-        logger.info("getPlaylistDetails: 平均AudioFeatures: {}", averageAudioFeatures);
-    }
-
+    /**
+     * レスポンス用のMapを作成する
+     */
     private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures, long totalDuration, final List<String> seedArtists) {
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
