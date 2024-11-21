@@ -94,7 +94,7 @@ public class PlaylistCreationController {
      * @param userName ユーザー名
      * @return 生成されたプレイリスト名
      */
-    private String generatePlaylistName(String userName) {
+    public String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
     }
 }
