@@ -1,10 +1,10 @@
 package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
+import com.github.oosm032519.playlistviewernext.model.CreatePlaylistRequest;
 import com.github.oosm032519.playlistviewernext.security.UserAuthenticationService;
 import com.github.oosm032519.playlistviewernext.service.playlist.SpotifyUserPlaylistCreationService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,7 +20,7 @@ import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+
 
 /**
  * プレイリスト作成のためのコントローラークラス
@@ -54,14 +54,16 @@ public class PlaylistCreationController {
      * プレイリストを作成するエンドポイント
      * 指定されたトラックIDのリストを使用して新しいプレイリストを作成する
      *
-     * @param trackIds  プレイリストに追加するトラックIDのリスト
+     * @param request   リクエストボディ。トラックIDのリストとプレイリスト名を含む
      * @param principal 認証されたユーザー情報
      * @return プレイリスト作成の結果を含むResponseEntity
      */
     @PostMapping("/create")
-    public ResponseEntity<String> createPlaylist(@Valid @RequestBody @NotEmpty List<String> trackIds,
-                                                 @AuthenticationPrincipal OAuth2User principal) throws SpotifyWebApiException {
-        logger.info("プレイリスト作成リクエストを受信しました。トラックID数: {}", trackIds.size());
+    public ResponseEntity<String> createPlaylist(
+            @Valid @RequestBody CreatePlaylistRequest request, // リクエストボディからデータを取得
+            @AuthenticationPrincipal OAuth2User principal
+    ) throws SpotifyWebApiException {
+        logger.info("プレイリスト作成リクエストを受信しました。トラックID数: {}", request.getTrackIds().size());
 
         // ユーザーのアクセストークンを取得
         String accessToken = userAuthenticationService.getAccessToken(principal);
@@ -75,10 +77,13 @@ public class PlaylistCreationController {
         // ユーザー情報を取得
         String userId = principal.getAttribute("id");
         String userName = principal.getAttribute("name");
-        String playlistName = generatePlaylistName(userName);
+
+        // プレイリスト名を設定。リクエストで指定された名前があれば使用、なければデフォルトの名前を生成
+        String finalPlaylistName = request.getPlaylistName() != null ? request.getPlaylistName() : generatePlaylistName(userName);
+
 
         // プレイリストを作成
-        String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, playlistName, trackIds);
+        String playlistId = spotifyUserPlaylistCreationService.createPlaylist(accessToken, userId, finalPlaylistName, request.getTrackIds());
         logger.info("プレイリストが正常に作成されました。プレイリストID: {}", playlistId);
         return ResponseEntity.ok(String.format("{\"playlistId\": \"%s\"}", playlistId));
     }
@@ -89,7 +94,7 @@ public class PlaylistCreationController {
      * @param userName ユーザー名
      * @return 生成されたプレイリスト名
      */
-    public String generatePlaylistName(String userName) {
+    private String generatePlaylistName(String userName) {
         return String.format(PLAYLIST_NAME_FORMAT, userName, LocalDateTime.now().format(DATE_TIME_FORMATTER));
     }
 }
