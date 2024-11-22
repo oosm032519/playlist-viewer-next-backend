@@ -5,7 +5,6 @@ import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundExcept
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -46,7 +45,6 @@ public class SpotifyPlaylistDetailsService {
      * @return プレイリスト内のトラックの配列
      * @throws ResourceNotFoundException プレイリストが見つからない場合
      */
-    @Cacheable(value = "playlistTracks", key = "#playlistId")
     public PlaylistTrack[] getPlaylistTracks(String playlistId) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
@@ -101,7 +99,6 @@ public class SpotifyPlaylistDetailsService {
      * @param playlistId プレイリストのID
      * @return プレイリスト情報、見つからない場合は null
      */
-    @Cacheable(value = "playlist", key = "#playlistId")
     public Playlist getPlaylist(String playlistId) throws SpotifyWebApiException {
         return RetryUtil.executeWithRetry(() -> {
             try {
