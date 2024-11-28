@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,6 +59,7 @@ public class SpotifyUserPlaylistsServiceTest {
         SecurityContextHolder.setContext(securityContext);
 
         when(spotifyApi.getListOfCurrentUsersPlaylists()).thenReturn(requestBuilder);
+        when(requestBuilder.limit(anyInt())).thenReturn(requestBuilder); // limit()のモックを追加
         when(requestBuilder.build()).thenReturn(request);
     }
 
@@ -83,7 +85,7 @@ public class SpotifyUserPlaylistsServiceTest {
         when(request.execute()).thenThrow(new SpotifyWebApiException("API error"));
 
         assertThatThrownBy(() -> spotifyUserPlaylistsService.getCurrentUsersPlaylists())
-                .isInstanceOf(SpotifyWebApiException.class); // SpotifyWebApiException がスローされることを検証
+                .isInstanceOf(SpotifyWebApiException.class);
         verify(spotifyApi).setAccessToken(accessToken);
     }
 
