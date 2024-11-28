@@ -90,7 +90,9 @@ public class SpotifyUserPlaylistsService {
      * @throws org.apache.hc.core5.http.ParseException Spotify APIのレスポンスのパース中にエラーが発生した場合
      */
     private List<PlaylistSimplified> getPlaylists() throws IOException, SpotifyWebApiException, org.apache.hc.core5.http.ParseException {
-        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists().build();
+        GetListOfCurrentUsersPlaylistsRequest playlistsRequest = spotifyApi.getListOfCurrentUsersPlaylists()
+                .limit(50)
+                .build();
         Paging<PlaylistSimplified> playlistsPaging = playlistsRequest.execute();
         return Optional.ofNullable(playlistsPaging.getItems())
                 .map(Arrays::asList)
