@@ -1,5 +1,6 @@
 package com.github.oosm032519.playlistviewernext.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserAuthenticationService {
 
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
+
     /**
      * 現在認証されているユーザーのアクセストークンを取得する
      *
@@ -18,6 +22,10 @@ public class UserAuthenticationService {
      * @return アクセストークン、または認証されていない場合はnull
      */
     public String getAccessToken(@AuthenticationPrincipal OAuth2User principal) {
+        if (mockEnabled) {
+            return "mock-access-token";
+        }
+
         if (isPrincipalNull(principal)) {
             return null;
         }

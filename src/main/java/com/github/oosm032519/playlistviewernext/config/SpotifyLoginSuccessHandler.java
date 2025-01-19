@@ -36,6 +36,9 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     @Value("${frontend.url}")
     public String frontendUrl;
 
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
+
     @Autowired
     public RedisTemplate<String, String> redisTemplate;
 
@@ -61,6 +64,42 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
      */
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        if (mockEnabled) {
+            handleMockAuthenticationSuccess(request, response, authentication);
+        } else {
+            handleRealAuthenticationSuccess(request, response, authentication);
+        }
+    }
+
+    private void handleMockAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        logger.info("SpotifyLoginSuccessHandler: モックモードで認証成功を処理します。");
+        // ダミーのユーザー情報とJWTトークンを生成
+        String userId = "mock-user-id";
+        String userName = "Mock User";
+        String spotifyAccessToken = "mock-access-token";
+
+        // JWTトークンの生成
+        Map<String, Object> fullSessionClaims = new HashMap<>();
+        fullSessionClaims.put("sub", userId);
+        fullSessionClaims.put("name", userName);
+        fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
+        String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
+
+        // 一時トークンとセッションIDの生成
+        String temporaryToken = UUID.randomUUID().toString();
+        String sessionId = UUID.randomUUID().toString();
+
+        // Redisに一時トークンとセッション情報を保存
+        redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
+        redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
+
+        // フロントエンドにリダイレクト
+        response.sendRedirect(frontendUrl + "#token=" + temporaryToken);
+    }
+
+    private void handleRealAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        logger.info("SpotifyLoginSuccessHandler: 実認証モードで認証成功を処理します。");
         OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
         String userId = oauth2User.getAttribute("id");
         String spotifyAccessToken = oauth2User.getAttribute("access_token");

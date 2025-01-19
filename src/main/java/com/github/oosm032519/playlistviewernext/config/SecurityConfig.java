@@ -4,6 +4,7 @@ import com.github.oosm032519.playlistviewernext.filter.JwtAuthenticationFilter;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyOAuth2UserService;
 import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -12,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
@@ -78,9 +78,7 @@ public class SecurityConfig {
                         .loginPage("/oauth2/authorization/spotify")
                         .userInfoEndpoint(userInfo -> userInfo.userService(spotifyOAuth2UserService))
                         .successHandler(spotifyLoginSuccessHandler)
-                )
-                // JWTフィルターを追加
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                );
         return http.build();
     }
 
@@ -90,6 +88,7 @@ public class SecurityConfig {
      * @return 設定済みのJwtAuthenticationFilter
      */
     @Bean
+    @ConditionalOnProperty(name = "spotify.mock.enabled", havingValue = "false", matchIfMissing = true)
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil);
     }
