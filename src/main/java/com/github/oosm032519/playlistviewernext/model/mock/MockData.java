@@ -15,7 +15,7 @@ public class MockData {
         // ダミーのプレイリストをいくつか作成
         for (int i = 1; i <= 5; i++) {
             Map<String, Object> playlist = new HashMap<>();
-            playlist.put("id", "mock-playlist-id-" + i);
+            playlist.put("id", generateMockPlaylistId(i)); // ID生成メソッドを使用
             playlist.put("name", "Mock Playlist " + i);
 
             Map<String, Object> tracks = new HashMap<>();
@@ -27,7 +27,7 @@ public class MockData {
             playlist.put("images", images);
 
             Map<String, Object> externalUrls = new HashMap<>();
-            externalUrls.put("spotify", "https://open.spotify.com/playlist/mock-playlist-id-" + i);
+            externalUrls.put("spotify", "https://open.spotify.com/playlist/" + playlist.get("id"));
             playlist.put("externalUrls", Map.of("externalUrls", externalUrls));
 
             playlists.add(playlist);
@@ -38,14 +38,19 @@ public class MockData {
         return response;
     }
 
+    // モックプレイリストIDを生成
+    private static String generateMockPlaylistId(int i) {
+        return "mockPlaylistId" + String.format("%03d", i);
+    }
+
     public static Map<String, Object> getMockedPlaylistDetails(String playlistId) {
         Map<String, Object> response = new HashMap<>();
         response.put("playlistName", "Mock Playlist");
-        response.put("ownerId", "mock-owner-id");
+        response.put("ownerId", "mockownerid"); // ダミーの所有者ID
         response.put("ownerName", "Mock Owner");
         response.put("totalDuration", 3600000); // 1 hour in milliseconds
 
-        // AudioFeaturesのモックデータ（オブジェクト形式に修正）
+        // AudioFeaturesのモックデータ
         Map<String, Object> maxAudioFeatures = new HashMap<>();
         maxAudioFeatures.put("acousticness", 1.0f);
         maxAudioFeatures.put("danceability", 1.0f);
@@ -94,30 +99,27 @@ public class MockData {
         List<Map<String, Object>> tracks = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             Map<String, Object> trackData = new HashMap<>();
-            trackData.put("id", "mock-track-id-" + i);
+            trackData.put("id", generateMockTrackId(i)); // ID生成メソッドを使用
             trackData.put("name", "Mock Track " + i);
             trackData.put("durationMs", 180000); // 3 minutes in milliseconds
 
             Map<String, Object> album = new HashMap<>();
             album.put("name", "Mock Album " + i);
             album.put("images", Collections.singletonList(Map.of("url", "https://via.placeholder.com/150")));
-            // album.externalUrls を externalUrls オブジェクトでラップ
-            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i)));
+            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/" + trackData.get("id"))));
             trackData.put("album", album);
 
             List<Map<String, Object>> artists = new ArrayList<>();
             Map<String, Object> artist = new HashMap<>();
             artist.put("name", "Mock Artist " + i);
-            // artist.externalUrls を externalUrls オブジェクトでラップ
-            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i)));
+            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/" + trackData.get("id"))));
             artists.add(artist);
             trackData.put("artists", artists);
 
-            // track.externalUrls を externalUrls オブジェクトでラップ
-            trackData.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i)));
+            trackData.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/" + trackData.get("id"))));
             trackData.put("previewUrl", "https://via.placeholder.com/150");
 
-            // AudioFeaturesのモックデータ（オブジェクト形式）
+            // AudioFeaturesのモックデータ
             Map<String, Object> audioFeatures = new HashMap<>();
             audioFeatures.put("acousticness", 0.5f);
             audioFeatures.put("danceability", 0.5f);
@@ -132,14 +134,11 @@ public class MockData {
             audioFeatures.put("valence", 0.5f);
             audioFeatures.put("key", 7);
             audioFeatures.put("durationMs", 180000);
-            audioFeatures.put("id", "mock-track-id-" + i);
-            // trackDataにaudioFeaturesを追加
+            audioFeatures.put("id", trackData.get("id"));
             trackData.put("audioFeatures", audioFeatures);
 
-            // trackData を track オブジェクトでラップ
             Map<String, Object> track = new HashMap<>();
             track.put("track", trackData);
-            // itemにaudioFeaturesを追加
             track.put("audioFeatures", audioFeatures);
             tracks.add(track);
         }
@@ -151,30 +150,35 @@ public class MockData {
         return response;
     }
 
+    // モックトラックIDを生成
+    private static String generateMockTrackId(int i) {
+        return "mockTrackId" + String.format("%03d", i);
+    }
+
     public static List<Map<String, Object>> getMockedRecommendations() {
         List<Map<String, Object>> recommendations = new ArrayList<>();
 
         // ダミーのトラックをいくつか作成
         for (int i = 1; i <= 5; i++) {
             Map<String, Object> track = new HashMap<>();
-            track.put("id", "mock-track-id-" + i);
+            track.put("id", generateMockTrackId(i)); // ID生成メソッドを使用
             track.put("name", "Mock Track " + i);
             track.put("durationMs", 180000); // 3 minutes in milliseconds
 
             Map<String, Object> album = new HashMap<>();
             album.put("name", "Mock Album " + i);
             album.put("images", Collections.singletonList(Map.of("url", "https://via.placeholder.com/150")));
-            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i)));
+            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/" + track.get("id"))));
             track.put("album", album);
 
             List<Map<String, Object>> artists = new ArrayList<>();
             Map<String, Object> artist = new HashMap<>();
             artist.put("name", "Mock Artist " + i);
-            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i)));
+            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/" + track.get("id"))));
             artists.add(artist);
             track.put("artists", artists);
 
-            track.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i)));
+            track.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/" + track.get("id"))));
             track.put("previewUrl", "https://via.placeholder.com/150");
 
             recommendations.add(track);
@@ -189,7 +193,7 @@ public class MockData {
         // ダミーのプレイリストをいくつか作成
         for (int i = 1; i <= 5; i++) {
             Map<String, Object> playlist = new HashMap<>();
-            playlist.put("id", "mock-playlist-id-" + i);
+            playlist.put("id", generateMockPlaylistId(i)); // ID生成メソッドを使用
             playlist.put("name", "Mock Playlist " + i);
 
             Map<String, Object> tracks = new HashMap<>();
@@ -200,7 +204,7 @@ public class MockData {
             images.add(Map.of("url", "https://via.placeholder.com/150"));
             playlist.put("images", images);
 
-            playlist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/mock-playlist-id-" + i)));
+            playlist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/" + playlist.get("id"))));
 
             Map<String, Object> owner = new HashMap<>();
             owner.put("displayName", "Mock Owner " + i);
@@ -219,7 +223,7 @@ public class MockData {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
         for (int i = 1; i <= 5; i++) {
             FavoritePlaylistResponse playlist = new FavoritePlaylistResponse(
-                    "mock-playlist-id-" + i,
+                    generateMockPlaylistId(i), // ID生成メソッドを使用
                     "Mock Playlist " + i,
                     "Mock Owner " + i,
                     10,
@@ -235,9 +239,9 @@ public class MockData {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "User is authenticated");
-        response.put("userId", "mock-user-id");
+        response.put("userId", "mockuser123");
         response.put("userName", "Mock User");
-        response.put("spotifyAccessToken", "mock-access-token");
+        response.put("spotifyAccessToken", "mockAccessToken123");
         return response;
     }
 }
