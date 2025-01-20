@@ -45,38 +45,38 @@ public class MockData {
         response.put("ownerName", "Mock Owner");
         response.put("totalDuration", 3600000); // 1 hour in milliseconds
 
-        // AudioFeaturesのモックデータ
-        Map<String, Float> maxAudioFeatures = new HashMap<>();
+        // AudioFeaturesのモックデータ（オブジェクト形式に修正）
+        Map<String, Object> maxAudioFeatures = new HashMap<>();
+        maxAudioFeatures.put("acousticness", 1.0f);
         maxAudioFeatures.put("danceability", 1.0f);
         maxAudioFeatures.put("energy", 1.0f);
-        maxAudioFeatures.put("valence", 1.0f);
-        maxAudioFeatures.put("tempo", 200.0f);
-        maxAudioFeatures.put("acousticness", 1.0f);
         maxAudioFeatures.put("instrumentalness", 1.0f);
         maxAudioFeatures.put("liveness", 1.0f);
         maxAudioFeatures.put("speechiness", 1.0f);
+        maxAudioFeatures.put("valence", 1.0f);
+        maxAudioFeatures.put("tempo", 200.0f);
         response.put("maxAudioFeatures", maxAudioFeatures);
 
-        Map<String, Float> minAudioFeatures = new HashMap<>();
+        Map<String, Object> minAudioFeatures = new HashMap<>();
+        minAudioFeatures.put("acousticness", 0.0f);
         minAudioFeatures.put("danceability", 0.0f);
         minAudioFeatures.put("energy", 0.0f);
-        minAudioFeatures.put("valence", 0.0f);
-        minAudioFeatures.put("tempo", 50.0f);
-        minAudioFeatures.put("acousticness", 0.0f);
         minAudioFeatures.put("instrumentalness", 0.0f);
         minAudioFeatures.put("liveness", 0.0f);
         minAudioFeatures.put("speechiness", 0.0f);
+        minAudioFeatures.put("valence", 0.0f);
+        minAudioFeatures.put("tempo", 50.0f);
         response.put("minAudioFeatures", minAudioFeatures);
 
-        Map<String, Float> averageAudioFeatures = new HashMap<>();
+        Map<String, Object> averageAudioFeatures = new HashMap<>();
+        averageAudioFeatures.put("acousticness", 0.5f);
         averageAudioFeatures.put("danceability", 0.5f);
         averageAudioFeatures.put("energy", 0.5f);
-        averageAudioFeatures.put("valence", 0.5f);
-        averageAudioFeatures.put("tempo", 120.0f);
-        averageAudioFeatures.put("acousticness", 0.5f);
         averageAudioFeatures.put("instrumentalness", 0.5f);
         averageAudioFeatures.put("liveness", 0.5f);
         averageAudioFeatures.put("speechiness", 0.5f);
+        averageAudioFeatures.put("valence", 0.5f);
+        averageAudioFeatures.put("tempo", 120.0f);
         response.put("averageAudioFeatures", averageAudioFeatures);
 
         // ジャンルカウントのモックデータ
@@ -108,14 +108,16 @@ public class MockData {
             List<Map<String, Object>> artists = new ArrayList<>();
             Map<String, Object> artist = new HashMap<>();
             artist.put("name", "Mock Artist " + i);
+            // artist.externalUrls を externalUrls オブジェクトでラップ
             artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i)));
             artists.add(artist);
             trackData.put("artists", artists);
 
+            // track.externalUrls を externalUrls オブジェクトでラップ
             trackData.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i)));
             trackData.put("previewUrl", "https://via.placeholder.com/150");
 
-            // AudioFeaturesのモックデータ
+            // AudioFeaturesのモックデータ（オブジェクト形式）
             Map<String, Object> audioFeatures = new HashMap<>();
             audioFeatures.put("acousticness", 0.5f);
             audioFeatures.put("danceability", 0.5f);
@@ -131,14 +133,19 @@ public class MockData {
             audioFeatures.put("key", 7);
             audioFeatures.put("durationMs", 180000);
             audioFeatures.put("id", "mock-track-id-" + i);
+            // trackDataにaudioFeaturesを追加
             trackData.put("audioFeatures", audioFeatures);
 
+            // trackData を track オブジェクトでラップ
             Map<String, Object> track = new HashMap<>();
             track.put("track", trackData);
+            // itemにaudioFeaturesを追加
+            track.put("audioFeatures", audioFeatures);
             tracks.add(track);
         }
         response.put("tracks", Map.of("items", tracks));
 
+        // プレイリストIDをモックデータに含める
         response.put("id", playlistId);
 
         return response;
