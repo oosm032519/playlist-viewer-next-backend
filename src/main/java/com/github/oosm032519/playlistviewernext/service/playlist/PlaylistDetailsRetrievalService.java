@@ -3,12 +3,14 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
+import com.github.oosm032519.playlistviewernext.model.mock.MockData;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeaturesCalculator;
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import se.michaelthelin.spotify.model_objects.specification.Playlist;
@@ -33,6 +35,9 @@ public class PlaylistDetailsRetrievalService {
     private final TrackDataRetriever trackDataRetriever;
     private final SpotifyPlaylistAnalyticsService playlistAnalyticsService;
 
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
+
     /**
      * コンストラクタ - 必要な依存関係を注入する
      *
@@ -45,7 +50,7 @@ public class PlaylistDetailsRetrievalService {
     @Autowired
     public PlaylistDetailsRetrievalService(
             SpotifyPlaylistDetailsService playlistDetailsService,
-            SpotifyClientCredentialsAuthentication authController,
+            @Autowired(required = false) SpotifyClientCredentialsAuthentication authController,
             TrackDataRetriever trackDataRetriever,
             SpotifyPlaylistAnalyticsService playlistAnalyticsService,
             SpotifyRecommendationService trackRecommendationService) {
@@ -67,8 +72,17 @@ public class PlaylistDetailsRetrievalService {
         logger.info("getPlaylistDetails: プレイリストID: {}", id);
 
         try {
-            // Spotify APIの認証
-            authController.authenticate();
+            // モックモードが有効な場合は認証をスキップ
+            if (!mockEnabled && authController != null) {
+                // Spotify APIの認証を行う
+                authController.authenticate();
+            }
+
+            // モックモードの場合はモックデータを返す
+            if (mockEnabled) {
+                logger.info("モックモードが有効です。モックデータを返します。");
+                return MockData.getMockedPlaylistDetails(id);
+            }
 
             // プレイリスト情報の取得
             Playlist playlist = playlistDetailsService.getPlaylist(id);

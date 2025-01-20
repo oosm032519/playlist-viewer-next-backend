@@ -48,7 +48,9 @@ public class MockDataInterceptor implements HandlerInterceptor {
             return MockData.getMockedPlaylistSearchResponse();
         } else if (requestURI.matches("/api/playlists/\\w+/details") && "GET".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/{id}/details に対するモックデータを取得します。");
-            return MockData.getMockedPlaylistDetails();
+            // URIからIDを抽出してモックデータを取得
+            String playlistId = requestURI.substring("/api/playlists/".length(), requestURI.indexOf("/details"));
+            return MockData.getMockedPlaylistDetails(playlistId);
         } else if (requestURI.startsWith("/api/playlists/recommendations") && "POST".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/recommendations に対するモックデータを取得します。");
             return MockData.getMockedRecommendations();

@@ -38,7 +38,7 @@ public class MockData {
         return response;
     }
 
-    public static Map<String, Object> getMockedPlaylistDetails() {
+    public static Map<String, Object> getMockedPlaylistDetails(String playlistId) {
         Map<String, Object> response = new HashMap<>();
         response.put("playlistName", "Mock Playlist");
         response.put("ownerId", "mock-owner-id");
@@ -93,26 +93,27 @@ public class MockData {
         // トラックリストのモックデータ
         List<Map<String, Object>> tracks = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
-            Map<String, Object> track = new HashMap<>();
-            track.put("id", "mock-track-id-" + i);
-            track.put("name", "Mock Track " + i);
-            track.put("durationMs", 180000); // 3 minutes in milliseconds
+            Map<String, Object> trackData = new HashMap<>();
+            trackData.put("id", "mock-track-id-" + i);
+            trackData.put("name", "Mock Track " + i);
+            trackData.put("durationMs", 180000); // 3 minutes in milliseconds
 
             Map<String, Object> album = new HashMap<>();
             album.put("name", "Mock Album " + i);
             album.put("images", Collections.singletonList(Map.of("url", "https://via.placeholder.com/150")));
-            album.put("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i));
-            track.put("album", album);
+            // album.externalUrls を externalUrls オブジェクトでラップ
+            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i)));
+            trackData.put("album", album);
 
             List<Map<String, Object>> artists = new ArrayList<>();
             Map<String, Object> artist = new HashMap<>();
             artist.put("name", "Mock Artist " + i);
-            artist.put("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i));
+            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i)));
             artists.add(artist);
-            track.put("artists", artists);
+            trackData.put("artists", artists);
 
-            track.put("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i));
-            track.put("previewUrl", "https://via.placeholder.com/150");
+            trackData.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i)));
+            trackData.put("previewUrl", "https://via.placeholder.com/150");
 
             // AudioFeaturesのモックデータ
             Map<String, Object> audioFeatures = new HashMap<>();
@@ -130,11 +131,15 @@ public class MockData {
             audioFeatures.put("key", 7);
             audioFeatures.put("durationMs", 180000);
             audioFeatures.put("id", "mock-track-id-" + i);
-            track.put("audioFeatures", audioFeatures);
+            trackData.put("audioFeatures", audioFeatures);
 
+            Map<String, Object> track = new HashMap<>();
+            track.put("track", trackData);
             tracks.add(track);
         }
         response.put("tracks", Map.of("items", tracks));
+
+        response.put("id", playlistId);
 
         return response;
     }
@@ -152,17 +157,17 @@ public class MockData {
             Map<String, Object> album = new HashMap<>();
             album.put("name", "Mock Album " + i);
             album.put("images", Collections.singletonList(Map.of("url", "https://via.placeholder.com/150")));
-            album.put("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i));
+            album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/mock-album-id-" + i)));
             track.put("album", album);
 
             List<Map<String, Object>> artists = new ArrayList<>();
             Map<String, Object> artist = new HashMap<>();
             artist.put("name", "Mock Artist " + i);
-            artist.put("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i));
+            artist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/artist/mock-artist-id-" + i)));
             artists.add(artist);
             track.put("artists", artists);
 
-            track.put("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i));
+            track.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/track/mock-track-id-" + i)));
             track.put("previewUrl", "https://via.placeholder.com/150");
 
             recommendations.add(track);
@@ -188,7 +193,7 @@ public class MockData {
             images.add(Map.of("url", "https://via.placeholder.com/150"));
             playlist.put("images", images);
 
-            playlist.put("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/mock-playlist-id-" + i));
+            playlist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/mock-playlist-id-" + i)));
 
             Map<String, Object> owner = new HashMap<>();
             owner.put("displayName", "Mock Owner " + i);

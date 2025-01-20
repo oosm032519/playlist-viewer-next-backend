@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,14 +35,18 @@ public class PlaylistSearchController {
     private final SpotifyPlaylistSearchService playlistSearchService;
     private final SpotifyClientCredentialsAuthentication authController;
 
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
+
     /**
      * PlaylistSearchControllerのコンストラクタ
      *
      * @param playlistSearchService Spotifyプレイリスト検索サービス
      * @param authController        Spotify認証コントローラ
      */
+    @Autowired
     public PlaylistSearchController(SpotifyPlaylistSearchService playlistSearchService,
-                                    SpotifyClientCredentialsAuthentication authController) {
+                                    @Autowired(required = false) SpotifyClientCredentialsAuthentication authController) {
         this.playlistSearchService = playlistSearchService;
         this.authController = authController;
     }
@@ -67,7 +73,9 @@ public class PlaylistSearchController {
         logger.info("Searching playlists. Query: {}, Offset: {}, Limit: {}", query, offset, limit);
 
         // Spotify APIの認証を行う
-        authController.authenticate();
+        if (!mockEnabled && authController != null) {
+            authController.authenticate();
+        }
 
         // プレイリストの検索を実行し、検索結果と総数を取得
         Map<String, Object> searchResult = playlistSearchService.searchPlaylists(query, offset, limit);
