@@ -68,20 +68,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // URLごとのアクセス制御を設定
                 .authorizeHttpRequests(authz -> authz
-                        // 公開エンドポイントの設定
-                        .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search",
-                                "/api/playlists/{id}/details", "api/playlists/recommendations",
-                                "api/session/sessionId").permitAll()
-                        // その他のリクエストは認証が必要
-                        .anyRequest().authenticated()
-                )
-                // OAuth2ログインの設定
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/oauth2/authorization/spotify")
-                        .userInfoEndpoint(userInfo -> userInfo.userService(spotifyOAuth2UserService))
-                        .successHandler(spotifyLoginSuccessHandler)
+                        .anyRequest().permitAll()
                 );
-
         return http.build();
     }
 
@@ -106,11 +94,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // 公開エンドポイントの設定
                         .requestMatchers("/", "/error", "/webjars/**", "/api/playlists/search",
-                                "api/session/sessionId").permitAll()
-                        // detailsエンドポイントはモックモードでは認証不要、実処理モードでは認証が必要
-                        .requestMatchers("/api/playlists/{id}/details").permitAll()
-                        .requestMatchers("api/playlists/recommendations").permitAll()
-                        // その他のリクエストは認証が必要
+                                "api/session/sessionId", "/api/playlists/{id}/details", "api/playlists/recommendations").permitAll()
                         .anyRequest().authenticated()
                 )
                 // OAuth2ログインの設定
