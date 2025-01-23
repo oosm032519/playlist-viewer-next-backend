@@ -239,9 +239,17 @@ public class MockData {
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "User is authenticated");
-        response.put("userId", "mockuser123");
+        response.put("userId", "mock-user-id");
         response.put("userName", "Mock User");
-        response.put("spotifyAccessToken", "mockAccessToken123");
+        return response;
+    }
+
+    public static Map<String, Object> getMockedLoginResponse() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("userId", "mock-user-id");
+        response.put("userName", "Mock User");
+        response.put("status", "success");
+        response.put("message", "モックログインに成功しました。");
         return response;
     }
 }

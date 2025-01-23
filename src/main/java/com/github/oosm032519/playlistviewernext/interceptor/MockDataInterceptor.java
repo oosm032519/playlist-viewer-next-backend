@@ -73,7 +73,7 @@ public class MockDataInterceptor implements HandlerInterceptor {
             logger.info("MockDataInterceptor: /api/playlist/remove-track に対するモックデータを取得します。");
             return Map.of("message", "トラックが正常に削除されました。");
         } else if (requestURI.startsWith("/api/session/check") && "GET".equalsIgnoreCase(method)) {
-            logger.info("MockDataInterceptor: /api/session/check に対するモックデータを取得します。");
+            logger.info("MockDataInterceptor: /api/session/check に対するモックデータを返します。");
             return MockData.getMockedSessionCheckResponse();
         } else if (requestURI.startsWith("/api/session/logout") && "POST".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/session/logout に対するモックデータを取得します。");
@@ -81,6 +81,9 @@ public class MockDataInterceptor implements HandlerInterceptor {
         } else if (requestURI.startsWith("/api/session/sessionId") && "POST".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/session/sessionId に対するモックデータを取得します。");
             return Map.of("sessionId", "mock-session-id");
+        } else if (requestURI.startsWith("/api/mock-login") && "POST".equalsIgnoreCase(method)) {
+            logger.info("MockDataInterceptor: /api/mock-login に対するモックデータを取得します。");
+            return MockData.getMockedLoginResponse();
         }
         return null;
     }
