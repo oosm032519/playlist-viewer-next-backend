@@ -1,6 +1,7 @@
 package com.github.oosm032519.playlistviewernext.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.oosm032519.playlistviewernext.model.mock.MockData;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,8 +18,13 @@ public class MockDataInterceptor implements HandlerInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(MockDataInterceptor.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Value("${spotify.mock.enabled}")
     private boolean mockEnabled;
+
+    public MockDataInterceptor() {
+        objectMapper.registerModule(new JavaTimeModule()); // ObjectMapper に JavaTimeModule を登録
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -31,7 +37,7 @@ public class MockDataInterceptor implements HandlerInterceptor {
             if (mockResponse != null) {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(objectMapper.writeValueAsString(mockResponse));
+                response.getWriter().write(objectMapper.writeValueAsString(mockResponse)); // ここで objectMapper を使用
                 logger.info("MockDataInterceptor: モックデータを返却しました。URI: {}", request.getRequestURI());
                 return false; // ハンドラーの実行を停止
             } else {

@@ -2,8 +2,6 @@ package com.github.oosm032519.playlistviewernext.model.mock;
 
 import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class MockData {
@@ -220,20 +218,20 @@ public class MockData {
         List<FavoritePlaylistResponse> favoritePlaylists = new ArrayList<>();
 
         // ダミーのお気に入りプレイリストをいくつか作成
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
         for (int i = 1; i <= 5; i++) {
             FavoritePlaylistResponse playlist = new FavoritePlaylistResponse(
                     generateMockPlaylistId(i), // ID生成メソッドを使用
                     "Mock Playlist " + i,
                     "Mock Owner " + i,
                     10,
-                    LocalDateTime.now()
+                    new Date() // 現在の日時のDateオブジェクトを生成
             );
             favoritePlaylists.add(playlist);
         }
 
         return favoritePlaylists;
     }
+
 
     public static Map<String, Object> getMockedSessionCheckResponse() {
         Map<String, Object> response = new HashMap<>();

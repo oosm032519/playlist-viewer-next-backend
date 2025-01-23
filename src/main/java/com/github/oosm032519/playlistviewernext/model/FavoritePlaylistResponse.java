@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * お気に入りプレイリストの応答を表すモデルクラス
@@ -53,5 +54,12 @@ public class FavoritePlaylistResponse {
         this.playlistOwnerName = playlistOwnerName;
         this.totalTracks = totalTracks;
         this.addedAt = addedAt;
+    }
+
+    public FavoritePlaylistResponse(final String playlistId, final String playlistName, final String playlistOwnerName, final int totalTracks, final Date date) {
+        this.playlistId = playlistId;
+        this.playlistName = playlistName;
+        this.playlistOwnerName = playlistOwnerName;
+        this.totalTracks = totalTracks;
     }
 }
