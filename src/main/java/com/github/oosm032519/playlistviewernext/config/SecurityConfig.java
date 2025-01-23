@@ -116,6 +116,7 @@ public class SecurityConfig {
      * @return 設定済みのJwtAuthenticationFilter
      */
     @Bean
+    @ConditionalOnProperty(name = "spotify.mock.enabled", havingValue = "false", matchIfMissing = true)
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtUtil);
     }
