@@ -6,12 +6,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.stereotype.Component;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.User;
@@ -26,18 +24,15 @@ import java.util.concurrent.TimeUnit;
  * Spotify認証成功時の処理を行うハンドラークラス
  * ユーザー情報の取得、JWTトークンの生成、一時トークンの発行などを行う
  */
-@Component
 public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(SpotifyLoginSuccessHandler.class);
 
     private final JwtUtil jwtUtil;
 
-    @Value("${frontend.url}")
-    public String frontendUrl;
+    private final String frontendUrl;
 
-    @Value("${spotify.mock.enabled}")
-    private boolean mockEnabled;
+    private final boolean mockEnabled;
 
     @Autowired
     public RedisTemplate<String, String> redisTemplate;
@@ -50,8 +45,11 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
      *
      * @param jwtUtil JWTユーティリティクラス
      */
-    public SpotifyLoginSuccessHandler(JwtUtil jwtUtil) {
+    public SpotifyLoginSuccessHandler(JwtUtil jwtUtil, String frontendUrl, boolean mockEnabled) {
         this.jwtUtil = jwtUtil;
+        this.frontendUrl = frontendUrl;
+        this.mockEnabled = mockEnabled;
+        logger.info("SpotifyLoginSuccessHandler が初期化されました。モックモード: {}", this.mockEnabled);
     }
 
     /**
@@ -65,18 +63,20 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         if (mockEnabled) {
+            logger.info("モックモードが有効です。モック用のダミーデータで認証成功処理を行います。");
             handleMockAuthenticationSuccess(request, response, authentication);
         } else {
+            logger.info("モックモードが無効です。Spotifyからのデータで認証成功処理を行います。");
             handleRealAuthenticationSuccess(request, response, authentication);
         }
     }
 
     private void handleMockAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         logger.info("SpotifyLoginSuccessHandler: モックモードで認証成功を処理します。");
-        // ダミーのユーザー情報とJWTトークンを生成
-        String userId = "mock-user-id";
-        String userName = "Mock User";
-        String spotifyAccessToken = "mock-access-token";
+        // モックユーザー情報を生成 (UUIDを使用)
+        String userId = UUID.randomUUID().toString();
+        String userName = "Mock User " + userId.substring(0, 8); // UUIDの一部をユーザー名に利用
+        String spotifyAccessToken = UUID.randomUUID().toString(); // モックのアクセストークンもUUIDで生成
 
         // JWTトークンの生成
         Map<String, Object> fullSessionClaims = new HashMap<>();

@@ -72,6 +72,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String sessionId = ServletUtil.extractSessionIdFromRequest(request);
         if (sessionId != null) {
+            logger.info("セッションIDをCookieから取得しました: {}", sessionId);
             try {
                 // Redisからセッション情報を取得
                 String fullSessionToken = redisTemplate.opsForValue().get("session:" + sessionId);
@@ -83,6 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                 }
 
+                logger.info("Redisからセッション情報を取得しました。検証します。");
                 // フルセッショントークンを検証
                 Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
                 if (fullSessionClaims == null) {
@@ -125,8 +127,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         "不正なリクエストです。",
                         e
                 );
+            } catch (AuthenticationException e) {
+                // AuthenticationException をキャッチした場合、ログを出力
+                logger.error("認証エラーが発生しました (doFilterInternal): ", e);
+                throw e;
             } catch (Exception e) {
-                logger.error("JWTトークンの検証エラー", e);
+                logger.error("JWTトークンの検証エラー(Exception)", e);
                 throw new AuthenticationException(
                         HttpStatus.UNAUTHORIZED,
                         "ログイン処理中にエラーが発生しました。再度ログインしてください。",
