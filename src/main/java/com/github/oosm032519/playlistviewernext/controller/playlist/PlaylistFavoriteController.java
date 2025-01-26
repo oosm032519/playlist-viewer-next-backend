@@ -9,6 +9,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -32,8 +33,12 @@ import java.util.Objects;
 public class PlaylistFavoriteController {
 
     private static final Logger logger = LoggerFactory.getLogger(PlaylistFavoriteController.class);
+    private static final String MOCK_USER_ID = "mock-user-id";
 
     private final UserFavoritePlaylistRepository userFavoritePlaylistRepository;
+
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
 
     @Autowired
     private HashUtil hashUtil;
@@ -66,9 +71,9 @@ public class PlaylistFavoriteController {
     ) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
-        String userId = principal.getAttribute("id");
+        String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
 
-        // ユーザーIDをハッシュ化
+        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
         String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // 既に登録されているかチェック
@@ -111,9 +116,9 @@ public class PlaylistFavoriteController {
                                                                   @RequestParam @NotBlank String playlistId) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り解除リクエストを受信しました。プレイリストID: {}", playlistId);
 
-        String userId = principal.getAttribute("id");
+        String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
 
-        // ユーザーIDをハッシュ化
+        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
         String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入り解除処理
@@ -146,9 +151,9 @@ public class PlaylistFavoriteController {
     public ResponseEntity<List<Map<String, Object>>> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) throws NoSuchAlgorithmException {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
-        String userId = principal.getAttribute("id");
+        String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
 
-        // ユーザーIDをハッシュ化
+        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
         String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入りプレイリスト一覧を取得
@@ -181,9 +186,9 @@ public class PlaylistFavoriteController {
                                                  @RequestParam @NotBlank String playlistId) throws NoSuchAlgorithmException {
         logger.info("プレイリストお気に入り確認リクエストを受信しました。プレイリストID: {}", playlistId);
 
-        String userId = principal.getAttribute("id");
+        String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
 
-        // ユーザーIDをハッシュ化
+        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
         String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
 
         // お気に入り登録状況を確認

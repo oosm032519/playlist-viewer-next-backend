@@ -48,10 +48,10 @@ public class MockLoginController {
         logger.info("モックログイン処理を開始します。");
 
         try {
-            // モックユーザー情報を生成 (UUIDを使用)
-            String userId = UUID.randomUUID().toString();
-            String userName = "Mock User " + userId.substring(0, 8); // UUIDの一部をユーザー名に利用
-            String spotifyAccessToken = UUID.randomUUID().toString(); // モックのアクセストークンもUUIDで生成
+            // モックユーザー情報を生成
+            String userId = "mock-user-id";
+            String userName = "Mock User";
+            String spotifyAccessToken = UUID.randomUUID().toString();
 
             // JWTトークンの生成
             Map<String, Object> fullSessionClaims = new HashMap<>();

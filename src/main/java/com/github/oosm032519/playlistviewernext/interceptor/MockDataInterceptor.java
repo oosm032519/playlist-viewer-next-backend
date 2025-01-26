@@ -31,6 +31,12 @@ public class MockDataInterceptor implements HandlerInterceptor {
         if (mockEnabled && request.getRequestURI().startsWith("/api/")) {
             logger.info("MockDataInterceptor: モックモードが有効です。リクエストURI: {}", request.getRequestURI());
 
+            // /api/playlists/favorite へのリクエストはモックデータを使用しない
+            if (request.getRequestURI().startsWith("/api/playlists/favorite")) {
+                logger.info("MockDataInterceptor: /api/playlists/favorite へのリクエストです。モックデータを使用しません。");
+                return true; // ハンドラーの実行を続行
+            }
+
             // モックデータを使用してレスポンスを生成
             Object mockResponse = getMockResponse(request.getRequestURI(), request.getMethod());
 
@@ -63,12 +69,6 @@ public class MockDataInterceptor implements HandlerInterceptor {
         } else if (requestURI.startsWith("/api/playlists/followed") && "GET".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/followed に対するモックデータを取得します。");
             return MockData.getMockedFollowedPlaylists();
-        } else if (requestURI.startsWith("/api/playlists/favorites") && "GET".equalsIgnoreCase(method)) {
-            logger.info("MockDataInterceptor: /api/playlists/favorites に対するモックデータを取得します。");
-            return MockData.getMockedFavoritePlaylists();
-        } else if (requestURI.startsWith("/api/playlists/favorite") && ("POST".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method))) {
-            logger.info("MockDataInterceptor: /api/playlists/favorite に対するモックデータを取得します。");
-            return Map.of("status", "success", "message", "お気に入りプレイリストの操作が成功しました");
         } else if (requestURI.startsWith("/api/playlists/create") && "POST".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/create に対するモックデータを取得します。");
             return Map.of("playlistId", "mock-playlist-id");
