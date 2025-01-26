@@ -6,12 +6,12 @@ import java.util.*;
 
 public class MockData {
 
-    public static Map<String, Object> getMockedPlaylistSearchResponse() {
+    public static Map<String, Object> getMockedPlaylistSearchResponse(int offset, int limit) {
         Map<String, Object> response = new HashMap<>();
-        List<Map<String, Object>> playlists = new ArrayList<>();
+        List<Map<String, Object>> allPlaylists = new ArrayList<>();
 
-        // ダミーのプレイリストをいくつか作成
-        for (int i = 1; i <= 5; i++) {
+        // ダミーのプレイリストを500個作成
+        for (int i = 1; i <= 500; i++) {
             Map<String, Object> playlist = new HashMap<>();
             playlist.put("id", generateMockPlaylistId(i)); // ID生成メソッドを使用
             playlist.put("name", "Mock Playlist " + i);
@@ -28,11 +28,22 @@ public class MockData {
             externalUrls.put("spotify", "https://open.spotify.com/playlist/" + playlist.get("id"));
             playlist.put("externalUrls", Map.of("externalUrls", externalUrls));
 
-            playlists.add(playlist);
+            allPlaylists.add(playlist);
         }
 
-        response.put("playlists", playlists);
-        response.put("total", 5);
+        // offset と limit に基づいてプレイリストをフィルタリング
+        int startIndex = offset;
+        int endIndex = Math.min(offset + limit, allPlaylists.size());
+
+        if (startIndex >= endIndex || startIndex < 0 || endIndex > allPlaylists.size()) {
+            response.put("playlists", Collections.emptyList());
+            response.put("total", allPlaylists.size());
+        } else {
+            List<Map<String, Object>> playlists = allPlaylists.subList(startIndex, endIndex);
+            response.put("playlists", playlists);
+            response.put("total", allPlaylists.size());
+        }
+
         return response;
     }
 

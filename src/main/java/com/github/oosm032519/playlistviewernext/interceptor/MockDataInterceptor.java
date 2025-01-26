@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class MockDataInterceptor implements HandlerInterceptor {
@@ -38,7 +39,7 @@ public class MockDataInterceptor implements HandlerInterceptor {
             }
 
             // モックデータを使用してレスポンスを生成
-            Object mockResponse = getMockResponse(request.getRequestURI(), request.getMethod());
+            Object mockResponse = getMockResponse(request);
 
             if (mockResponse != null) {
                 response.setContentType("application/json");
@@ -53,11 +54,17 @@ public class MockDataInterceptor implements HandlerInterceptor {
         return true; // 通常の処理を続行
     }
 
-    private Object getMockResponse(String requestURI, String method) {
-        // リクエストURIに基づいて適切なモックデータを返す
+    private Object getMockResponse(HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+
+        // /api/playlists/search に対するモックデータ
         if (requestURI.startsWith("/api/playlists/search") && "GET".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/search に対するモックデータを取得します。");
-            return MockData.getMockedPlaylistSearchResponse();
+            // クエリパラメータから offset と limit を取得
+            int offset = Integer.parseInt(Optional.ofNullable(request.getParameter("offset")).orElse("0"));
+            int limit = Integer.parseInt(Optional.ofNullable(request.getParameter("limit")).orElse("20"));
+            return MockData.getMockedPlaylistSearchResponse(offset, limit);
         } else if (requestURI.matches("/api/playlists/\\w+/details") && "GET".equalsIgnoreCase(method)) {
             logger.info("MockDataInterceptor: /api/playlists/{id}/details に対するモックデータを取得します。");
             // URIからIDを抽出してモックデータを取得
