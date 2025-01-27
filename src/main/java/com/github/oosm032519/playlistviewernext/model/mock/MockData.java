@@ -1,7 +1,5 @@
 package com.github.oosm032519.playlistviewernext.model.mock;
 
-import com.github.oosm032519.playlistviewernext.model.FavoritePlaylistResponse;
-
 import java.util.*;
 
 public class MockData {
@@ -224,25 +222,6 @@ public class MockData {
 
         return playlists;
     }
-
-    public static List<FavoritePlaylistResponse> getMockedFavoritePlaylists() {
-        List<FavoritePlaylistResponse> favoritePlaylists = new ArrayList<>();
-
-        // ダミーのお気に入りプレイリストをいくつか作成
-        for (int i = 1; i <= 5; i++) {
-            FavoritePlaylistResponse playlist = new FavoritePlaylistResponse(
-                    generateMockPlaylistId(i), // ID生成メソッドを使用
-                    "Mock Playlist " + i,
-                    "Mock Owner " + i,
-                    10,
-                    new Date() // 現在の日時のDateオブジェクトを生成
-            );
-            favoritePlaylists.add(playlist);
-        }
-
-        return favoritePlaylists;
-    }
-
 
     public static Map<String, Object> getMockedSessionCheckResponse() {
         Map<String, Object> response = new HashMap<>();
