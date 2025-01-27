@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.config;
 
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -22,13 +21,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Spotify認証成功時の処理を行うハンドラークラス
- * ユーザー情報の取得、JWTトークンの生成、一時トークンの発行などを行う
+ * ユーザー情報の取得、セッションIDの生成、一時トークンの発行などを行う
  */
 public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(SpotifyLoginSuccessHandler.class);
-
-    private final JwtUtil jwtUtil;
 
     private final String frontendUrl;
 
@@ -43,10 +40,10 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
     /**
      * コンストラクタ
      *
-     * @param jwtUtil JWTユーティリティクラス
+     * @param frontendUrl フロントエンドのURL
+     * @param mockEnabled モックモードが有効かどうか
      */
-    public SpotifyLoginSuccessHandler(JwtUtil jwtUtil, String frontendUrl, boolean mockEnabled) {
-        this.jwtUtil = jwtUtil;
+    public SpotifyLoginSuccessHandler(String frontendUrl, boolean mockEnabled) {
         this.frontendUrl = frontendUrl;
         this.mockEnabled = mockEnabled;
         logger.info("SpotifyLoginSuccessHandler が初期化されました。モックモード: {}", this.mockEnabled);
@@ -78,21 +75,22 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
         String userName = "Mock User " + userId.substring(0, 8); // UUIDの一部をユーザー名に利用
         String spotifyAccessToken = UUID.randomUUID().toString(); // モックのアクセストークンもUUIDで生成
 
-        // JWTトークンの生成
-        Map<String, Object> fullSessionClaims = new HashMap<>();
-        fullSessionClaims.put("sub", userId);
-        fullSessionClaims.put("name", userName);
-        fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
-        String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
-
-        // 一時トークンとセッションIDの生成
-        String temporaryToken = UUID.randomUUID().toString();
+        // セッションIDの生成
         String sessionId = UUID.randomUUID().toString();
 
-        // Redisに一時トークンとセッション情報を保存
-        redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
-        redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
+        // Redisにセッション情報を保存 (Hash型を使用)
+        Map<String, String> sessionData = new HashMap<>();
+        sessionData.put("userId", userId);
+        sessionData.put("userName", userName);
+        sessionData.put("spotifyAccessToken", spotifyAccessToken);
+        redisTemplate.opsForHash().putAll("session:" + sessionId, sessionData);
         redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
+
+        // 一時トークンの生成
+        String temporaryToken = UUID.randomUUID().toString();
+
+        // Redisに一時トークンとセッションIDを保存
+        redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
 
         // フロントエンドにリダイレクト
         response.sendRedirect(frontendUrl + "#token=" + temporaryToken);
@@ -107,21 +105,22 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
         // Spotifyユーザー名を取得
         String userName = getSpotifyUserName(userId, spotifyAccessToken);
 
-        // JWTトークンの生成
-        Map<String, Object> fullSessionClaims = new HashMap<>();
-        fullSessionClaims.put("sub", userId);
-        fullSessionClaims.put("name", userName);
-        fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
-        String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
-
-        // 一時トークンとセッションIDの生成
-        String temporaryToken = UUID.randomUUID().toString();
+        // セッションIDの生成
         String sessionId = UUID.randomUUID().toString();
 
-        // Redisに一時トークンとセッション情報を保存
-        redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
-        redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
+        // Redisにセッション情報を保存 (Hash型を使用)
+        Map<String, String> sessionData = new HashMap<>();
+        sessionData.put("userId", userId);
+        sessionData.put("userName", userName);
+        sessionData.put("spotifyAccessToken", spotifyAccessToken);
+        redisTemplate.opsForHash().putAll("session:" + sessionId, sessionData);
         redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
+
+        // 一時トークンの生成
+        String temporaryToken = UUID.randomUUID().toString();
+
+        // Redisに一時トークンとセッションIDを保存
+        redisTemplate.opsForValue().set("temp:" + temporaryToken, sessionId, 5, TimeUnit.MINUTES);
 
         // フロントエンドにリダイレクト
         response.sendRedirect(frontendUrl + "#token=" + temporaryToken);

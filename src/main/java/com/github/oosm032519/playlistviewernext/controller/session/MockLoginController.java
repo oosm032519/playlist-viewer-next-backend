@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.controller.session;
 
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -33,9 +32,6 @@ public class MockLoginController {
     @Autowired
     public RedisTemplate<String, String> redisTemplate;
 
-    @Autowired
-    private JwtUtil jwtUtil; // JwtUtil をAutowired
-
     /**
      * モックログインエンドポイント
      * モックのセッションIDとユーザー情報を生成し、クッキーを設定して返却する
@@ -53,19 +49,15 @@ public class MockLoginController {
             String userName = "Mock User";
             String spotifyAccessToken = UUID.randomUUID().toString();
 
-            // JWTトークンの生成
-            Map<String, Object> fullSessionClaims = new HashMap<>();
-            fullSessionClaims.put("sub", userId);
-            fullSessionClaims.put("name", userName);
-            fullSessionClaims.put("spotify_access_token", spotifyAccessToken);
-            String fullSessionToken = jwtUtil.generateToken(fullSessionClaims);
-            logger.info("JWTトークンを生成しました: {}", fullSessionToken);
-
             // セッションIDの生成
             String sessionId = UUID.randomUUID().toString();
 
-            // Redisにセッション情報を保存 (JWTトークンをセッション情報として保存)
-            redisTemplate.opsForValue().set("session:" + sessionId, fullSessionToken);
+            // Redisにセッション情報を保存 (Hash型を使用)
+            Map<String, String> sessionData = new HashMap<>();
+            sessionData.put("userId", userId);
+            sessionData.put("userName", userName);
+            sessionData.put("spotifyAccessToken", spotifyAccessToken);
+            redisTemplate.opsForHash().putAll("session:" + sessionId, sessionData);
             redisTemplate.expire("session:" + sessionId, 3600, TimeUnit.SECONDS);
             logger.info("Redisにセッション情報を保存しました。セッションID: {}", sessionId);
 

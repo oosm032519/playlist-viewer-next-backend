@@ -1,8 +1,7 @@
 package com.github.oosm032519.playlistviewernext.config;
 
-import com.github.oosm032519.playlistviewernext.filter.JwtAuthenticationFilter;
+import com.github.oosm032519.playlistviewernext.filter.SessionAuthenticationFilter;
 import com.github.oosm032519.playlistviewernext.service.auth.SpotifyOAuth2UserService;
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 /**
  * Spring Securityの設定クラス。
- * アプリケーションのセキュリティ設定、認証・認可の制御、CORSの設定、JWTの処理などを管理する。
+ * アプリケーションのセキュリティ設定、認証・認可の制御、CORSの設定などを管理する。
  */
 @Configuration
 @EnableWebSecurity
@@ -33,12 +32,6 @@ public class SecurityConfig {
      */
     @Autowired
     private CorsConfigurationSource corsConfigurationSource;
-
-    /**
-     * JWT関連のユーティリティクラス
-     */
-    @Autowired
-    private JwtUtil jwtUtil;
 
     /**
      * SpotifyのOAuth2認証サービス
@@ -66,14 +59,14 @@ public class SecurityConfig {
         logger.info("モックモード: {}", mockEnabled);
 
         // SpotifyLoginSuccessHandler をここでインスタンス化
-        SpotifyLoginSuccessHandler spotifyLoginSuccessHandler = new SpotifyLoginSuccessHandler(jwtUtil, frontendUrl, mockEnabled);
+        SpotifyLoginSuccessHandler spotifyLoginSuccessHandler = new SpotifyLoginSuccessHandler(frontendUrl, mockEnabled);
 
         http
                 // CORSの設定を適用
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // CSRFを無効化
                 .csrf(AbstractHttpConfigurer::disable)
-                // セッション管理をSTATELESSに設定
+                // セッション管理をSTATELESSに設定 (JWTを使用しないため、任意の設定に変更可能)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // URLごとのアクセス制御を設定
                 .authorizeHttpRequests(authz -> authz
@@ -95,19 +88,19 @@ public class SecurityConfig {
                     }
                 });
 
-        // JWT認証フィルターを適用 (モックモード、実処理モード共通)
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        // セッション認証フィルターを適用 (モックモード、実処理モード共通)
+        http.addFilterBefore(sessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
-     * JWTの認証フィルターを生成する。
+     * セッション認証フィルターを生成する。
      *
-     * @return 設定済みのJwtAuthenticationFilter
+     * @return 設定済みのSessionAuthenticationFilter
      */
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtUtil);
+    public SessionAuthenticationFilter sessionAuthenticationFilter() {
+        return new SessionAuthenticationFilter();
     }
 }

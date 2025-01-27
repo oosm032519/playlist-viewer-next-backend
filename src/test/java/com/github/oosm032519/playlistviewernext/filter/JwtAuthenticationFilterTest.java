@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.filter;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

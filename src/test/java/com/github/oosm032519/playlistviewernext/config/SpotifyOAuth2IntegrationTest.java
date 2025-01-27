@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.config;
 
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

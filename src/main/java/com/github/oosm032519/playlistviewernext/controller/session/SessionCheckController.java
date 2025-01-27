@@ -2,7 +2,6 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 
 import com.github.oosm032519.playlistviewernext.exception.AuthenticationException;
 import com.github.oosm032519.playlistviewernext.exception.DatabaseAccessException;
-import com.github.oosm032519.playlistviewernext.util.JwtUtil;
 import com.github.oosm032519.playlistviewernext.util.ServletUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,21 +30,9 @@ public class SessionCheckController {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionCheckController.class);
 
-    private final JwtUtil jwtUtil;
-
     @Lazy
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-
-    /**
-     * コンストラクタ
-     *
-     * @param jwtUtil JWTユーティリティクラス
-     */
-    public SessionCheckController(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-        logger.info("SessionCheckControllerが初期化されました。JwtUtil: {}", jwtUtil);
-    }
 
     /**
      * セッションをチェックするエンドポイント
@@ -74,7 +61,6 @@ public class SessionCheckController {
         }
     }
 
-
     /**
      * セッションの検証を行う
      *
@@ -85,13 +71,12 @@ public class SessionCheckController {
     private ResponseEntity<?> handleSessionValidation(String sessionId, Map<String, Object> response) {
         logger.info("セッションIDが存在します。Redisからセッション情報を取得します。");
         String redisKey = "session:" + sessionId;
-        String fullSessionToken = redisTemplate.opsForValue().get(redisKey);
-        logger.debug("Redisキー: {}, 取得されたトークン: {}", redisKey, fullSessionToken != null ? "存在" : "なし");
+        Map<Object, Object> sessionData = redisTemplate.opsForHash().entries(redisKey);
+        logger.debug("Redisキー: {}, 取得されたセッションデータ: {}", redisKey, sessionData != null ? "存在" : "なし");
 
-        if (fullSessionToken != null) {
-            logger.info("Redisからセッショントークンを取得しました。トークンの検証を開始します。");
-            Map<String, Object> fullSessionClaims = jwtUtil.validateToken(fullSessionToken);
-            return createSuccessResponse(response, fullSessionClaims);
+        if (sessionData != null && !sessionData.isEmpty()) {
+            logger.info("Redisからセッション情報を取得しました。");
+            return createSuccessResponse(response, sessionData);
         } else {
             // Redisにセッション情報がない場合は AuthenticationException をスロー
             logger.warn("Redisにセッション情報が見つかりません。セッションID: {}", sessionId);
@@ -105,14 +90,14 @@ public class SessionCheckController {
     /**
      * 成功レスポンスを作成する
      *
-     * @param response レスポンスマップ
-     * @param claims   トークンクレーム
+     * @param response    レスポンスマップ
+     * @param sessionData セッションデータ
      * @return レスポンスエンティティ
      */
-    private ResponseEntity<Map<String, Object>> createSuccessResponse(Map<String, Object> response, Map<String, Object> claims) {
-        String userId = (String) claims.get("sub");
-        String userName = (String) claims.get("name");
-        String spotifyAccessToken = (String) claims.get("spotify_access_token");
+    private ResponseEntity<Map<String, Object>> createSuccessResponse(Map<String, Object> response, Map<Object, Object> sessionData) {
+        String userId = (String) sessionData.get("userId");
+        String userName = (String) sessionData.get("userName");
+        String spotifyAccessToken = (String) sessionData.get("spotifyAccessToken");
 
         response.put("status", "success");
         response.put("message", "User is authenticated");
@@ -120,7 +105,7 @@ public class SessionCheckController {
         response.put("userName", userName);
         response.put("spotifyAccessToken", spotifyAccessToken);
 
-        logger.info("トークン検証成功 - ユーザーID: {}, ユーザー名: {}, Spotifyトークン: {}",
+        logger.info("セッション検証成功 - ユーザーID: {}, ユーザー名: {}, Spotifyトークン: {}",
                 userId, userName, spotifyAccessToken != null ? "取得済み" : "なし");
         return ResponseEntity.ok(response);
     }
@@ -180,7 +165,6 @@ public class SessionCheckController {
             );
         }
     }
-
 
     /**
      * セッションIDのCookieをクリアする
