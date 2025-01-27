@@ -89,7 +89,7 @@ public class SecurityConfig {
                 });
 
         // セッション認証フィルターを適用 (モックモード、実処理モード共通)
-        http.addFilterBefore(sessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(sessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
