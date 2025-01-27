@@ -25,8 +25,9 @@ public class MockData {
             playlist.put("tracks", tracks);
 
             List<Map<String, String>> images = new ArrayList<>();
-            // Picsum Photosを使用
-            images.add(Map.of("url", String.format("https://picsum.photos/id/%d/128/128", random.nextInt(1001))));
+            // Picsum Photosを使用 (UUIDをシードとして使用)
+            String seed = UUID.randomUUID().toString();
+            images.add(Map.of("url", String.format("https://picsum.photos/seed/%s/128/128", seed)));
             playlist.put("images", images);
 
             playlist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/" + playlist.get("id"))));
@@ -129,8 +130,9 @@ public class MockData {
 
             Map<String, Object> album = new HashMap<>();
             album.put("name", faker.book().genre()); // java-faker
-            // Picsum Photosを使用
-            album.put("images", Collections.singletonList(Map.of("url", String.format("https://picsum.photos/id/%d/128/128", random.nextInt(1001)))));
+            // Picsum Photosを使用 (UUIDをシードとして使用)
+            String seed = UUID.randomUUID().toString();
+            album.put("images", Collections.singletonList(Map.of("url", String.format("https://picsum.photos/seed/%s/128/128", seed))));
             album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/" + trackData.get("id"))));
             trackData.put("album", album);
 
@@ -189,8 +191,9 @@ public class MockData {
 
             Map<String, Object> album = new HashMap<>();
             album.put("name", faker.book().genre()); // java-faker
-            // Picsum Photosを使用
-            album.put("images", Collections.singletonList(Map.of("url", String.format("https://picsum.photos/id/%d/128/128", random.nextInt(1001)))));
+            // Picsum Photosを使用 (UUIDをシードとして使用)
+            String seed = UUID.randomUUID().toString();
+            album.put("images", Collections.singletonList(Map.of("url", String.format("https://picsum.photos/seed/%s/128/128", seed))));
             album.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/album/" + track.get("id"))));
             track.put("album", album);
 
@@ -224,8 +227,9 @@ public class MockData {
             playlist.put("tracks", tracks);
 
             List<Map<String, String>> images = new ArrayList<>();
-            // Picsum Photosを使用
-            images.add(Map.of("url", String.format("https://picsum.photos/id/%d/128/128", random.nextInt(1001))));
+            // Picsum Photosを使用 (UUIDをシードとして使用)
+            String seed = UUID.randomUUID().toString();
+            images.add(Map.of("url", String.format("https://picsum.photos/seed/%s/128/128", seed)));
             playlist.put("images", images);
 
             playlist.put("externalUrls", Map.of("externalUrls", Map.of("spotify", "https://open.spotify.com/playlist/" + playlist.get("id"))));
