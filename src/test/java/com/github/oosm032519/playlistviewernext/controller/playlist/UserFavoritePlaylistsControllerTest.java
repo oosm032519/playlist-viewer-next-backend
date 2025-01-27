@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,8 +46,8 @@ public class UserFavoritePlaylistsControllerTest {
         String userId = "testUserId";
         String hashedUserId = "hashedTestUserId";
         List<FavoritePlaylistResponse> expectedPlaylists = List.of(
-                new FavoritePlaylistResponse("playlistId1", "playlistName1", "ownerName1", 10, null),
-                new FavoritePlaylistResponse("playlistId2", "playlistName2", "ownerName2", 20, null)
+                new FavoritePlaylistResponse("playlistId1", "playlistName1", "ownerName1", 10, (LocalDateTime) null),
+                new FavoritePlaylistResponse("playlistId2", "playlistName2", "ownerName2", 20, (LocalDateTime) null)
         );
 
         // モックの設定

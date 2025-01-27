@@ -36,7 +36,7 @@ class FavoritePlaylistResponseTest {
     void testSetters() {
         // オブジェクトの生成
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                null, null, null, 0, null);
+                null, null, null, 0, (LocalDateTime) null);
 
         // 新しい値の設定
         String newPlaylistId = "newPlaylist456";
@@ -81,7 +81,7 @@ class FavoritePlaylistResponseTest {
     @DisplayName("nullの許容性テスト")
     void testNullability() {
         FavoritePlaylistResponse response = new FavoritePlaylistResponse(
-                null, null, null, 0, null);
+                null, null, null, 0, (LocalDateTime) null);
 
         assertThat(response.getPlaylistId()).isNull();
         assertThat(response.getPlaylistName()).isNull();

@@ -27,7 +27,7 @@ public class SpotifyLoginSuccessHandler implements AuthenticationSuccessHandler 
 
     private static final Logger logger = LoggerFactory.getLogger(SpotifyLoginSuccessHandler.class);
 
-    private final String frontendUrl;
+    public String frontendUrl;
 
     private final boolean mockEnabled;
 
