@@ -5,10 +5,15 @@ import com.github.oosm032519.playlistviewernext.exception.InternalServerExceptio
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Paging;
@@ -31,14 +36,18 @@ public class SpotifyUserPlaylistsService {
     private static final Logger logger = LoggerFactory.getLogger(SpotifyUserPlaylistsService.class);
 
     private final SpotifyApi spotifyApi;
+    private final WebClient webClient;
 
-    /**
-     * SpotifyApiインスタンスを注入するコンストラクタ
-     *
-     * @param spotifyApi Spotify APIクライアント
-     */
-    public SpotifyUserPlaylistsService(SpotifyApi spotifyApi) {
+    @Value("${spotify.mock-api.url}")
+    private String mockApiUrl;
+
+    @Value("${spotify.mock.enabled:false}")
+    private boolean mockEnabled;
+
+    @Autowired
+    public SpotifyUserPlaylistsService(SpotifyApi spotifyApi, WebClient.Builder webClientBuilder) {
         this.spotifyApi = spotifyApi;
+        webClient = webClientBuilder.build();
     }
 
     /**
@@ -48,6 +57,34 @@ public class SpotifyUserPlaylistsService {
      * @throws AuthenticationException 認証エラーが発生した場合
      */
     public List<PlaylistSimplified> getCurrentUsersPlaylists() throws SpotifyWebApiException {
+        if (mockEnabled && mockApiUrl != null && !mockApiUrl.isEmpty()) {
+            return getCurrentUsersPlaylistsMock();
+        } else {
+            return getCurrentUsersPlaylistsReal();
+        }
+    }
+
+    private List<PlaylistSimplified> getCurrentUsersPlaylistsMock() {
+        logger.info("Getting current user's playlists using mock API.");
+
+        // WebClientを使用してモックAPIからデータを取得
+        List<PlaylistSimplified> playlists = webClient.get()
+                .uri(mockApiUrl + "/following/playlists")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PlaylistSimplified>>() {
+                })
+                .onErrorMap(WebClientResponseException.class, e -> {
+                    logger.error("Error calling mock API: {}", e.getResponseBodyAsString(), e);
+                    return new InternalServerException(HttpStatus.INTERNAL_SERVER_ERROR, "Error calling mock API", e);
+                })
+                .block();
+
+        return playlists;
+    }
+
+    private List<PlaylistSimplified> getCurrentUsersPlaylistsReal() throws SpotifyWebApiException {
+        logger.info("Getting current user's playlists using real API.");
+
         return RetryUtil.executeWithRetry(() -> {
             try {
                 OAuth2User oauth2User = (OAuth2User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

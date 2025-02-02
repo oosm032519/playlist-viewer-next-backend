@@ -5,8 +5,13 @@ import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeatureSe
 import com.github.oosm032519.playlistviewernext.util.RetryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.exceptions.SpotifyWebApiException;
 import se.michaelthelin.spotify.model_objects.specification.Recommendations;
@@ -28,16 +33,19 @@ public class SpotifyRecommendationService {
 
     private final SpotifyApi spotifyApi;
     private final AudioFeatureSetter audioFeatureSetter;
+    private final WebClient webClient;
 
-    /**
-     * SpotifyRecommendationServiceのコンストラクタ。
-     *
-     * @param spotifyApi         Spotify APIクライアント
-     * @param audioFeatureSetter AudioFeaturesを設定するユーティリティ
-     */
-    public SpotifyRecommendationService(SpotifyApi spotifyApi, AudioFeatureSetter audioFeatureSetter) {
+    @Value("${spotify.mock-api.url}")
+    private String mockApiUrl;
+
+    @Value("${spotify.mock.enabled:false}")
+    private boolean mockEnabled;
+
+    @Autowired
+    public SpotifyRecommendationService(SpotifyApi spotifyApi, AudioFeatureSetter audioFeatureSetter, WebClient.Builder webClientBuilder) {
         this.spotifyApi = spotifyApi;
         this.audioFeatureSetter = audioFeatureSetter;
+        webClient = webClientBuilder.build();
     }
 
     /**
@@ -51,6 +59,32 @@ public class SpotifyRecommendationService {
     public List<Track> getRecommendations(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) throws SpotifyWebApiException {
         logger.info("getRecommendations: seedArtists: {}, maxAudioFeatures: {}, minAudioFeatures: {}", seedArtists, maxAudioFeatures, minAudioFeatures);
 
+        if (mockEnabled && mockApiUrl != null && !mockApiUrl.isEmpty()) {
+            return getRecommendationsMock();
+        } else {
+            return getRecommendationsReal(seedArtists, maxAudioFeatures, minAudioFeatures);
+        }
+    }
+
+    private List<Track> getRecommendationsMock() {
+        logger.info("Getting recommendations using mock API.");
+
+        // WebClientを使用してモックAPIからデータを取得
+        List<Track> response = webClient.get()
+                .uri("/recommendations")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<Track>>() {
+                })
+                .onErrorMap(WebClientResponseException.class, e -> {
+                    logger.error("Error calling mock API: {}", e.getResponseBodyAsString(), e);
+                    return new InternalServerException(HttpStatus.INTERNAL_SERVER_ERROR, "Error calling mock API", e);
+                })
+                .block();
+
+        return response;
+    }
+
+    private List<Track> getRecommendationsReal(List<String> seedArtists, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures) throws SpotifyWebApiException {
         if (seedArtists == null || seedArtists.isEmpty()) {
             logger.warn("seedArtistsがnullまたは空です。");
             return Collections.emptyList();

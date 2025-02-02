@@ -3,7 +3,6 @@ package com.github.oosm032519.playlistviewernext.service.playlist;
 import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.InvalidRequestException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
-import com.github.oosm032519.playlistviewernext.model.mock.MockData;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeaturesCalculator;
 import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.recommendation.SpotifyRecommendationService;
@@ -54,10 +53,12 @@ public class PlaylistDetailsRetrievalService {
             TrackDataRetriever trackDataRetriever,
             SpotifyPlaylistAnalyticsService playlistAnalyticsService,
             SpotifyRecommendationService trackRecommendationService) {
+        logger.info("PlaylistDetailsRetrievalService constructor started.");
         this.playlistDetailsService = playlistDetailsService;
         this.authController = authController;
         this.trackDataRetriever = trackDataRetriever;
         this.playlistAnalyticsService = playlistAnalyticsService;
+        logger.info("PlaylistDetailsRetrievalService constructor finished.");
     }
 
     /**
@@ -71,22 +72,26 @@ public class PlaylistDetailsRetrievalService {
     public Map<String, Object> getPlaylistDetails(String id) {
         logger.info("getPlaylistDetails: プレイリストID: {}", id);
 
+        Map<String, Object> playlistDetails = new HashMap<>();
         try {
+            logger.info("getPlaylistDetails: モックモード有効か: {}", mockEnabled);
             // モックモードが有効な場合は認証をスキップ
             if (!mockEnabled && authController != null) {
+                logger.info("getPlaylistDetails: Spotify API 認証開始");
                 // Spotify APIの認証を行う
                 authController.authenticate();
+                logger.info("getPlaylistDetails: Spotify API 認証完了");
+            } else {
+                logger.info("getPlaylistDetails: モックモード有効、認証スキップ");
             }
 
-            // モックモードの場合はモックデータを返す
-            if (mockEnabled) {
-                logger.info("モックモードが有効です。モックデータを返します。");
-                return MockData.getMockedPlaylistDetails(id);
-            }
-
+            logger.info("getPlaylistDetails: プレイリスト情報取得開始, プレイリストID: {}", id);
             // プレイリスト情報の取得
             Playlist playlist = playlistDetailsService.getPlaylist(id);
+            logger.info("getPlaylistDetails: プレイリスト情報取得完了, プレイリスト: {}", playlist);
+
             if (playlist == null) {
+                logger.warn("getPlaylistDetails: プレイリストが見つかりません, プレイリストID: {}", id);
                 throw new ResourceNotFoundException(
                         HttpStatus.NOT_FOUND,
                         "指定されたプレイリストが見つかりません。"
@@ -95,40 +100,54 @@ public class PlaylistDetailsRetrievalService {
 
             String playlistName = playlist.getName();
             User owner = playlist.getOwner();
+            logger.info("getPlaylistDetails: プレイリスト名: {}, オーナーID: {}, オーナー名: {}", playlistName, owner.getId(), owner.getDisplayName());
 
+            logger.info("getPlaylistDetails: トラック情報取得開始, プレイリストID: {}", id);
             // トラック情報の取得と解析
             PlaylistTrack[] tracks = playlistDetailsService.getPlaylistTracks(id);
+            logger.info("getPlaylistDetails: トラック情報取得完了, トラック数: {}", tracks != null ? tracks.length : 0);
             List<Map<String, Object>> trackList = trackDataRetriever.getTrackListData(tracks);
+            logger.info("getPlaylistDetails: トラックデータリスト取得完了, トラックリストサイズ: {}", trackList.size());
 
+
+            logger.info("getPlaylistDetails: オーディオ特徴量計算開始");
             // オーディオ特徴の計算
             Map<String, Float> maxAudioFeatures = AudioFeaturesCalculator.calculateMaxAudioFeatures(trackList);
             Map<String, Float> minAudioFeatures = AudioFeaturesCalculator.calculateMinAudioFeatures(trackList);
             Map<String, Float> averageAudioFeatures = AudioFeaturesCalculator.calculateAverageAudioFeatures(trackList);
+            logger.info("getPlaylistDetails: オーディオ特徴量計算完了");
 
             // 上位アーティストの取得
+            logger.info("getPlaylistDetails: 上位アーティスト取得開始");
             List<String> seedArtists = playlistAnalyticsService.getTop5ArtistsForPlaylist(id);
+            logger.info("getPlaylistDetails: 上位アーティスト取得完了, seedArtists: {}", seedArtists);
 
             logAudioFeatures(maxAudioFeatures, minAudioFeatures, averageAudioFeatures);
 
             long totalDuration = calculateTotalDuration(tracks);
 
-            return createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, averageAudioFeatures, totalDuration, seedArtists);
+            playlistDetails = createResponse(trackList, playlistName, owner, maxAudioFeatures, minAudioFeatures, averageAudioFeatures, totalDuration, seedArtists);
+            logger.info("getPlaylistDetails: レスポンス作成完了, プレイリストID: {}", id);
+
 
         } catch (ResourceNotFoundException e) {
+            logger.warn("getPlaylistDetails: ResourceNotFoundException: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            logger.error("プレイリストの詳細情報の取得中に予期しないエラーが発生しました。", e);
+            logger.error("getPlaylistDetails: プレイリストの詳細情報の取得中に予期しないエラーが発生しました。", e);
+            logger.error("getPlaylistDetails: エラー詳細: ", e);
             throw new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "プレイリストの詳細情報の取得中にエラーが発生しました。", e);
         }
+        return playlistDetails;
     }
 
     /**
      * オーディオ特徴をログに出力する
      */
     private void logAudioFeatures(Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures) {
-        logger.info("getPlaylistDetails: 最大AudioFeatures: {}", maxAudioFeatures);
-        logger.info("getPlaylistDetails: 最小AudioFeatures: {}", minAudioFeatures);
-        logger.info("getPlaylistDetails: 平均AudioFeatures: {}", averageAudioFeatures);
+        logger.info("logAudioFeatures: 最大AudioFeatures: {}", maxAudioFeatures);
+        logger.info("logAudioFeatures: 最小AudioFeatures: {}", minAudioFeatures);
+        logger.info("logAudioFeatures: 平均AudioFeatures: {}", averageAudioFeatures);
     }
 
     /**
@@ -137,11 +156,14 @@ public class PlaylistDetailsRetrievalService {
      * @param tracks プレイリストのトラック配列
      * @return 総再生時間（ミリ秒）
      */
-    public long calculateTotalDuration(PlaylistTrack[] tracks) {
+    private long calculateTotalDuration(PlaylistTrack[] tracks) {
         long totalDuration = 0;
-        for (PlaylistTrack track : tracks) {
-            totalDuration += track.getTrack().getDurationMs();
+        if (tracks != null) {
+            for (PlaylistTrack track : tracks) {
+                totalDuration += track.getTrack().getDurationMs();
+            }
         }
+        logger.info("calculateTotalDuration: 総再生時間: {}ms", totalDuration);
         return totalDuration;
     }
 
@@ -149,6 +171,7 @@ public class PlaylistDetailsRetrievalService {
      * レスポンス用のMapを作成する
      */
     private Map<String, Object> createResponse(List<Map<String, Object>> trackList, String playlistName, User owner, Map<String, Float> maxAudioFeatures, Map<String, Float> minAudioFeatures, Map<String, Float> averageAudioFeatures, long totalDuration, final List<String> seedArtists) {
+        logger.info("createResponse: レスポンス作成開始");
         Map<String, Object> response = new HashMap<>();
         response.put("tracks", Map.of("items", trackList));
         response.put("playlistName", playlistName);
@@ -159,6 +182,8 @@ public class PlaylistDetailsRetrievalService {
         response.put("averageAudioFeatures", averageAudioFeatures);
         response.put("totalDuration", totalDuration);
         response.put("seedArtists", seedArtists);
+        logger.info("createResponse: レスポンス: {}", response);
+        logger.info("createResponse: レスポンス作成完了");
         return response;
     }
 }
