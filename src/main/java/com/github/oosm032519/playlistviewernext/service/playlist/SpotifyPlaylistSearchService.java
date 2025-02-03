@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -67,7 +66,6 @@ public class SpotifyPlaylistSearchService {
      * @return プレイリスト情報と総件数を含むMap。キー"playlists"にプレイリストのリスト、キー"total"に総件数が格納される
      * @throws SpotifyWebApiException Spotify APIでエラーが発生した場合
      */
-    @Cacheable(value = "playlistSearch", key = "{#query, #offset, #limit}")
     public Map<String, Object> searchPlaylists(String query, int offset, int limit) throws SpotifyWebApiException {
         // モックモードが有効かつ、モックAPIのURLが設定されている場合のみモックAPIを呼び出す
         if (mockEnabled && mockApiUrl != null && !mockApiUrl.isEmpty()) {

@@ -71,7 +71,7 @@ public class SpotifyRecommendationService {
 
         // WebClientを使用してモックAPIからデータを取得
         List<Track> response = webClient.get()
-                .uri("/recommendations")
+                .uri(mockApiUrl + "/recommendations")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Track>>() {
                 })
