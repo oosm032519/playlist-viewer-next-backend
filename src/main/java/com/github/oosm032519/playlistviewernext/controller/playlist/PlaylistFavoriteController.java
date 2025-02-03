@@ -72,9 +72,14 @@ public class PlaylistFavoriteController {
         logger.info("プレイリストお気に入り登録リクエストを受信しました。プレイリストID: {}, プレイリスト名: {}, 楽曲数: {}", playlistId, playlistName, totalTracks);
 
         String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
+        String hashedUserId = null;
 
-        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
-        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        // モックモードが有効な場合はハッシュ化処理をスキップ
+        if (!mockEnabled) {
+            hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        } else {
+            hashedUserId = userId;
+        }
 
         // 既に登録されているかチェック
         if (userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId)) {
@@ -117,9 +122,14 @@ public class PlaylistFavoriteController {
         logger.info("プレイリストお気に入り解除リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
+        String hashedUserId = null;
 
-        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
-        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        // モックモードが有効な場合はハッシュ化処理をスキップ
+        if (!mockEnabled) {
+            hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        } else {
+            hashedUserId = userId;
+        }
 
         // お気に入り解除処理
         boolean deleted = userFavoritePlaylistRepository.deleteByUserIdAndPlaylistId(hashedUserId, playlistId) > 0;
@@ -152,9 +162,14 @@ public class PlaylistFavoriteController {
         logger.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
         String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
+        String hashedUserId = null;
 
-        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
-        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        // モックモードが有効な場合はハッシュ化処理をスキップ
+        if (!mockEnabled) {
+            hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        } else {
+            hashedUserId = userId;
+        }
 
         // お気に入りプレイリスト一覧を取得
         List<UserFavoritePlaylist> favoritePlaylists = userFavoritePlaylistRepository.findByUserId(hashedUserId);
@@ -187,9 +202,14 @@ public class PlaylistFavoriteController {
         logger.info("プレイリストお気に入り確認リクエストを受信しました。プレイリストID: {}", playlistId);
 
         String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
+        String hashedUserId = null;
 
-        // ユーザーIDをハッシュ化 (モックモードでもハッシュ化する)
-        String hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        // モックモードが有効な場合はハッシュ化処理をスキップ
+        if (!mockEnabled) {
+            hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
+        } else {
+            hashedUserId = userId;
+        }
 
         // お気に入り登録状況を確認
         boolean isFavorited = userFavoritePlaylistRepository.existsByUserIdAndPlaylistId(hashedUserId, playlistId);
