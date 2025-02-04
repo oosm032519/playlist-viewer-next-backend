@@ -7,6 +7,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,6 +25,18 @@ public class CorsConfig {
     private String frontendUrl;
 
     /**
+     * モックサーバーのURLを設定ファイルから取得する。
+     */
+    @Value("${spotify.mock-api.url}")
+    private String mockApiUrl;
+
+    /**
+     * モックサーバーが有効かどうかを設定ファイルから取得する。
+     */
+    @Value("${spotify.mock.enabled}")
+    private boolean mockEnabled;
+
+    /**
      * CORS設定を構成するメソッド。
      * 特定のオリジン、HTTPメソッド、およびヘッダーを許可する設定を行う。
      *
@@ -34,8 +47,17 @@ public class CorsConfig {
         // CORSの設定を保持するオブジェクトを作成
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 許可するオリジンを設定（フロントエンドのURL）
-        configuration.setAllowedOrigins(List.of(frontendUrl));
+        // 許可するオリジンのリストを作成
+        List<String> allowedOrigins = new ArrayList<>();
+        allowedOrigins.add(frontendUrl);
+
+        // モックサーバーが有効な場合、モックサーバーのURLも許可するオリジンに追加
+        if (mockEnabled) {
+            allowedOrigins.add(mockApiUrl);
+        }
+
+        // 許可するオリジンを設定
+        configuration.setAllowedOrigins(allowedOrigins);
 
         // 許可するHTTPメソッドのリストを設定
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
