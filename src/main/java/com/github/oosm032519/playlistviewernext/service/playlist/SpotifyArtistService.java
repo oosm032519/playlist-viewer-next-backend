@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -49,7 +48,6 @@ public class SpotifyArtistService {
      * @param artistIds アーティストIDのリスト
      * @return アーティストIDとジャンルのリストのマップ
      */
-    @Cacheable(value = "artistGenres", key = "#artistIds")
     public Map<String, List<String>> getArtistGenres(List<String> artistIds) throws SpotifyWebApiException {
         if (mockEnabled && mockApiUrl != null && !mockApiUrl.isEmpty()) {
             return getArtistGenresMock(artistIds);
