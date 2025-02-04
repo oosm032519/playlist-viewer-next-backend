@@ -90,7 +90,6 @@ public class SpotifyPlaylistDetailsService {
             // PlaylistTrack オブジェクトを生成
             PlaylistTrack.Builder playlistTrackBuilder = new PlaylistTrack.Builder();
             playlistTrackBuilder.setTrack(track);
-            // addedAt, addedBy など、必要に応じて他の属性も設定
 
             playlistTracks[i] = playlistTrackBuilder.build();
             logger.debug("convertMapListToPlaylistTrackArray: PlaylistTrack オブジェクト生成: {}", playlistTracks[i]);
@@ -100,7 +99,7 @@ public class SpotifyPlaylistDetailsService {
         return playlistTracks;
     }
 
-    private List<Map<String, Object>> getPlaylistTracksMock(String playlistId) { // 返り値の型を List<Map<String, Object>> に変更
+    private List<Map<String, Object>> getPlaylistTracksMock(String playlistId) {
         logger.info("getPlaylistTracksMock: playlistId: {}", playlistId);
         logger.info("getPlaylistTracksMock: mockApiUrl: {}", mockApiUrl);
         logger.info("getPlaylistTracksMock: WebClient GET リクエスト送信, URL: {}/playlists/{}/tracks", mockApiUrl, playlistId);
