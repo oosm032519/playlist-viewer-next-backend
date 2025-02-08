@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * ログインユーザーのお気に入りプレイリストを取得するAPIエンドポイントを提供するコントローラークラス
@@ -40,6 +39,7 @@ public class UserFavoritePlaylistsController {
      * コンストラクタ
      *
      * @param userFavoritePlaylistsService お気に入りプレイリストサービス
+     * @param hashUtil                     ハッシュユーティリティ
      */
     public UserFavoritePlaylistsController(UserFavoritePlaylistsService userFavoritePlaylistsService, HashUtil hashUtil) {
         this.userFavoritePlaylistsService = userFavoritePlaylistsService;
@@ -54,22 +54,58 @@ public class UserFavoritePlaylistsController {
      */
     @GetMapping
     public ResponseEntity<?> getFavoritePlaylists(@AuthenticationPrincipal OAuth2User principal) throws NoSuchAlgorithmException {
-        LOGGER.info("お気に入りプレイリスト一覧取得リクエストを受信しました。 ユーザー情報: {}", principal);
+        LOGGER.info("お気に入りプレイリスト一覧取得リクエストを受信しました。");
 
-        String userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
-        String hashedUserId = null;
-
-        // モックモードが有効な場合はハッシュ化処理をスキップ
-        if (!mockEnabled) {
-            hashedUserId = hashUtil.hashUserId(Objects.requireNonNull(userId));
-        } else {
-            hashedUserId = userId;
+        if (principal == null) {
+            LOGGER.error("認証されたユーザー情報が利用できません。 principalがnullです。");
+            return ResponseEntity.badRequest().body("認証情報が不足しています。");
         }
 
-        LOGGER.debug("ユーザーID: {} のお気に入りプレイリストを取得します。", hashedUserId);
+        LOGGER.debug("認証情報を検証中。ユーザー情報: {}", principal);
 
-        List<FavoritePlaylistResponse> favoritePlaylists = userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId); // ハッシュ化されたIDを使用
-        LOGGER.info("ユーザーID: {} のお気に入りプレイリストを {} 件取得しました。", hashedUserId, favoritePlaylists.size());
+        String userId;
+        try {
+            userId = mockEnabled ? MOCK_USER_ID : principal.getAttribute("id");
+            LOGGER.debug("取得されたユーザーID: {}", userId);
+        } catch (Exception e) {
+            LOGGER.error("ユーザーIDの取得中にエラーが発生しました。", e);
+            return ResponseEntity.status(500).body("ユーザーIDの取得に失敗しました。");
+        }
+
+        if (userId == null) {
+            LOGGER.error("ユーザーIDがnullです。principalの内容: {}", principal);
+            return ResponseEntity.badRequest().body("ユーザーIDを取得できませんでした。");
+        }
+
+        String hashedUserId;
+        try {
+            if (!mockEnabled) {
+                LOGGER.debug("ユーザーIDをハッシュ化します。");
+                hashedUserId = hashUtil.hashUserId(userId);
+                LOGGER.debug("ハッシュ化されたユーザーID: {}", hashedUserId);
+            } else {
+                LOGGER.debug("モックモードが有効のため、ユーザーIDのハッシュ化をスキップします。ユーザーID: {}", userId);
+                hashedUserId = userId;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error("ユーザーIDのハッシュ化中にエラーが発生しました。ユーザーID: {}", userId, e);
+            return ResponseEntity.status(500).body("ユーザーIDのハッシュ化に失敗しました。");
+        }
+
+        LOGGER.info("ユーザー [{}] のお気に入りプレイリストの取得を開始します。", hashedUserId);
+
+        List<FavoritePlaylistResponse> favoritePlaylists;
+        try {
+            favoritePlaylists = userFavoritePlaylistsService.getFavoritePlaylists(hashedUserId);
+            LOGGER.info("ユーザー [{}] のお気に入りプレイリストを {} 件取得しました。", hashedUserId, favoritePlaylists.size());
+        } catch (Exception e) {
+            LOGGER.error("お気に入りプレイリストの取得中にエラーが発生しました。ユーザーID: {}", hashedUserId, e);
+            return ResponseEntity.status(500).body("お気に入りプレイリストの取得に失敗しました。");
+        }
+
+        LOGGER.debug("ユーザー [{}] のお気に入りプレイリスト内容: {}", hashedUserId, favoritePlaylists);
+
+        LOGGER.info("お気に入りプレイリスト一覧取得リクエストが正常に完了しました。");
         return ResponseEntity.ok(favoritePlaylists);
     }
 }
