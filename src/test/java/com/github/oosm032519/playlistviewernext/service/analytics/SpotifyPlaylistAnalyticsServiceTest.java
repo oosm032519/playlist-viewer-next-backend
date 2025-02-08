@@ -35,9 +35,12 @@ class SpotifyPlaylistAnalyticsServiceTest {
     @InjectMocks
     private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
 
+    /**
+     * プレイリストのジャンルカウントが正常に取得・集計され、出現回数で降順にソートされたマップが返されることを確認する。
+     */
     @Test
     void getGenreCountsForPlaylist_ShouldReturnSortedGenreCounts() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: テストデータの準備とモックの設定
         String playlistId = "testPlaylistId";
         PlaylistTrack[] playlistTracks = createMockPlaylistTracks();
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(playlistTracks);
@@ -47,65 +50,77 @@ class SpotifyPlaylistAnalyticsServiceTest {
         genreCounts.put("jazz", 1);
         when(genreAggregatorService.aggregateGenres(playlistTracks)).thenReturn(genreCounts);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isNotEmpty()
                 .containsOnlyKeys("rock", "pop", "jazz")
                 .containsEntry("rock", 2)
                 .containsEntry("pop", 1)
                 .containsEntry("jazz", 1);
 
-        // Verify sorting
+        // ソートの検証
         List<Map.Entry<String, Integer>> sortedEntries = new ArrayList<>(result.entrySet());
         sortedEntries.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
         assertThat(new ArrayList<>(result.entrySet())).isEqualTo(sortedEntries);
     }
 
+    /**
+     * 空のプレイリストが与えられた場合、空のジャンルカウントマップが返されることを確認する。
+     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: 空のプレイリストに対するモックの設定
         String playlistId = "emptyPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
-        // Act
+        // Act: テスト対象メソッドの実行
         Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isEmpty();
     }
 
+    /**
+     * プレイリストのトラック取得時に例外が発生した場合、InvalidRequestExceptionがスローされることを確認する。
+     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleException() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: 例外をスローするモックの設定
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
                 .thenThrow(new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
-        // Act & Assert
+        // Act & Assert: 例外がスローされることの確認
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId))
                 .isInstanceOf(InvalidRequestException.class)
                 .hasMessage("プレイリストのジャンルごとのトラック数の取得中にエラーが発生しました。");
     }
 
+    /**
+     * プレイリストのトラックがnullの場合、空のジャンルカウントマップが返されることを確認する。
+     */
     @Test
     void getGenreCountsForPlaylist_ShouldHandleNullTracks() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: nullのトラックを返すモックの設定
         String playlistId = "nullTracksPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(null);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         Map<String, Integer> result = spotifyPlaylistAnalyticsService.getGenreCountsForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isEmpty();
     }
 
+    /**
+     * プレイリストの上位5ジャンルが正常に取得できることを確認する。
+     */
     @Test
     void getTop5GenresForPlaylist_ShouldReturnTop5Genres() throws PlaylistViewerNextException {
-        // Arrange
+        // Arrange: テストデータの準備とモックの設定
         String playlistId = "testPlaylistId";
         Map<String, Integer> genreCounts = new LinkedHashMap<>();
         genreCounts.put("rock", 10);
@@ -119,17 +134,20 @@ class SpotifyPlaylistAnalyticsServiceTest {
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
         when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz", "blues", "classical"));
 
-        // Act
+        // Act: テスト対象メソッドの実行
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).hasSize(5)
                 .containsExactly("rock", "pop", "jazz", "blues", "classical");
     }
 
+    /**
+     * プレイリストのジャンル数が5未満の場合、存在するジャンルのみが返されることを確認する。
+     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleLessThan5Genres() throws PlaylistViewerNextException {
-        // Arrange
+        // Arrange: テストデータの準備とモックの設定
         String playlistId = "fewGenresPlaylistId";
         Map<String, Integer> genreCounts = new LinkedHashMap<>();
         genreCounts.put("rock", 10);
@@ -140,36 +158,42 @@ class SpotifyPlaylistAnalyticsServiceTest {
         doReturn(genreCounts).when(spyService).getGenreCountsForPlaylist(playlistId);
         when(genreAggregatorService.getTopGenres(genreCounts, 5)).thenReturn(Arrays.asList("rock", "pop", "jazz"));
 
-        // Act
+        // Act: テスト対象メソッドの実行
         List<String> result = spyService.getTop5GenresForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).hasSize(3)
                 .containsExactly("rock", "pop", "jazz");
     }
 
+    /**
+     * 空のプレイリストが与えられた場合、上位5ジャンルとして空のリストが返されることを確認する。
+     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleEmptyPlaylist() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: 空のプレイリストに対するモックの設定
         String playlistId = "emptyPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId)).thenReturn(new PlaylistTrack[0]);
         when(genreAggregatorService.aggregateGenres(new PlaylistTrack[0])).thenReturn(Collections.emptyMap());
 
-        // Act
+        // Act: テスト対象メソッドの実行
         List<String> result = spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).isEmpty();
     }
 
+    /**
+     * プレイリストの上位5ジャンル取得時に例外が発生した場合、PlaylistViewerNextExceptionがスローされることを確認する。
+     */
     @Test
     void getTop5GenresForPlaylist_ShouldHandleException() throws PlaylistViewerNextException, SpotifyWebApiException {
-        // Arrange
+        // Arrange: 例外をスローするモックの設定
         String playlistId = "errorPlaylistId";
         when(playlistDetailsService.getPlaylistTracks(playlistId))
                 .thenThrow(new InvalidRequestException(HttpStatus.INTERNAL_SERVER_ERROR, "API error"));
 
-        // Act & Assert
+        // Act & Assert: 例外がスローされることの確認
         assertThatThrownBy(() -> spotifyPlaylistAnalyticsService.getTop5GenresForPlaylist(playlistId))
                 .isInstanceOf(PlaylistViewerNextException.class)
                 .hasMessage("プレイリストのジャンル出現頻度上位5つの取得中にエラーが発生しました。");

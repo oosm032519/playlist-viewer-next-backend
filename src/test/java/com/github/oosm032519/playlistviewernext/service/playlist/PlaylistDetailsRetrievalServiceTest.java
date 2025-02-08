@@ -1,6 +1,5 @@
 package com.github.oosm032519.playlistviewernext.service.playlist;
 
-import com.github.oosm032519.playlistviewernext.controller.auth.SpotifyClientCredentialsAuthentication;
 import com.github.oosm032519.playlistviewernext.exception.PlaylistViewerNextException;
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.AudioFeaturesCalculator;
@@ -34,12 +33,6 @@ class PlaylistDetailsRetrievalServiceTest {
     private SpotifyPlaylistDetailsService playlistDetailsService;
 
     @Mock
-    private SpotifyTrackService trackService;
-
-    @Mock
-    private SpotifyClientCredentialsAuthentication authController;
-
-    @Mock
     private TrackDataRetriever trackDataRetriever;
 
     @Mock
@@ -48,6 +41,9 @@ class PlaylistDetailsRetrievalServiceTest {
     @InjectMocks
     private PlaylistDetailsRetrievalService playlistDetailsRetrievalService;
 
+    /**
+     * プレイリストの詳細情報が正常に取得できることを確認する。
+     */
     @Test
     void getPlaylistDetails_ReturnsDetailsSuccessfully() throws Exception {
         // Arrange: テストデータの準備
@@ -105,25 +101,31 @@ class PlaylistDetailsRetrievalServiceTest {
         }
     }
 
+    /**
+     * プレイリスト情報の取得中に例外が発生した場合、PlaylistViewerNextExceptionがスローされることを確認する。
+     */
     @Test
     void getPlaylistDetails_ThrowsPlaylistViewerNextException_WhenOtherExceptionOccurs() throws SpotifyWebApiException {
-        // Arrange
+        // Arrange: 例外をスローするモックの設定
         String playlistId = "testPlaylistId";
         when(playlistDetailsService.getPlaylist(playlistId)).thenThrow(new RuntimeException("Other Error"));
 
-        // Act & Assert
+        // Act & Assert: PlaylistViewerNextExceptionがスローされることの確認
         assertThatThrownBy(() -> playlistDetailsRetrievalService.getPlaylistDetails(playlistId))
                 .isInstanceOf(PlaylistViewerNextException.class)
                 .hasMessageContaining("プレイリストの詳細情報の取得中にエラーが発生しました。");
     }
 
+    /**
+     * 指定されたプレイリストが見つからない場合、ResourceNotFoundExceptionがスローされることを確認する。
+     */
     @Test
     void getPlaylistDetails_ThrowsResourceNotFoundException_WhenPlaylistNotFound() throws SpotifyWebApiException {
-        // Arrange
+        // Arrange: プレイリストが見つからない場合のモック設定
         String playlistId = "testPlaylistId";
         when(playlistDetailsService.getPlaylist(playlistId)).thenReturn(null);
 
-        // Act & Assert
+        // Act & Assert: ResourceNotFoundExceptionがスローされることの確認
         assertThatThrownBy(() -> playlistDetailsRetrievalService.getPlaylistDetails(playlistId))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("指定されたプレイリストが見つかりません。");

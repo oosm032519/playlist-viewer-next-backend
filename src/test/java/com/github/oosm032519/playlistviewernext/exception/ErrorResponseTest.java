@@ -1,43 +1,51 @@
 package com.github.oosm032519.playlistviewernext.exception;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 class ErrorResponseTest {
 
+    /**
+     * 3つのパラメータを持つコンストラクタでErrorResponseオブジェクトを生成し、
+     * 各フィールドに正しい値が設定されていることを確認する。
+     */
     @Test
     void testConstructorWithThreeParameters() {
-        // Given
+        // Arrange: テストデータの準備
         HttpStatus status = HttpStatus.BAD_REQUEST;
         String errorCode = "ERR001";
         String message = "Invalid input";
 
-        // When
+        // Act: ErrorResponseオブジェクトの生成
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message);
 
-        // Then
+        // Assert: 各フィールドの値が正しいことを確認
         assertThat(errorResponse.getStatus()).isEqualTo(status);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(errorCode);
         assertThat(errorResponse.getMessage()).isEqualTo(message);
         assertThat(errorResponse.getDetails()).isNull();
     }
 
+    /**
+     * 4つのパラメータを持つコンストラクタでErrorResponseオブジェクトを生成し、
+     * 各フィールドに正しい値が設定されていることを確認する。
+     */
     @Test
     void testConstructorWithFourParameters() {
-        // Given
+        // Arrange: テストデータの準備
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
         String errorCode = "ERR002";
         String message = "Server error";
         String details = "Detailed error information";
 
-        // When
+        // Act: ErrorResponseオブジェクトの生成
         ErrorResponse errorResponse = new ErrorResponse(status, errorCode, message, details);
 
-        // Then
+        // Assert: 各フィールドの値が正しいことを確認
         assertThat(errorResponse.getStatus()).isEqualTo(status);
+        assertThat(errorResponse.getErrorCode()).isEqualTo(errorCode);
         assertThat(errorResponse.getMessage()).isEqualTo(message);
         assertThat(errorResponse.getDetails()).isEqualTo(details);
     }

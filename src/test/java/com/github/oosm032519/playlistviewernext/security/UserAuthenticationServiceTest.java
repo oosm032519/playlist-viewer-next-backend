@@ -34,56 +34,68 @@ class UserAuthenticationServiceTest {
     @DisplayName("getAccessTokenメソッドのテスト")
     class GetAccessTokenTest {
 
+        /**
+         * OAuth2Userから有効なアクセストークンが取得できることを確認する。
+         */
         @Test
         @DisplayName("有効なアクセストークンが取得できる場合")
         void getAccessToken_WithValidToken_ReturnsToken() {
-            // Arrange
+            // Arrange: テストデータの準備
             String expectedToken = "validAccessToken";
             Map<String, Object> attributes = Collections.singletonMap("spotify_access_token", expectedToken);
             when(principal.getAttributes()).thenReturn(attributes);
 
-            // Act
+            // Act: テスト対象メソッドの実行
             String actualToken = userAuthenticationService.getAccessToken(principal);
 
-            // Assert
+            // Assert: 結果の検証
             assertThat(actualToken).isEqualTo(expectedToken);
         }
 
+        /**
+         * 認証されていない場合（principalがnull）に、nullが返されることを確認する。
+         */
         @Test
         @DisplayName("認証されていない場合（principalがnull）")
         void getAccessToken_WithNullPrincipal_ReturnsNull() {
-            // Act
+            // Act: テスト対象メソッドの実行
             String result = userAuthenticationService.getAccessToken(null);
 
-            // Assert
+            // Assert: 結果の検証
             assertThat(result).isNull();
         }
 
+        /**
+         * OAuth2Userの属性にアクセストークンが存在しない場合に、nullが返されることを確認する。
+         */
         @Test
         @DisplayName("アクセストークンが存在しない場合")
         void getAccessToken_WithNoAccessToken_ReturnsNull() {
-            // Arrange
+            // Arrange: モックの設定
             when(principal.getAttributes()).thenReturn(Collections.emptyMap());
 
-            // Act
+            // Act: テスト対象メソッドの実行
             String result = userAuthenticationService.getAccessToken(principal);
 
-            // Assert
+            // Assert: 結果の検証
             assertThat(result).isNull();
         }
 
+        /**
+         * OAuth2Userの属性にアクセストークンがnullで存在する場合に、nullが返されることを確認する。
+         */
         @Test
         @DisplayName("アクセストークンがnullの場合")
         void getAccessToken_WithNullAccessToken_ReturnsNull() {
-            // Arrange
+            // Arrange: テストデータの準備
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("spotify_access_token", null);
             when(principal.getAttributes()).thenReturn(attributes);
 
-            // Act
+            // Act: テスト対象メソッドの実行
             String result = userAuthenticationService.getAccessToken(principal);
 
-            // Assert
+            // Assert: 結果の検証
             assertThat(result).isNull();
         }
     }

@@ -2,17 +2,17 @@ package com.github.oosm032519.playlistviewernext.controller.session;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@TestPropertySource(properties = {"spotify.mock.enabled=true"}) // モックモードを有効にする
 class MockLoginControllerTest {
 
     @Mock
@@ -35,23 +36,24 @@ class MockLoginControllerTest {
     @InjectMocks
     private MockLoginController mockLoginController;
 
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(mockLoginController, "frontendUrl", "http://localhost:3000");
-    }
+    @Value("${frontend.url}") // frontend.url を注入
+    public String frontendUrl;
 
+    /**
+     * モックログインが成功した場合、セッションIDを含むレスポンスが返され、
+     * セッション情報がRedisに保存され、Cookieが設定されることを確認する。
+     */
     @Test
     void mockLogin_success() {
-        // Arrange
+        // Arrange: モックの設定
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
-        // putAll() は void を返すので、doNothing() を使用する
         doNothing().when(hashOperations).putAll(anyString(), anyMap());
         when(redisTemplate.expire(anyString(), anyLong(), any())).thenReturn(true);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         ResponseEntity<?> responseEntity = mockLoginController.mockLogin(response);
 
-        // Assert
+        // Assert: レスポンスの検証
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
         assertThat(responseBody)
@@ -66,17 +68,19 @@ class MockLoginControllerTest {
         verify(response, times(1)).addCookie(any(Cookie.class));
     }
 
+    /**
+     * Redisへの操作中にエラーが発生した場合、INTERNAL_SERVER_ERRORが返されることを確認する。
+     */
     @Test
     void mockLogin_redisError() {
-        // Arrange
+        // Arrange: モックの設定 (Redis操作中に例外をスロー)
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
-        // putAll() で例外をスローさせる場合は、doThrow() を使用する
         doThrow(new RuntimeException("Redis error")).when(hashOperations).putAll(anyString(), anyMap());
 
-        // Act
+        // Act: テスト対象メソッドの実行
         ResponseEntity<?> responseEntity = mockLoginController.mockLogin(response);
 
-        // Assert
+        // Assert: レスポンスの検証
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         Map<String, Object> responseBody = (Map<String, Object>) responseEntity.getBody();
         assertThat(responseBody)

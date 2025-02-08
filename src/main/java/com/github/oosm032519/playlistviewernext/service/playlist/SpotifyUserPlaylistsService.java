@@ -64,7 +64,7 @@ public class SpotifyUserPlaylistsService {
         }
     }
 
-    private List<PlaylistSimplified> getCurrentUsersPlaylistsMock() {
+    public List<PlaylistSimplified> getCurrentUsersPlaylistsMock() {
         logger.info("Getting current user's playlists using mock API.");
 
         // WebClientを使用してモックAPIからデータを取得
@@ -82,7 +82,7 @@ public class SpotifyUserPlaylistsService {
         return playlists;
     }
 
-    private List<PlaylistSimplified> getCurrentUsersPlaylistsReal() throws SpotifyWebApiException {
+    public List<PlaylistSimplified> getCurrentUsersPlaylistsReal() throws SpotifyWebApiException {
         logger.info("Getting current user's playlists using real API.");
 
         return RetryUtil.executeWithRetry(() -> {

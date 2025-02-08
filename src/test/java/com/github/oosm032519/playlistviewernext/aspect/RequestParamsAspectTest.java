@@ -2,7 +2,7 @@ package com.github.oosm032519.playlistviewernext.aspect;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.JoinPoint;
-import org.junit.jupiter.api.DisplayName;
+import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,70 +28,73 @@ class RequestParamsAspectTest {
     @Mock
     private HttpServletRequest request;
 
+    @Mock
+    private Signature signature;
+
+    /**
+     * リクエストパラメータが存在する場合に、ログが正しく出力されることを確認する。
+     */
     @Test
-    @DisplayName("正常系：リクエストパラメータが存在する場合のログ出力テスト")
     void logRequestParams_WithValidParameters() {
-        // テストデータのセットアップ
+        // Arrange: テストデータの準備
         Map<String, String[]> parameterMap = new HashMap<>();
         parameterMap.put("testParam", new String[]{"testValue"});
 
-        // モックの設定
         ServletRequestAttributes attributes = mock(ServletRequestAttributes.class);
         when(attributes.getRequest()).thenReturn(request);
         when(request.getParameterMap()).thenReturn(parameterMap);
+        when(joinPoint.getSignature()).thenReturn(signature);
 
-        // RequestContextHolderの設定
         RequestContextHolder.setRequestAttributes(attributes);
 
-        try {
-            // テスト実行
-            requestParamsAspect.logRequestParams(joinPoint);
-
-            // 検証
-            verify(request, times(1)).getParameterMap();
-            verify(joinPoint, times(1)).getSignature();
-        } finally {
-            // クリーンアップ
-            RequestContextHolder.resetRequestAttributes();
-        }
-    }
-
-    @Test
-    @DisplayName("異常系：RequestAttributesがnullの場合のテスト")
-    void logRequestParams_WithNullRequestAttributes() {
-        // RequestContextHolderをクリア
-        RequestContextHolder.resetRequestAttributes();
-
-        // テスト実行
+        // Act: テスト対象メソッドの実行
         requestParamsAspect.logRequestParams(joinPoint);
 
-        // 検証：エラーが発生せずに正常に処理が完了すること
+        // Assert: メソッド呼び出しの検証
+        verify(request, times(1)).getParameterMap();
+        verify(joinPoint, times(1)).getSignature();
+
+        // クリーンアップ
+        RequestContextHolder.resetRequestAttributes();
+    }
+
+    /**
+     * RequestAttributesがnullの場合に、エラーが発生せずに処理が終了することを確認する。
+     */
+    @Test
+    void logRequestParams_WithNullRequestAttributes() {
+        // Arrange: RequestContextHolderをクリア
+        RequestContextHolder.resetRequestAttributes();
+
+        // Act: テスト対象メソッドの実行
+        requestParamsAspect.logRequestParams(joinPoint);
+
+        // Assert: エラーが発生せずに正常に処理が完了することを確認
         verify(joinPoint, never()).getSignature();
     }
 
+    /**
+     * 空のパラメータマップが渡された場合に、ログ出力が行われないことを確認する。
+     */
     @Test
-    @DisplayName("正常系：空のパラメータマップの場合のテスト")
     void logRequestParams_WithEmptyParameters() {
-        // テストデータのセットアップ
+        // Arrange: テストデータの準備
         Map<String, String[]> emptyParameterMap = new HashMap<>();
 
-        // モックの設定
         ServletRequestAttributes attributes = mock(ServletRequestAttributes.class);
         when(attributes.getRequest()).thenReturn(request);
         when(request.getParameterMap()).thenReturn(emptyParameterMap);
 
         RequestContextHolder.setRequestAttributes(attributes);
 
-        try {
-            // テスト実行
-            requestParamsAspect.logRequestParams(joinPoint);
+        // Act: テスト対象メソッドの実行
+        requestParamsAspect.logRequestParams(joinPoint);
 
-            // 検証
-            verify(request, times(1)).getParameterMap();
-            verify(joinPoint, never()).getSignature();
-        } finally {
-            // クリーンアップ
-            RequestContextHolder.resetRequestAttributes();
-        }
+        // Assert: メソッド呼び出しの検証
+        verify(request, times(1)).getParameterMap();
+        verify(joinPoint, never()).getSignature();
+
+        // クリーンアップ
+        RequestContextHolder.resetRequestAttributes();
     }
 }

@@ -16,24 +16,31 @@ class RetryUtilTest {
     @DisplayName("executeWithRetryメソッドのテスト")
     class ExecuteWithRetryTest {
 
+        /**
+         * 最初の試行で操作が成功する場合、結果が正しく返され、再試行が行われないことを確認する。
+         */
         @Test
         @DisplayName("正常系: 最初の試行で成功する場合")
         void successOnFirstAttempt() throws Exception {
-            // テストデータ
+            // Arrange: テストデータの準備
             String expectedResult = "success";
             RetryUtil.RetryableOperation<String> operation = () -> expectedResult;
 
-            // 実行
+            // Act: テスト対象メソッドの実行
             String result = RetryUtil.executeWithRetry(operation, 3, 100);
 
-            // 検証
+            // Assert: 結果の検証
             assertThat(result).isEqualTo(expectedResult);
         }
 
+        /**
+         * TooManyRequestsExceptionが発生し、リトライ後に操作が成功する場合、
+         * 最終的に成功結果が返され、指定された回数リトライが行われることを確認する。
+         */
         @Test
         @DisplayName("異常系: TooManyRequestsExceptionが発生し、リトライ後に成功する場合")
         void successAfterRetry() throws Exception {
-            // モックの設定
+            // Arrange: モックの設定
             RetryUtil.RetryableOperation<String> operation = mock(RetryUtil.RetryableOperation.class);
             TooManyRequestsException exception = mock(TooManyRequestsException.class);
             when(exception.getRetryAfter()).thenReturn(1);
@@ -43,18 +50,21 @@ class RetryUtilTest {
                     .thenThrow(exception)
                     .thenReturn("success");
 
-            // 実行
+            // Act: テスト対象メソッドの実行
             String result = RetryUtil.executeWithRetry(operation, 3, 100);
 
-            // 検証
+            // Assert: 結果の検証
             assertThat(result).isEqualTo("success");
             verify(operation, times(2)).execute();
         }
 
+        /**
+         * リトライ回数が上限に達しても操作が失敗し続ける場合、TooManyRequestsExceptionがスローされることを確認する。
+         */
         @Test
         @DisplayName("異常系: 最大リトライ回数を超えた場合")
         void failureAfterMaxRetries() throws SpotifyWebApiException {
-            // モックの設定
+            // Arrange: モックの設定
             RetryUtil.RetryableOperation<String> operation = mock(RetryUtil.RetryableOperation.class);
             TooManyRequestsException exception = mock(TooManyRequestsException.class);
             when(exception.getRetryAfter()).thenReturn(1);
@@ -62,20 +72,23 @@ class RetryUtilTest {
             try {
                 when(operation.execute()).thenThrow(exception);
 
-                // 実行
+                // Act: テスト対象メソッドの実行
                 RetryUtil.executeWithRetry(operation, 2, 100);
                 fail("TooManyRequestsExceptionが発生するはずです");
             } catch (Exception e) {
-                // 検証
+                // Assert: 例外の検証
                 assertThat(e).isInstanceOf(TooManyRequestsException.class);
                 verify(operation, times(3)).execute(); // 初回 + 2回のリトライ
             }
         }
 
+        /**
+         * リトライ中にスレッドが割り込まれた場合、InternalServerExceptionがスローされることを確認する。
+         */
         @Test
         @DisplayName("異常系: リトライ中に割り込みが発生した場合")
         void interruptedDuringRetry() throws Exception {
-            // モックの設定
+            // Arrange: モックの設定
             RetryUtil.RetryableOperation<String> operation = mock(RetryUtil.RetryableOperation.class);
             TooManyRequestsException exception = mock(TooManyRequestsException.class);
             when(exception.getRetryAfter()).thenReturn(1);
@@ -84,7 +97,7 @@ class RetryUtilTest {
             when(operation.execute()).thenThrow(exception);
             Thread.currentThread().interrupt();
 
-            // 実行と検証
+            // Act & Assert: InternalServerExceptionがスローされることの確認
             assertThatThrownBy(() -> RetryUtil.executeWithRetry(operation, 3, 100))
                     .isInstanceOf(InternalServerException.class)
                     .hasMessageContaining("再試行が中断されました。");

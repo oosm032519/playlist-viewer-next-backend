@@ -66,7 +66,7 @@ public class SpotifyRecommendationService {
         }
     }
 
-    private List<Track> getRecommendationsMock() {
+    public List<Track> getRecommendationsMock() {
         logger.info("Getting recommendations using mock API.");
 
         // WebClientを使用してモックAPIからデータを取得

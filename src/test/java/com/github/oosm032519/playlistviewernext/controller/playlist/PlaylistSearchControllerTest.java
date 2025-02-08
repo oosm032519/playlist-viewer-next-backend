@@ -31,9 +31,12 @@ public class PlaylistSearchControllerTest {
     @InjectMocks
     private PlaylistSearchController playlistSearchController;
 
+    /**
+     * 有効なクエリでプレイリスト検索が成功した場合、検索結果が返されることを確認する。
+     */
     @Test
     void searchPlaylists_validQuery_returnsSearchResults() throws SpotifyWebApiException {
-        // テストデータの準備
+        // Arrange: テストデータの準備
         String query = "test query";
         int offset = 0;
         int limit = 20;
@@ -44,28 +47,30 @@ public class PlaylistSearchControllerTest {
         // モックの設定
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenReturn(expectedSearchResult);
 
-        // テスト対象メソッドの実行
+        // Act: テスト対象メソッドの実行
         playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
         ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
-        // アサーション
+        // Assert: アサーション
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(expectedSearchResult);
     }
 
+    /**
+     * 空白のクエリでプレイリスト検索を行った場合、BadRequestエラーが返されることを確認する。
+     */
     @Test
     void searchPlaylists_blankQuery_returnsBadRequest() throws SpotifyWebApiException {
-        // テストデータの準備
-        String query = "   ";
+        // Arrange: テストデータの準備
+        String query = "   "; // 空白のクエリ
         int offset = 0;
         int limit = 20;
 
-        // テスト対象メソッドの実行
+        // Act: テスト対象メソッドの実行
         playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
         ResponseEntity<?> response = playlistSearchController.searchPlaylists(query, offset, limit);
 
-
-        // アサーション
+        // Assert: アサーション
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
         ErrorResponse errorResponse = (ErrorResponse) response.getBody();
@@ -73,9 +78,12 @@ public class PlaylistSearchControllerTest {
         assertThat(errorResponse.getMessage()).isEqualTo("検索クエリは必須です。");
     }
 
+    /**
+     * Spotify API例外が発生した場合、例外がスローされることを確認する。
+     */
     @Test
     void searchPlaylists_spotifyApiException_throwsException() throws SpotifyWebApiException {
-        // テストデータの準備
+        // Arrange: テストデータの準備
         String query = "test query";
         int offset = 0;
         int limit = 20;
@@ -84,7 +92,7 @@ public class PlaylistSearchControllerTest {
         SpotifyWebApiException exception = new SpotifyWebApiException("Spotify API error");
         when(playlistSearchService.searchPlaylists(query, offset, limit)).thenThrow(exception);
 
-        // テスト対象メソッドの実行
+        // Act & Assert: テスト対象メソッドの実行と例外の確認
         playlistSearchController = new PlaylistSearchController(playlistSearchService, authController);
 
         try {

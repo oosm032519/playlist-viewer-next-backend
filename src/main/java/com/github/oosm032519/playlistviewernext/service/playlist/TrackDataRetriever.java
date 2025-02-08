@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import se.michaelthelin.spotify.model_objects.IPlaylistItem;
 import se.michaelthelin.spotify.model_objects.specification.AudioFeatures;
 import se.michaelthelin.spotify.model_objects.specification.PlaylistTrack;
 import se.michaelthelin.spotify.model_objects.specification.Track;
@@ -48,9 +49,9 @@ public class TrackDataRetriever {
 
             // 全てのトラックIDをリストアップ
             List<String> trackIds = Arrays.stream(tracks)
-                    .map(playlistTrack -> playlistTrack.getTrack())
+                    .map(PlaylistTrack::getTrack)
                     .filter(Objects::nonNull) // null チェックを追加
-                    .map(track -> track.getId())
+                    .map(IPlaylistItem::getId)
                     .filter(Objects::nonNull) // null チェックを追加
                     .collect(Collectors.toList());
             logger.info("getTrackListData: トラックIDリスト作成完了, trackIds size: {}", trackIds.size());
@@ -59,7 +60,10 @@ public class TrackDataRetriever {
 
             // 全てのトラックのAudioFeaturesを一度に取得
             logger.info("getTrackListData: AudioFeatures 取得開始, trackIds size: {}", trackIds.size());
-            List<AudioFeatures> audioFeaturesList = trackService.getAudioFeaturesForTracks(trackIds);
+            List<AudioFeatures> audioFeaturesList = Collections.emptyList(); //初期化
+            if (!trackIds.isEmpty()) {
+                audioFeaturesList = trackService.getAudioFeaturesForTracks(trackIds);
+            }
             logger.info("getTrackListData: AudioFeatures 取得完了, audioFeaturesList size: {}", audioFeaturesList.size());
 
             // トラック情報とAudioFeaturesをマッピング
@@ -67,7 +71,7 @@ public class TrackDataRetriever {
             for (int i = 0; i < tracks.length; i++) {
                 Map<String, Object> trackData = new HashMap<>();
                 Track fullTrack = (Track) tracks[i].getTrack();
-                AudioFeatures audioFeatures = (audioFeaturesList != null && i < audioFeaturesList.size()) ? audioFeaturesList.get(i) : null;
+                AudioFeatures audioFeatures = i < audioFeaturesList.size() ? audioFeaturesList.get(i) : null;
 
                 trackData.put("track", fullTrack);
                 trackData.put("audioFeatures", audioFeatures);

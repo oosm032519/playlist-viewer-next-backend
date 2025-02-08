@@ -133,7 +133,7 @@ public class SpotifyPlaylistDetailsService {
         return tracks;
     }
 
-    private PlaylistTrack[] getPlaylistTracksReal(String playlistId) throws SpotifyWebApiException {
+    public PlaylistTrack[] getPlaylistTracksReal(String playlistId) throws SpotifyWebApiException {
         logger.info("getPlaylistTracksReal: playlistId: {}", playlistId);
 
         return RetryUtil.executeWithRetry(() -> {
@@ -209,7 +209,7 @@ public class SpotifyPlaylistDetailsService {
         }
     }
 
-    private Playlist getPlaylistMock(String playlistId) {
+    public Playlist getPlaylistMock(String playlistId) {
         logger.info("getPlaylistMock: playlistId: {}", playlistId);
         logger.info("getPlaylistMock: mockApiUrl: {}", mockApiUrl);
         logger.info("getPlaylistMock: WebClient GET リクエスト送信, URL: {}/playlists/{}", mockApiUrl, playlistId);

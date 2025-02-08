@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,42 +56,48 @@ class SessionAuthenticationFilterTest {
         SecurityContextHolder.clearContext(); // テスト開始前にSecurityContextをクリア
     }
 
+    /**
+     * 有効なセッションIDがCookieに含まれている場合、認証が成功し、SecurityContextに認証情報が設定されることを確認する。
+     */
     @Test
     void doFilterInternal_ValidSessionId_AuthenticationSuccess() throws ServletException, IOException {
-        // Arrange
+        // Arrange: テストデータの準備とモックの設定
         String sessionId = "validSessionId";
         Cookie sessionIdCookie = new Cookie("sessionId", sessionId);
         when(request.getCookies()).thenReturn(new Cookie[]{sessionIdCookie});
-        Map<Object, Object> sessionData = createSessionData("user123", "Test User", "testToken");
+        Map<Object, Object> sessionData = createSessionData();
 
         // HashOperations のモックをテストメソッド内で設定
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(hashOperations.entries("session:" + sessionId)).thenReturn(sessionData);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         sessionAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Assert: 認証情報がSecurityContextに設定されていることを確認
         verify(filterChain).doFilter(request, response);
         OAuth2AuthenticationToken authentication = (OAuth2AuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         assertThat(authentication).isNotNull();
         OAuth2User oAuth2User = authentication.getPrincipal();
-        assertThat((String) oAuth2User.getAttribute("id")).isEqualTo("user123");
-        assertThat((String) oAuth2User.getAttribute("name")).isEqualTo("Test User");
-        assertThat((String) oAuth2User.getAttribute("spotify_access_token")).isEqualTo("testToken");
+        assertThat(oAuth2User.<String>getAttribute("id")).isEqualTo("user123");
+        assertThat(oAuth2User.<String>getAttribute("name")).isEqualTo("Test User");
+        assertThat(oAuth2User.<String>getAttribute("spotify_access_token")).isEqualTo("testToken");
     }
 
-    private Map<Object, Object> createSessionData(String userId, String userName, String spotifyAccessToken) {
+    private Map<Object, Object> createSessionData() {
         Map<Object, Object> sessionData = new HashMap<>();
-        sessionData.put("userId", userId);
-        sessionData.put("userName", userName);
-        sessionData.put("spotifyAccessToken", spotifyAccessToken);
+        sessionData.put("userId", "user123");
+        sessionData.put("userName", "Test User");
+        sessionData.put("spotifyAccessToken", "testToken");
         return sessionData;
     }
 
+    /**
+     * 無効なセッションIDがCookieに含まれている場合、認証が失敗し、AuthenticationExceptionがスローされることを確認する。
+     */
     @Test
-    void doFilterInternal_InvalidSessionId_AuthenticationFailure() throws ServletException, IOException {
-        // Arrange
+    void doFilterInternal_InvalidSessionId_AuthenticationFailure() {
+        // Arrange: テストデータの準備とモックの設定
         String sessionId = "invalidSessionId";
         Cookie sessionIdCookie = new Cookie("sessionId", sessionId);
         when(request.getCookies()).thenReturn(new Cookie[]{sessionIdCookie});
@@ -100,29 +106,35 @@ class SessionAuthenticationFilterTest {
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(hashOperations.entries("session:" + sessionId)).thenReturn(null);
 
-        // Act & Assert
-        assertThrows(AuthenticationException.class, () -> {
-            sessionAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
+        // Act & Assert: AuthenticationExceptionがスローされることの確認
+        assertThatThrownBy(() -> sessionAuthenticationFilter.doFilterInternal(request, response, filterChain))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("セッションが有効期限切れか、無効です。再度ログインしてください。");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+    /**
+     * セッションIDがCookieに含まれていない場合、認証処理が行われず、フィルターチェーンが続行されることを確認する。
+     */
     @Test
     void doFilterInternal_NoSessionId_NoAuthentication() throws ServletException, IOException {
-        // Arrange
+        // Arrange: Cookieがないリクエストをシミュレート
         when(request.getCookies()).thenReturn(null);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         sessionAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert
+        // Assert: フィルターチェーンが続行され、認証情報が設定されないことを確認
         verify(filterChain).doFilter(request, response);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+    /**
+     * Redis操作中にエラーが発生した場合、AuthenticationExceptionがスローされることを確認する。
+     */
     @Test
-    void doFilterInternal_RedisError_AuthenticationException() throws ServletException, IOException {
-        // Arrange
+    void doFilterInternal_RedisError_AuthenticationException() {
+        // Arrange: テストデータの準備とモックの設定
         String sessionId = "errorSessionId";
         Cookie sessionIdCookie = new Cookie("sessionId", sessionId);
         when(request.getCookies()).thenReturn(new Cookie[]{sessionIdCookie});
@@ -131,11 +143,11 @@ class SessionAuthenticationFilterTest {
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(hashOperations.entries("session:" + sessionId)).thenThrow(new RuntimeException("Redis error"));
 
-        // Act & Assert
-        AuthenticationException exception = assertThrows(AuthenticationException.class, () -> {
-            sessionAuthenticationFilter.doFilterInternal(request, response, filterChain);
-        });
-        assertThat(exception.getHttpStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        // Act & Assert: AuthenticationExceptionがスローされることの確認
+        assertThatThrownBy(() -> sessionAuthenticationFilter.doFilterInternal(request, response, filterChain))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessageContaining("セッション情報の取得中にエラーが発生しました。")
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 }

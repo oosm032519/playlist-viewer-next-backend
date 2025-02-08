@@ -18,71 +18,87 @@ class HashUtilTest {
         hashUtil = new HashUtil();
     }
 
+    /**
+     * 同じユーザーIDに対して、常に同じハッシュ値が生成されることを確認する。
+     */
     @Test
     @DisplayName("正常系: 同じユーザーIDに対して常に同じハッシュ値が生成されることを確認")
     void hashUserId_ShouldReturnConsistentHash() throws NoSuchAlgorithmException {
-        // Given
+        // Arrange: テストデータの準備
         String userId = "testUser123";
 
-        // When
+        // Act: テスト対象メソッドの実行
         String hash1 = hashUtil.hashUserId(userId);
         String hash2 = hashUtil.hashUserId(userId);
 
-        // Then
+        // Assert: 結果の検証
         assertThat(hash1)
                 .isNotEmpty()
                 .isEqualTo(hash2);
     }
 
+    /**
+     * 異なるユーザーIDに対して、異なるハッシュ値が生成されることを確認する。
+     */
     @Test
     @DisplayName("正常系: 異なるユーザーIDに対して異なるハッシュ値が生成されることを確認")
     void hashUserId_ShouldReturnDifferentHashForDifferentInputs() throws NoSuchAlgorithmException {
-        // Given
+        // Arrange: テストデータの準備
         String userId1 = "testUser1";
         String userId2 = "testUser2";
 
-        // When
+        // Act: テスト対象メソッドの実行
         String hash1 = hashUtil.hashUserId(userId1);
         String hash2 = hashUtil.hashUserId(userId2);
 
-        // Then
+        // Assert: 結果の検証
         assertThat(hash1)
                 .isNotEmpty()
                 .isNotEqualTo(hash2);
     }
 
+    /**
+     * nullが入力された場合、NullPointerExceptionが発生することを確認する。
+     */
     @Test
     @DisplayName("異常系: nullが入力された場合、NullPointerExceptionが発生することを確認")
     void hashUserId_ShouldThrowException_WhenInputIsNull() {
+        // Act & Assert: 例外がスローされることの確認
         assertThatThrownBy(() -> hashUtil.hashUserId(null))
                 .isInstanceOf(NullPointerException.class);
     }
 
+    /**
+     * 空文字列が入力された場合、有効なハッシュ値が返されることを確認する。
+     */
     @Test
     @DisplayName("正常系: 空文字列が入力された場合、有効なハッシュ値が返されることを確認")
     void hashUserId_ShouldReturnValidHash_WhenInputIsEmpty() throws NoSuchAlgorithmException {
-        // Given
+        // Arrange: テストデータの準備
         String emptyUserId = "";
 
-        // When
+        // Act: テスト対象メソッドの実行
         String hashedValue = hashUtil.hashUserId(emptyUserId);
 
-        // Then
+        // Assert: 結果の検証
         assertThat(hashedValue)
                 .isNotEmpty()
                 .matches("^[A-Za-z0-9+/]*={0,2}$"); // Base64エンコードパターンに一致することを確認
     }
 
+    /**
+     * ハッシュ値がBase64エンコードされた文字列であることを確認する。
+     */
     @Test
     @DisplayName("正常系: ハッシュ値がBase64エンコードされた文字列であることを確認")
     void hashUserId_ShouldReturnBase64EncodedString() throws NoSuchAlgorithmException {
-        // Given
+        // Arrange: テストデータの準備
         String userId = "testUser123";
 
-        // When
+        // Act: テスト対象メソッドの実行
         String hashedValue = hashUtil.hashUserId(userId);
 
-        // Then
+        // Assert: 結果の検証
         assertThat(hashedValue)
                 .matches("^[A-Za-z0-9+/]*={0,2}$"); // Base64エンコードパターンに一致することを確認
     }

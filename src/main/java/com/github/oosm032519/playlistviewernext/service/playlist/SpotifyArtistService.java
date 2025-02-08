@@ -56,7 +56,7 @@ public class SpotifyArtistService {
         }
     }
 
-    private Map<String, List<String>> getArtistGenresMock(List<String> artistIds) {
+    public Map<String, List<String>> getArtistGenresMock(List<String> artistIds) {
         logger.info("Getting artist genres using mock API. Artist IDs: {}", artistIds);
 
         // WebClientを使用してモックAPIからデータを取得
@@ -76,7 +76,7 @@ public class SpotifyArtistService {
         return response;
     }
 
-    private Map<String, List<String>> getArtistGenresReal(List<String> artistIds) throws SpotifyWebApiException {
+    public Map<String, List<String>> getArtistGenresReal(List<String> artistIds) throws SpotifyWebApiException {
         logger.info("Getting artist genres using real API. Artist IDs: {}", artistIds);
 
         return RetryUtil.executeWithRetry(() -> {
@@ -119,7 +119,7 @@ public class SpotifyArtistService {
      * @return アーティスト情報の配列
      * @throws Exception Spotify API 呼び出し中にエラーが発生した場合
      */
-    private Artist[] getArtists(List<String> artistIds) throws Exception {
+    public Artist[] getArtists(List<String> artistIds) throws Exception {
         GetSeveralArtistsRequest getSeveralArtistsRequest = spotifyApi.getSeveralArtists(artistIds.toArray(new String[0])).build();
         return getSeveralArtistsRequest.execute();
     }

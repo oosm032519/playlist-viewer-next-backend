@@ -29,9 +29,12 @@ class AudioFeatureSetterTest {
         audioFeatures = new HashMap<>();
     }
 
+    /**
+     * 各オーディオ特徴量の最大値がGetRecommendationsRequest.Builderに正しく設定されることを確認する。
+     */
     @Test
     void testSetMaxAudioFeatures() {
-        // Arrange
+        // Arrange: テストデータの準備
         audioFeatures.put("danceability", 0.8f);
         audioFeatures.put("energy", 0.7f);
         audioFeatures.put("valence", 0.6f);
@@ -41,10 +44,10 @@ class AudioFeatureSetterTest {
         audioFeatures.put("liveness", 0.3f);
         audioFeatures.put("speechiness", 0.2f);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         audioFeatureSetter.setMaxAudioFeatures(builder, audioFeatures);
 
-        // Assert
+        // Assert: 各特徴量の最大値がビルダーに設定されたことを確認
         verify(builder).max_danceability(0.8f);
         verify(builder).max_energy(0.7f);
         verify(builder).max_valence(0.6f);
@@ -56,18 +59,24 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * 空のマップが与えられた場合に、GetRecommendationsRequest.Builderのメソッドが呼び出されないことを確認する。
+     */
     @Test
     void testSetMaxAudioFeatures_EmptyMap() {
-        // Act
+        // Act: テスト対象メソッドの実行
         audioFeatureSetter.setMaxAudioFeatures(builder, audioFeatures);
 
-        // Assert
+        // Assert: ビルダーのメソッドが呼び出されないことを確認
         verifyNoInteractions(builder);
     }
 
+    /**
+     * 各オーディオ特徴量の最小値がGetRecommendationsRequest.Builderに正しく設定されることを確認する。
+     */
     @Test
     void testSetMinAudioFeatures() {
-        // Arrange
+        // Arrange: テストデータの準備
         audioFeatures.put("danceability", 0.2f);
         audioFeatures.put("energy", 0.3f);
         audioFeatures.put("valence", 0.4f);
@@ -77,10 +86,10 @@ class AudioFeatureSetterTest {
         audioFeatures.put("liveness", 0.3f);
         audioFeatures.put("speechiness", 0.4f);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         audioFeatureSetter.setMinAudioFeatures(builder, audioFeatures);
 
-        // Assert
+        // Assert: 各特徴量の最小値がビルダーに設定されたことを確認
         verify(builder).min_danceability(0.2f);
         verify(builder).min_energy(0.3f);
         verify(builder).min_valence(0.4f);
@@ -92,12 +101,15 @@ class AudioFeatureSetterTest {
         verifyNoMoreInteractions(builder);
     }
 
+    /**
+     * 空のマップが与えられた場合に、GetRecommendationsRequest.Builderのメソッドが呼び出されないことを確認する。
+     */
     @Test
     void testSetMinAudioFeatures_EmptyMap() {
-        // Act
+        // Act: テスト対象メソッドの実行
         audioFeatureSetter.setMinAudioFeatures(builder, audioFeatures);
 
-        // Assert
+        // Assert: ビルダーのメソッドが呼び出されないことを確認
         verifyNoInteractions(builder);
     }
 }

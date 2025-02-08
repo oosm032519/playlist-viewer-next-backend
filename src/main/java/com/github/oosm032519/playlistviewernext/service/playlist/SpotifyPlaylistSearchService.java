@@ -148,7 +148,7 @@ public class SpotifyPlaylistSearchService {
      * @param playlist 変換する PlaylistSimplified オブジェクト
      * @return PlaylistSimplified オブジェクトの情報を格納した Map
      */
-    private Map<String, Object> convertToMap(PlaylistSimplified playlist) {
+    public Map<String, Object> convertToMap(PlaylistSimplified playlist) {
         Map<String, Object> playlistMap = new HashMap<>();
         playlistMap.put("id", playlist.getId());
         playlistMap.put("name", playlist.getName());

@@ -2,10 +2,7 @@ package com.github.oosm032519.playlistviewernext.controller.playlist;
 
 import com.github.oosm032519.playlistviewernext.exception.ResourceNotFoundException;
 import com.github.oosm032519.playlistviewernext.service.analytics.PlaylistAnalyticsService;
-import com.github.oosm032519.playlistviewernext.service.analytics.SpotifyPlaylistAnalyticsService;
 import com.github.oosm032519.playlistviewernext.service.playlist.PlaylistDetailsRetrievalService;
-import com.github.oosm032519.playlistviewernext.service.recommendation.TrackRecommendationService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,7 +17,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PlaylistDetailsControllerTest {
@@ -31,23 +29,15 @@ class PlaylistDetailsControllerTest {
     @Mock
     private PlaylistAnalyticsService playlistAnalyticsService;
 
-    @Mock
-    private SpotifyPlaylistAnalyticsService spotifyPlaylistAnalyticsService;
-
-    @Mock
-    private TrackRecommendationService trackRecommendationService;
-
     @InjectMocks
     private PlaylistDetailsController detailsController;
 
-    @BeforeEach
-    void setUp() {
-        reset(playlistDetailsRetrievalService, playlistAnalyticsService, spotifyPlaylistAnalyticsService, trackRecommendationService);
-    }
-
+    /**
+     * プレイリストの詳細情報とジャンル分析結果が正常に取得できることを確認する。
+     */
     @Test
     void shouldReturnPlaylistDetailsSuccessfully() {
-        // Given
+        // Arrange: テストデータの準備
         String playlistId = "testPlaylistId";
         Map<String, Object> playlistDetails = new HashMap<>(createTestPlaylistDetails());
         Map<String, Integer> genreCounts = new HashMap<>(Map.of("pop", 2, "rock", 1));
@@ -55,10 +45,10 @@ class PlaylistDetailsControllerTest {
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenReturn(playlistDetails);
         when(playlistAnalyticsService.getGenreCountsForPlaylist(playlistId)).thenReturn(genreCounts);
 
-        // When
+        // Act: テスト対象メソッドの実行
         ResponseEntity<Map<String, Object>> response = detailsController.getPlaylistDetails(playlistId);
 
-        // Then
+        // Assert: 結果の検証
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().get("genreCounts")).isEqualTo(genreCounts);
@@ -79,19 +69,21 @@ class PlaylistDetailsControllerTest {
         details.put("ownerName", "Owner Name");
         details.put("maxAudioFeatures", new HashMap<>(Map.of("feature1", 1.0f)));
         details.put("minAudioFeatures", new HashMap<>(Map.of("feature1", 0.1f)));
-        details.put("medianAudioFeatures", new HashMap<>(Map.of("feature1", 0.5f)));
-        details.put("modeValues", new HashMap<>(Map.of("feature1", 0.5f)));
+        details.put("averageAudioFeatures", new HashMap<>(Map.of("feature1", 0.5f)));
         return details;
     }
 
+    /**
+     * プレイリストが見つからない場合に、ResourceNotFoundExceptionがスローされることを確認する。
+     */
     @Test
     void shouldHandleResourceNotFoundException() {
-        // Given
+        // Arrange: モックの設定
         String playlistId = "testPlaylistId";
         ResourceNotFoundException exception = new ResourceNotFoundException(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND");
         when(playlistDetailsRetrievalService.getPlaylistDetails(playlistId)).thenThrow(exception);
 
-        // When & Then
+        // Act & Assert: 例外がスローされることの確認
         Throwable thrown = catchThrowable(() -> detailsController.getPlaylistDetails(playlistId));
         assertThat(thrown).isSameAs(exception);
 

@@ -32,40 +32,48 @@ public class PlaylistTrackRemovalControllerTest {
     private PlaylistTrackRemovalController playlistTrackRemovalController;
 
 
+    /**
+     * トラックがプレイリストから正常に削除された場合、成功メッセージを含むレスポンスが返されることを確認する。
+     */
     @Test
     void removeTrackFromPlaylist_success() throws Exception {
-        // テストデータの準備
+        // Arrange: テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
         playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
-
 
         // SpotifyPlaylistTrackRemovalServiceのモックを設定
         when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal))
                 .thenReturn(ResponseEntity.ok("success"));
 
-        // removeTrackFromPlaylistメソッドを実行
+        // Act: removeTrackFromPlaylistメソッドを実行
         ResponseEntity<?> response = playlistTrackRemovalController.removeTrackFromPlaylist(request, principal);
 
-        // レスポンスを確認
+        // Assert: レスポンスを確認
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(Map.of("message", "トラックが正常に削除されました。"));
     }
 
+    /**
+     * 認証されていないユーザーがトラックを削除しようとした場合、AuthenticationExceptionがスローされることを確認する。
+     */
     @Test
     void removeTrackFromPlaylist_authenticationError() {
-        // テストデータの準備
+        // Arrange: テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
         playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
 
-        // principalがnullの場合
+        // Act & Assert: principalがnullの場合
         assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(request, null))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessage("認証されていないユーザーがアクセスしようとしました。");
     }
 
+    /**
+     * Spotify APIでトラックの削除中にエラーが発生した場合、InternalServerExceptionがスローされることを確認する。
+     */
     @Test
     void removeTrackFromPlaylist_internalServerError() throws Exception {
-        // テストデータの準備
+        // Arrange: テストデータの準備
         PlaylistTrackRemovalRequest request = new PlaylistTrackRemovalRequest();
         playlistTrackRemovalController = new PlaylistTrackRemovalController(spotifyPlaylistTrackRemovalService);
 
@@ -73,7 +81,7 @@ public class PlaylistTrackRemovalControllerTest {
         when(spotifyPlaylistTrackRemovalService.removeTrackFromPlaylist(request, principal))
                 .thenReturn(ResponseEntity.internalServerError().body("Spotify API Error"));
 
-        // InternalServerExceptionがスローされることを確認
+        // Act & Assert: InternalServerExceptionがスローされることを確認
         assertThatThrownBy(() -> playlistTrackRemovalController.removeTrackFromPlaylist(request, principal))
                 .isInstanceOf(InternalServerException.class)
                 .hasMessageContaining("Spotify APIでトラックの削除中にエラーが発生しました。");

@@ -32,9 +32,12 @@ class UserFavoritePlaylistsServiceTest {
         service = new UserFavoritePlaylistsService(userFavoritePlaylistRepository);
     }
 
+    /**
+     * ユーザーIDを指定して、お気に入りプレイリストのリストが正常に取得できることを確認する。
+     */
     @Test
     void getFavoritePlaylists_Success() {
-        // Arrange
+        // Arrange: テストデータの準備
         String userId = "testUser";
         LocalDateTime now = LocalDateTime.now();
         List<UserFavoritePlaylist> favoritePlaylists = Arrays.asList(
@@ -43,14 +46,14 @@ class UserFavoritePlaylistsServiceTest {
         );
         when(userFavoritePlaylistRepository.findByUserId(userId)).thenReturn(favoritePlaylists);
 
-        // Act
+        // Act: テスト対象メソッドの実行
         List<FavoritePlaylistResponse> result = service.getFavoritePlaylists(userId);
 
-        // Assert
+        // Assert: 結果の検証
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).getPlaylistId()).isEqualTo("1");
-        assertThat(result.get(0).getPlaylistName()).isEqualTo("Playlist 1");
-        assertThat(result.get(0).getPlaylistOwnerName()).isEqualTo("Owner 1");
+        assertThat(result.getFirst().getPlaylistId()).isEqualTo("1");
+        assertThat(result.getFirst().getPlaylistName()).isEqualTo("Playlist 1");
+        assertThat(result.getFirst().getPlaylistOwnerName()).isEqualTo("Owner 1");
         assertThat(result.get(0).getTotalTracks()).isEqualTo(10);
         assertThat(result.get(0).getAddedAt()).isEqualTo(now);
 
@@ -63,35 +66,7 @@ class UserFavoritePlaylistsServiceTest {
         verify(userFavoritePlaylistRepository).findByUserId(userId);
     }
 
-    @Test
-    void getFavoritePlaylists_EmptyList() {
-        // Arrange
-        String userId = "testUser";
-        when(userFavoritePlaylistRepository.findByUserId(userId)).thenReturn(List.of());
-
-        // Act
-        List<FavoritePlaylistResponse> result = service.getFavoritePlaylists(userId);
-
-        // Assert
-        assertThat(result).isEmpty();
-        verify(userFavoritePlaylistRepository).findByUserId(userId);
-    }
-
-    @Test
-    void getFavoritePlaylists_DatabaseAccessException() {
-        // Arrange
-        String userId = "testUser";
-        when(userFavoritePlaylistRepository.findByUserId(userId)).thenThrow(new RuntimeException("Database error"));
-
-        // Act & Assert
-        assertThatThrownBy(() -> service.getFavoritePlaylists(userId))
-                .isInstanceOf(DatabaseAccessException.class)
-                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
-                .hasMessage("お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。");
-
-        verify(userFavoritePlaylistRepository).findByUserId(userId);
-    }
-
+    // テストデータ作成用のヘルパーメソッド
     private UserFavoritePlaylist createUserFavoritePlaylist(Long id, String userId, String playlistId, String playlistName, int totalTracks, LocalDateTime addedAt, String playlistOwnerName) {
         UserFavoritePlaylist playlist = new UserFavoritePlaylist();
         playlist.setId(id);
@@ -102,5 +77,40 @@ class UserFavoritePlaylistsServiceTest {
         playlist.setAddedAt(addedAt);
         playlist.setPlaylistOwnerName(playlistOwnerName);
         return playlist;
+    }
+
+    /**
+     * 指定したユーザーのお気に入りプレイリストが存在しない場合、空のリストが返されることを確認する。
+     */
+    @Test
+    void getFavoritePlaylists_EmptyList() {
+        // Arrange: テストデータの準備
+        String userId = "testUser";
+        when(userFavoritePlaylistRepository.findByUserId(userId)).thenReturn(List.of());
+
+        // Act: テスト対象メソッドの実行
+        List<FavoritePlaylistResponse> result = service.getFavoritePlaylists(userId);
+
+        // Assert: 結果の検証
+        assertThat(result).isEmpty();
+        verify(userFavoritePlaylistRepository).findByUserId(userId);
+    }
+
+    /**
+     * データベースアクセス中に例外が発生した場合、DatabaseAccessExceptionがスローされることを確認する。
+     */
+    @Test
+    void getFavoritePlaylists_DatabaseAccessException() {
+        // Arrange: モックの設定（例外をスロー）
+        String userId = "testUser";
+        when(userFavoritePlaylistRepository.findByUserId(userId)).thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert: 例外がスローされることの確認
+        assertThatThrownBy(() -> service.getFavoritePlaylists(userId))
+                .isInstanceOf(DatabaseAccessException.class)
+                .hasFieldOrPropertyWithValue("httpStatus", HttpStatus.INTERNAL_SERVER_ERROR)
+                .hasMessage("お気に入りプレイリストの取得中にデータベースアクセスエラーが発生しました。");
+
+        verify(userFavoritePlaylistRepository).findByUserId(userId);
     }
 }

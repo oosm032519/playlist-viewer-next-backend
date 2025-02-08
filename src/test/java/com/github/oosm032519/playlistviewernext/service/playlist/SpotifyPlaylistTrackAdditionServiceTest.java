@@ -27,9 +27,12 @@ class SpotifyPlaylistTrackAdditionServiceTest {
     @Mock
     private SpotifyApi spotifyApi;
 
+    /**
+     * トラックがプレイリストに正常に追加され、スナップショットIDが返されることを確認する。
+     */
     @Test
     void addTrackToPlaylist_正常系() throws Exception {
-        // 準備
+        // Arrange: テストデータの準備とモックの設定
         String accessToken = "accessToken";
         String playlistId = "playlistId";
         String trackId = "trackId";
@@ -41,16 +44,19 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         doReturn(request).when(builder).build();
         doReturn(snapshotResult).when(request).execute();
 
-        // 実行
+        // Act: テスト対象メソッドの実行
         SnapshotResult result = spotifyPlaylistTrackAdditionService.addTrackToPlaylist(accessToken, playlistId, trackId);
 
-        // 検証
+        // Assert: 結果の検証
         assertThat(result).isEqualTo(snapshotResult);
     }
 
+    /**
+     * SpotifyWebApiExceptionが発生した場合、例外がそのままスローされることを確認する。
+     */
     @Test
     void addTrackToPlaylist_SpotifyWebApiException発生時_例外がそのままスローされる() throws Exception {
-        // 準備
+        // Arrange: テストデータの準備とモックの設定
         String accessToken = "accessToken";
         String playlistId = "playlistId";
         String trackId = "trackId";
@@ -62,15 +68,18 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         doReturn(request).when(builder).build();
         doThrow(exception).when(request).execute();
 
-        // 実行・検証
+        // Act & Assert: 例外がスローされることの確認
         assertThatThrownBy(() -> spotifyPlaylistTrackAdditionService.addTrackToPlaylist(accessToken, playlistId, trackId))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .isSameAs(exception);
     }
 
+    /**
+     * その他の例外が発生した場合、InternalServerExceptionにラップされてスローされることを確認する。
+     */
     @Test
     void addTrackToPlaylist_その他例外発生時_InternalServerExceptionにラップされてスローされる() throws Exception {
-        // 準備
+        // Arrange: テストデータの準備とモックの設定
         String accessToken = "accessToken";
         String playlistId = "playlistId";
         String trackId = "trackId";
@@ -82,8 +91,7 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         doReturn(request).when(builder).build();
         doThrow(exception).when(request).execute();
 
-
-        // 実行・検証
+        // Act & Assert: InternalServerExceptionがスローされることの確認
         assertThatThrownBy(() -> spotifyPlaylistTrackAdditionService.addTrackToPlaylist(accessToken, playlistId, trackId))
                 .isInstanceOf(InternalServerException.class)
                 .hasCause(exception)
@@ -91,9 +99,12 @@ class SpotifyPlaylistTrackAdditionServiceTest {
                 .extracting("httpStatus").isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    /**
+     * リトライ内でSpotifyWebApiExceptionが発生し続ける場合、最終的にSpotifyWebApiExceptionがスローされることを確認する。
+     */
     @Test
     void addTrackToPlaylist_リトライ内でSpotifyWebApiExceptionが発生し続ける場合_最終的にSpotifyWebApiExceptionがスローされる() throws Exception {
-        // 準備
+        // Arrange: テストデータの準備とモックの設定
         String accessToken = "accessToken";
         String playlistId = "playlistId";
         String trackId = "trackId";
@@ -105,7 +116,7 @@ class SpotifyPlaylistTrackAdditionServiceTest {
         doReturn(request).when(builder).build();
         doThrow(exception).when(request).execute();
 
-        // 実行・検証
+        // Act & Assert: 例外がスローされることの確認
         assertThatThrownBy(() -> spotifyPlaylistTrackAdditionService.addTrackToPlaylist(accessToken, playlistId, trackId))
                 .isInstanceOf(SpotifyWebApiException.class)
                 .isSameAs(exception);
