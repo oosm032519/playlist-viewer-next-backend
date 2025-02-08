@@ -64,3 +64,4 @@ jobs:
           REDIS_TLS_URL: ${{ secrets.REDIS_TLS_URL }}
 
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SPOTIFY_MOCK_API_URL: ${{ secrets.SPOTIFY_MOCK_API_URL }}
